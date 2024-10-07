@@ -1,6 +1,6 @@
 #pragma once
 
-#include "src/ecs/Entity.hpp"
+#include "ecs/Entity.hpp"
 
 #include <vector>
 #include <glm/vec2.hpp>
@@ -12,11 +12,11 @@ struct Player {
 };
 
 struct Motion {
-	vec2 position = { 0, 0 };
+	glm::vec2 position = { 0, 0 };
 	float angle = 0;
-	vec2 scale = { 0, 0 };
-	vec2 velocity = { 0, 0 };
-	vec2 acceleration = { 0, 0 };
+	glm::vec2 scale = { 0, 0 };
+	glm::vec2 velocity = { 0, 0 };
+	glm::vec2 acceleration = { 0, 0 };
 	float drag = 0;
 };
 

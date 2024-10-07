@@ -1,6 +1,6 @@
 #pragma once
 
-#include "src/ecs/Entity.hpp"
+#include "ecs/Entity.hpp"
 
 #include <algorithm>
 #include <vector>

@@ -1,10 +1,12 @@
 #pragma once
 
-#include "src/ecs/Entity.hpp"
+#include "ecs/Entity.hpp"
+
+#include <vector>
+#include <unordered_map>
 
 template <typename Component> // A component can be any class
-class ComponentContainer : public IComponentContainer
-{
+class ComponentContainer : public IComponentContainer {
 private:
 	// The hash map from Entity -> array index.
 	std::unordered_map<unsigned int, unsigned int> map_entity_componentID; // the entity is cast to uint to be hashable.
@@ -17,13 +19,11 @@ public:
 	std::vector<Entity> entities;
 
 	// Constructor that registers the type
-	ComponentContainer()
-	{
+	ComponentContainer() {
 	}
 
 	// Inserting a component c associated to entity e
-	inline Component& insert(Entity e, Component c, bool check_for_duplicates = true)
-	{
+	inline Component& insert(Entity e, Component c, bool check_for_duplicates = true) {
 		// Usually, every entity should only have one instance of each component type
 		assert(!(check_for_duplicates && has(e)) && "Entity already contained in ECS registry");
 
@@ -55,8 +55,7 @@ public:
 	}
 
 	// Remove an component and pack the container to re-use the empty space
-	void remove(Entity e)
-	{
+	void remove(Entity e) {
 		if (has(e))
 		{
 			// Get the current position
@@ -77,23 +76,20 @@ public:
 	};
 
 	// Remove all components of type 'Component'
-	void clear()
-	{
+	void clear() {
 		map_entity_componentID.clear();
 		components.clear();
 		entities.clear();
 	}
 
 	// Report the number of components of type 'Component'
-	size_t size()
-	{
+	size_t size() {
 		return components.size();
 	}
 
 	// Sort the components and associated entity assignment structures by the comparisonFunction, see std::sort
 	template <class Compare>
-	void sort(Compare comparisonFunction)
-	{
+	void sort(Compare comparisonFunction) {
 		// First sort the entity list as desired
 		std::sort(entities.begin(), entities.end(), comparisonFunction);
 		// Now re-arrange the components (Note, creates a new vector, which may be slow! Not sure if in-place could be faster: https://stackoverflow.com/questions/63703637/how-to-efficiently-permute-an-array-in-place-using-stdswap)
