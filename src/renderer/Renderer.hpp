@@ -42,6 +42,9 @@ public:
     void init() {
         // Magic code that sets up OpenGL. The order of these calls matter. Best not
         // to touch it ;)
+        if (!glfwInit()) {
+            throw std::runtime_error("Failed to initialize GLFW");
+        }
 
         //-------------------------------------------------------------------------
         // If you are on Linux or Windows, you can change these 2 numbers to 4 and 3 and
@@ -55,10 +58,6 @@ public:
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
         glfwWindowHint(GLFW_RESIZABLE, 0);
-
-        if (!glfwInit()) {
-            throw std::runtime_error("Failed to initialize GLFW");
-        }
 
         m_window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
         if (!m_window) {
