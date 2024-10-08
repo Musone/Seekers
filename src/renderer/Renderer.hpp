@@ -42,6 +42,20 @@ public:
     void init() {
         // Magic code that sets up OpenGL. The order of these calls matter. Best not
         // to touch it ;)
+
+        //-------------------------------------------------------------------------
+        // If you are on Linux or Windows, you can change these 2 numbers to 4 and 3 and
+        // enable the glDebugMessageCallback to have OpenGL catch your mistakes for you.
+        // GLFW / OGL Initialization
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+#if __APPLE__
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+        glfwWindowHint(GLFW_RESIZABLE, 0);
+
         if (!glfwInit()) {
             throw std::runtime_error("Failed to initialize GLFW");
         }
@@ -62,8 +76,8 @@ public:
             throw std::runtime_error("Failed to initialize gl3w");
         }
 
-        // We are using Opengl 3.1. Look at the cmake file to see.
-        if (!gl3w_is_supported(3, 1)) {
+        // We are using Opengl 3.3. Basically check A1.
+        if (!gl3w_is_supported(3, 3)) {
             throw std::runtime_error("OpenGL 3.1 not supported\n");
         }
 
