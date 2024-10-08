@@ -106,7 +106,7 @@ public:
 
         // Draw the triangle
         glBindVertexArray(m_vao);
-        glDrawArrays(GL_TRIANGLES, 0, std::size(vertices));
+        glDrawArrays(GL_TRIANGLES, 0, Common::c_arr_size(vertices));
 
         /* Swap front and back buffers */
         glfwSwapBuffers(m_window);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utils/Common.hpp>
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -12,8 +14,6 @@
 #include <vector>
 #include <stdexcept>
 #include <fstream>
-#include <sstream>
-#include <ostream>
 
 namespace FileSystem{
     inline std::string get_executable_path() {
@@ -30,41 +30,17 @@ namespace FileSystem{
         return std::string(path);
     }
 
-    inline std::vector<std::string> split_string(const std::string& str, const char& delimiter) {
-        std::string token;
-        std::vector<std::string> tokens;
-
-        std::stringstream stream(str);
-        while (std::getline(stream, token, delimiter)) {
-            tokens.push_back(token);
-        }
-        return tokens;
-    }
-
-    // Was too lazy to make my own. Check this out if you're interested.
-    // https://stackoverflow.com/questions/9277906/stdvector-to-string-with-custom-delimiter
-    inline std::string join_string(const std::vector<std::string>& tokens, const char& delimiter) {
-        std::ostringstream stream;
-        for (const auto& token : tokens) {
-            if (&token != &tokens[0]) {
-                stream << delimiter;
-            }
-            stream << token;
-        }
-        return stream.str();
-    }
-
     inline std::string read_file(std::string file_path) {
         // Normalize path to use '/' instead of '\\'
-        file_path = join_string(split_string(file_path, '\\'), '/');
+        file_path = Common::join_string(Common::split_string(file_path, '\\'), '/');
         // Try absolute path
         std::ifstream file(file_path);
         if (!file.is_open()) {
             // Try relative path
-            auto cwd_tokens = split_string(get_executable_path(), '\\');
+            auto cwd_tokens = Common::split_string(get_executable_path(), '\\');
             // Remove the executable itself from the cwd path
             cwd_tokens.pop_back();
-            const auto cwd = join_string(cwd_tokens, '/');
+            const auto cwd = Common::join_string(cwd_tokens, '/');
             file.open(cwd + '/' + file_path);
             
             if (!file.is_open()) {
