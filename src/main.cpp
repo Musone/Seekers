@@ -54,11 +54,17 @@ int main(void) {
     }
 
 #pragma region Setup_modern_gl_lol
-    // Define vertices for a triangle
-    float vertices[] = {
-        0.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f
+    // Here, I am defining what a Vertex is. This struct is used to tell OpenGL which uniform
+    // variables it should expect. Using this method helps prevent hardcoding magic numbers.
+    struct Vertex {
+        glm::vec2 position = { 0.0f, 0.0f };
+        glm::vec3 colour = { 0.0f, 0.0f, 0.0f };
+    };
+
+    Vertex vertices[] = {
+        {{0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+        {{1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}},
+        {{0.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
     };
 
     // Create and bind Vertex Array Object (VAO)
@@ -72,9 +78,20 @@ int main(void) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // Set vertex attribute pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // Set vertex attribute pointers. They basically tell OpenGL the structure of a vertex, so that
+    // it can parse them into meaningful data-types once they get to the shaders. The data contained
+    // within a Vertex is called an attribute. For example, vertex.position is an attribute.
+    // https://docs.gl/gl3/glVertexAttribPointer
+    //
+    // If no shader is present, then by default: OpenGl will use attribute at index 0 as the position.
+    //
+    // If this is confusing, check out this video to learn what an attribute is.: 
+    // https://www.youtube.com/watch?v=x0H--CL2tUI&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=5&ab_channel=TheCherno
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, position));
     glEnableVertexAttribArray(0);
+    
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, colour));
+    glEnableVertexAttribArray(1);
 #pragma endregion
 
     /* Loop until the user closes the window */
@@ -88,7 +105,7 @@ int main(void) {
 
         // Draw the triangle
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, std::size(vertices));
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
