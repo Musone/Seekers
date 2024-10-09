@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ecs/Entity.hpp"
+#include <ecs/Entity.hpp>
 
 #include <vector>
 #include <glm/vec2.hpp>

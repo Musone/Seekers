@@ -1,3 +1,3 @@
-#include "src/Ecs/Entity.hpp"
+#include <ecs/Entity.hpp>
 
 unsigned int Entity::id_count = 0;

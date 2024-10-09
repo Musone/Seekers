@@ -1,6 +1,7 @@
 #pragma once
 
-#include "ecs/Entity.hpp"
+#include <ecs/Entity.hpp>
+#include <ecs/IComponentContainer.hpp>
 
 #include <vector>
 #include <unordered_map>

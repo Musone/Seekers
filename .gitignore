@@ -1,2 +1,4 @@
 build/
 .vscode/
+ext/project_path.hpp
+cmake-build-debug/
