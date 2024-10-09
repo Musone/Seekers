@@ -3,6 +3,8 @@
 #include <utils/Log.hpp>
 #include <utils/FileSystem.hpp>
 
+#include <string>
+
 /*
 You MUST
         #define GL3W_IMPLEMENTATION
@@ -22,6 +24,27 @@ You MUST
 // Adding gl3w breaks the normal OpenGl triangle initialization.
 #include <gl3w.h>
 #include <GLFW/glfw3.h>
+
+// OpenGL error checking brought to you and parted by:
+// https://www.youtube.com/watch?v=FBbPWSOQ0-w&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=10&ab_channel=TheCherno
+#define GL_Call(x) s_gl_clear_error();x;s_gl_log_call(#x, __FILE__, __LINE__)
+
+static void s_gl_clear_error() {
+    while (glGetError() != GL_NO_ERROR);
+}
+
+static void s_gl_log_call(const char* function, const char* file, int line) {
+    while (GLenum error = glGetError()) {
+        Log::log_error_and_terminate(
+            std::string(function) + 
+            "\n" +
+            std::string(file) + 
+            ":" + 
+            std::to_string(line)
+        );
+    }
+}
+
 
 // Here, I am defining what a Vertex is. This struct is used to tell OpenGL what Attributes
 // it should expect when reading in a Vertex. Using this method helps prevent hardcoding magic numbers.
@@ -51,14 +74,14 @@ public:
         // If you are on Linux or Windows, you can change these 2 numbers to 4 and 3 and
         // enable the glDebugMessageCallback to have OpenGL catch your mistakes for you.
         // GLFW / OGL Initialization
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+        GL_Call(glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3));
+        GL_Call(glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3));
+        GL_Call(glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE));
+        GL_Call(glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE));
 #if __APPLE__
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        GL_Call(glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE));
 #endif
-        glfwWindowHint(GLFW_RESIZABLE, 0);
+        GL_Call(glfwWindowHint(GLFW_RESIZABLE, 0));
 
         m_window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
         if (!m_window) {
@@ -66,7 +89,7 @@ public:
             throw std::runtime_error("Failed to create window");
         }
 
-        glfwMakeContextCurrent(m_window);
+        GL_Call(glfwMakeContextCurrent(m_window));
         
         // "Initializes the library. Should be called once after an 
         // OpenGL context has been created. Returns 0 when gl3w was 
@@ -82,15 +105,15 @@ public:
         }
 
         // Binding means that you are selecting. OpenGL is a state machine.
-        glGenBuffers(1, &m_vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        GL_Call(glGenBuffers(1, &m_vbo));
+        GL_Call(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
 
         // Going to try using index buffer.
-        glGenBuffers(1, &m_ibo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+        GL_Call(glGenBuffers(1, &m_ibo));
+        GL_Call(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo));
         
-        glGenVertexArrays(1, &m_vao);
-        glBindVertexArray(m_vao);
+        GL_Call(glGenVertexArrays(1, &m_vao));
+        GL_Call(glBindVertexArray(m_vao));
 
         // Set vertex attribute pointers. They basically tell OpenGL the structure of a vertex, so that
         // it can parse them into meaningful data-types once they get to the shaders. The data contained
@@ -101,11 +124,11 @@ public:
         //
         // If this is confusing, check out this video to learn what an attribute is.: 
         // https://www.youtube.com/watch?v=x0H--CL2tUI&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=5&ab_channel=TheCherno
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, position));
-        glEnableVertexAttribArray(0);
+        GL_Call(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, position)));
+        GL_Call(glEnableVertexAttribArray(0));
         
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, colour));
-        glEnableVertexAttribArray(1);
+        GL_Call(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, colour)));
+        GL_Call(glEnableVertexAttribArray(1));
 
         _load_shaders();
     }
@@ -124,22 +147,22 @@ public:
             2, 3, 1
         };
         
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        GL_Call(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
 
         // Try using index buffer..
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        GL_Call(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        GL_Call(glClear(GL_COLOR_BUFFER_BIT));
 
         // glDrawArrays(GL_TRIANGLES, 0, Common::c_arr_size(vertices));
-        glDrawElements(GL_TRIANGLES, Common::c_arr_size(indices), GL_UNSIGNED_INT, &indices);
+        GL_Call(glDrawElements(GL_TRIANGLES, Common::c_arr_size(indices), GL_UNSIGNED_INT, &indices));
 
         /* Swap front and back buffers */
-        glfwSwapBuffers(m_window);
+        GL_Call(glfwSwapBuffers(m_window));
 
         /* Poll for and process events */
-        glfwPollEvents();
+        GL_Call(glfwPollEvents());
     }
 
     bool is_terminated() {
@@ -162,7 +185,7 @@ private:
         hello_fragment_shader = FileSystem::read_file("shaders/Hello.fs.glsl");
         
         m_shader = _create_shader(hello_vertex_shader, hello_fragment_shader);
-        glUseProgram(m_shader);
+        GL_Call(glUseProgram(m_shader));
     }
     
     // The Cherno goes over initializing shaders in this video. Check it out if you are curious.
@@ -170,20 +193,20 @@ private:
     unsigned int _compile_shader(const int& type, const std::string& source) {
         unsigned int id = glCreateShader(type);
         const char* src = source.c_str();
-        glShaderSource(id, 1, &src, nullptr);
-        glCompileShader(id);
+        GL_Call(glShaderSource(id, 1, &src, nullptr));
+        GL_Call(glCompileShader(id));
 
         int result;
-        glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+        GL_Call(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
 
         if (result == GL_FALSE) {
             int length;
-            glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+            GL_Call(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
             char* error_message = (char*)alloca(length * sizeof(char));
-            glGetShaderInfoLog(id, length, &length, error_message);
+            GL_Call(glGetShaderInfoLog(id, length, &length, error_message));
             std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader" << std::endl;
             std::cout << error_message << std::endl;
-            glDeleteShader(id);
+            GL_Call(glDeleteShader(id));
             return 0;
         }
 
@@ -197,13 +220,13 @@ private:
         unsigned int compiled_vertex_shader = _compile_shader(GL_VERTEX_SHADER, vertex_shader);
         unsigned int compiled_fragment_shader = _compile_shader(GL_FRAGMENT_SHADER, fragment_shader);
 
-        glAttachShader(program, compiled_vertex_shader);
-        glAttachShader(program, compiled_fragment_shader);
-        glLinkProgram(program);
-        glValidateProgram(program);
+        GL_Call(glAttachShader(program, compiled_vertex_shader));
+        GL_Call(glAttachShader(program, compiled_fragment_shader));
+        GL_Call(glLinkProgram(program));
+        GL_Call(glValidateProgram(program));
 
-        glDeleteShader(compiled_vertex_shader);
-        glDeleteShader(compiled_fragment_shader);
+        GL_Call(glDeleteShader(compiled_vertex_shader));
+        GL_Call(glDeleteShader(compiled_fragment_shader));
         
         return program;
     }
