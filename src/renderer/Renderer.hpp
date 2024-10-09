@@ -170,8 +170,8 @@ public:
     }
 
     void terminate() {
-        glfwTerminate();
-        glfwSetWindowShouldClose(m_window, 1);
+        GL_Call(glfwTerminate());
+        GL_Call(glfwSetWindowShouldClose(m_window, 1));
     }
 
 private:
