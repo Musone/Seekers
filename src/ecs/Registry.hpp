@@ -17,6 +17,7 @@ public:
 	ComponentContainer<Buff> buffs;
 	ComponentContainer<WeaponStats> weapon_stats;
 	ComponentContainer<ProjectileStats> projectile_stats;
+	ComponentContainer<AttackCooldown> attack_cooldowns;
 	Entity player;
 	
 	Registry() {
@@ -26,7 +27,8 @@ public:
 		m_registry_list.push_back(&locomotion_stats);
 		m_registry_list.push_back(&buffs);
 		m_registry_list.push_back(&weapon_stats);
-		m_registry_list.push_back(&projectile_stats);	
+		m_registry_list.push_back(&projectile_stats);
+		m_registry_list.push_back(&attack_cooldowns);
 	}
 
 	void hello() {

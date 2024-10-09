@@ -69,7 +69,7 @@ struct WeaponStats
 	float damage;
 	float range;
 	float proj_speed;
-	float attack_speed;
+	float attack_cooldown;
 	ATTACK_STYLE attack_style = ATTACK_STYLE::ATTACK_STYLE_COUNT;
 };
 
@@ -83,4 +83,8 @@ struct Collision
 {
 	Entity other;
 	Collision(Entity &other) { this->other = other; };
+};
+
+struct AttackCooldown {
+	float timer;
 };
