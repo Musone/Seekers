@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ecs/Registry.hpp"
-#include "ecs/Entity.hpp"
+#include <ecs/Registry.hpp>
+#include <ecs/Entity.hpp>
 
 // stlib
 #include <vector>
