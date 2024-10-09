@@ -10,20 +10,23 @@ class Registry {
 	std::vector<IComponentContainer*> m_registry_list;
 
 public:
-	ComponentContainer<DeathTimer> death_timers;
 	ComponentContainer<Motion> motions;
 	ComponentContainer<Collision> collisions;
-	ComponentContainer<Player> players;
-	ComponentContainer<ScreenState> screen_states;
-	ComponentContainer<DebugComponent> debug_components;
-
+	ComponentContainer<Attacker> attackers;
+	ComponentContainer<LocomotionStats> locomotion_stats;
+	ComponentContainer<Buff> buffs;
+	ComponentContainer<WeaponStats> weapon_stats;
+	ComponentContainer<ProjectileStats> projectile_stats;
+	Entity player;
+	
 	Registry() {
-		m_registry_list.push_back(&death_timers);
 		m_registry_list.push_back(&motions);
 		m_registry_list.push_back(&collisions);
-		m_registry_list.push_back(&players);
-		m_registry_list.push_back(&screen_states);
-		m_registry_list.push_back(&debug_components);
+		m_registry_list.push_back(&attackers);
+		m_registry_list.push_back(&locomotion_stats);
+		m_registry_list.push_back(&buffs);
+		m_registry_list.push_back(&weapon_stats);
+		m_registry_list.push_back(&projectile_stats);	
 	}
 
 	void hello() {
