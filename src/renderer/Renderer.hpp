@@ -74,14 +74,15 @@ public:
         // If you are on Linux or Windows, you can change these 2 numbers to 4 and 3 and
         // enable the glDebugMessageCallback to have OpenGL catch your mistakes for you.
         // GLFW / OGL Initialization
-        GL_Call(glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3));
-        GL_Call(glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3));
-        GL_Call(glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE));
-        GL_Call(glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE));
+        // TODO: FIX THIS RANDOM ERROR WITH GL_CALL......
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #if __APPLE__
-        GL_Call(glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE));
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-        GL_Call(glfwWindowHint(GLFW_RESIZABLE, 0));
+        glfwWindowHint(GLFW_RESIZABLE, 0);
 
         m_window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
         if (!m_window) {
@@ -89,7 +90,7 @@ public:
             throw std::runtime_error("Failed to create window");
         }
 
-        GL_Call(glfwMakeContextCurrent(m_window));
+        glfwMakeContextCurrent(m_window);
         
         // "Initializes the library. Should be called once after an 
         // OpenGL context has been created. Returns 0 when gl3w was 
@@ -104,17 +105,6 @@ public:
             throw std::runtime_error("OpenGL 3.1 not supported\n");
         }
 
-        // Binding means that you are selecting. OpenGL is a state machine.
-        GL_Call(glGenBuffers(1, &m_vbo));
-        GL_Call(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
-
-        // Going to try using index buffer.
-        GL_Call(glGenBuffers(1, &m_ibo));
-        GL_Call(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo));
-        
-        GL_Call(glGenVertexArrays(1, &m_vao));
-        GL_Call(glBindVertexArray(m_vao));
-
         // Set vertex attribute pointers. They basically tell OpenGL the structure of a vertex, so that
         // it can parse them into meaningful data-types once they get to the shaders. The data contained
         // within a Vertex is called an attribute. For example, vertex.position is an attribute.
@@ -124,39 +114,43 @@ public:
         //
         // If this is confusing, check out this video to learn what an attribute is.: 
         // https://www.youtube.com/watch?v=x0H--CL2tUI&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=5&ab_channel=TheCherno
-        GL_Call(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, position)));
-        GL_Call(glEnableVertexAttribArray(0));
+        GL_Call(glGenVertexArrays(1, &m_vao));
+        GL_Call(glBindVertexArray(m_vao));
+    
+        // Binding means that you are selecting. OpenGL is a state machine.
+        GL_Call(glGenBuffers(1, &m_vbo));
+        GL_Call(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
+
+        // Going to try using index buffer.
+        GL_Call(glGenBuffers(1, &m_ibo));
+        GL_Call(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo));
         
-        GL_Call(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, colour)));
+        GL_Call(glEnableVertexAttribArray(0));
+        GL_Call(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, position)));
         GL_Call(glEnableVertexAttribArray(1));
+        GL_Call(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, colour)));
+
+        _hard_coded_vertices_and_indices();
 
         _load_shaders();
     }
 
     void draw() {
-        // Here are some vertices for testing
-        Vertex vertices[] = {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
-            {{0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}}, // 1
-            {{0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 2
-            {{-0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 3
-        };
-
         unsigned int indices[] = {
             0, 1, 2,
             2, 3, 1
         };
-        
-        GL_Call(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
-
-        // Try using index buffer..
-        GL_Call(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
-
         /* Render here */
         GL_Call(glClear(GL_COLOR_BUFFER_BIT));
 
-        // glDrawArrays(GL_TRIANGLES, 0, Common::c_arr_size(vertices));
-        GL_Call(glDrawElements(GL_TRIANGLES, Common::c_arr_size(indices), GL_UNSIGNED_INT, &indices));
+        GL_Call(glUseProgram(m_shader));
+
+        // We have to call this every time if we don't use VAO because there can be different types of
+        // vertices for different shaders.
+        GL_Call(glBindVertexArray(m_vao));
+
+        // GL_Call(glDrawElements(GL_TRIANGLES, Common::c_arr_count(indices), GL_UNSIGNED_INT, &indices));
+        GL_Call(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
         /* Swap front and back buffers */
         GL_Call(glfwSwapBuffers(m_window));
@@ -175,6 +169,26 @@ public:
     }
 
 private:
+    void _hard_coded_vertices_and_indices() {
+        // Here are some vertices for testing
+        Vertex vertices[] = {
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
+            {{0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}}, // 1
+            {{0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 2
+            {{-0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 3
+        };
+
+        unsigned int indices[] = {
+            0, 1, 2,
+            2, 3, 1
+        };
+        
+        GL_Call(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
+
+        // Try using index buffer..
+        GL_Call(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
+    }
+
     void _load_shaders() {
         // Gonna use these test shaders for testing.
         std::string hello_vertex_shader;
@@ -185,7 +199,6 @@ private:
         hello_fragment_shader = FileSystem::read_file("shaders/Hello.fs.glsl");
         
         m_shader = _create_shader(hello_vertex_shader, hello_fragment_shader);
-        GL_Call(glUseProgram(m_shader));
     }
     
     // The Cherno goes over initializing shaders in this video. Check it out if you are curious.
