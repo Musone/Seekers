@@ -36,6 +36,7 @@ private:
     GLFWwindow* m_window;
     unsigned int m_vao;
     unsigned int m_vbo;
+    unsigned int m_ibo;
     unsigned int m_shader;
 public:
     // Make sure to catch, log, and terminate errors when using the renderer.
@@ -83,6 +84,10 @@ public:
         // Binding means that you are selecting. OpenGL is a state machine.
         glGenBuffers(1, &m_vbo);
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+        // Going to try using index buffer.
+        glGenBuffers(1, &m_ibo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
         
         glGenVertexArrays(1, &m_vao);
         glBindVertexArray(m_vao);
@@ -108,18 +113,27 @@ public:
     void draw() {
         // Here are some vertices for testing
         Vertex vertices[] = {
-            {{0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-            {{1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}},
-            {{0.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
+            {{0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}}, // 1
+            {{0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 2
+            {{-0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 3
         };
+
+        unsigned int indices[] = {
+            0, 1, 2,
+            2, 3, 1
+        };
+        
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        // Try using index buffer..
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Draw the triangle
-        glBindVertexArray(m_vao);
-        glDrawArrays(GL_TRIANGLES, 0, Common::c_arr_size(vertices));
+        // glDrawArrays(GL_TRIANGLES, 0, Common::c_arr_size(vertices));
+        glDrawElements(GL_TRIANGLES, Common::c_arr_size(indices), GL_UNSIGNED_INT, &indices);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(m_window);
