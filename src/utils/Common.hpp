@@ -31,7 +31,7 @@ namespace Common {
     }
 
     template<typename T, unsigned int N>
-    inline unsigned int c_arr_size(const T (&array)[N]) {
+    inline unsigned int c_arr_count(const T (&array)[N]) {
         // Suppress compiler warning...
         (void)array;
         return N;
