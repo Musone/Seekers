@@ -2,6 +2,11 @@
 
 #include <utils/Log.hpp>
 #include <utils/FileSystem.hpp>
+#include <renderer/VertexBuffer.hpp>
+#include <renderer/IndexBuffer.hpp>
+#include <renderer/VertexArray.hpp>
+#include <renderer/VertexBufferLayout.hpp>
+#include <renderer/GLUtils.hpp>
 
 #include <string>
 
@@ -25,27 +30,6 @@ You MUST
 #include <gl3w.h>
 #include <GLFW/glfw3.h>
 
-// OpenGL error checking brought to you and parted by:
-// https://www.youtube.com/watch?v=FBbPWSOQ0-w&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=10&ab_channel=TheCherno
-#define GL_Call(x) s_gl_clear_error();x;s_gl_log_call(#x, __FILE__, __LINE__)
-
-static void s_gl_clear_error() {
-    while (glGetError() != GL_NO_ERROR);
-}
-
-static void s_gl_log_call(const char* function, const char* file, int line) {
-    while (GLenum error = glGetError()) {
-        Log::log_error_and_terminate(
-            std::string(function) + 
-            "\n" +
-            std::string(file) + 
-            ":" + 
-            std::to_string(line)
-        );
-    }
-}
-
-
 // Here, I am defining what a Vertex is. This struct is used to tell OpenGL what Attributes
 // it should expect when reading in a Vertex. Using this method helps prevent hardcoding magic numbers.
 struct Vertex {
@@ -57,9 +41,9 @@ struct Vertex {
 class Renderer {
 private:
     GLFWwindow* m_window;
-    unsigned int m_vao;
-    unsigned int m_vbo;
-    unsigned int m_ibo;
+    VertexArray m_vao;
+    VertexBuffer m_vbo;
+    IndexBuffer m_ibo;
     unsigned int m_shader;
 public:
     // Make sure to catch, log, and terminate errors when using the renderer.
@@ -114,32 +98,47 @@ public:
         //
         // If this is confusing, check out this video to learn what an attribute is.: 
         // https://www.youtube.com/watch?v=x0H--CL2tUI&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=5&ab_channel=TheCherno
-        GL_Call(glGenVertexArrays(1, &m_vao));
-        GL_Call(glBindVertexArray(m_vao));
+#pragma region TESTING
+
+        // GL_Call(glGenVertexArrays(1, &m_vao));
+        // GL_Call(glBindVertexArray(m_vao));
     
-        // Binding means that you are selecting. OpenGL is a state machine.
-        GL_Call(glGenBuffers(1, &m_vbo));
-        GL_Call(glBindBuffer(GL_ARRAY_BUFFER, m_vbo));
+        // Here are some vertices for testing
+        Vertex vertices[] = {
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
+            {{0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}}, // 1
+            {{0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 2
+            {{-0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 3
+        };
 
-        // Going to try using index buffer.
-        GL_Call(glGenBuffers(1, &m_ibo));
-        GL_Call(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo));
+        // new stuff
+        m_vao.init(); // this should already be initialized because of the constructor...
+        m_vbo.init(vertices, sizeof(vertices));
         
-        GL_Call(glEnableVertexAttribArray(0));
-        GL_Call(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, position)));
-        GL_Call(glEnableVertexAttribArray(1));
-        GL_Call(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, colour)));
+        VertexBufferLayout layout;
+        layout.push<float>(2);
+        layout.push<float>(3);
+        m_vao.add_buffer(m_vbo, layout);
 
-        _hard_coded_vertices_and_indices();
+        unsigned int indices[] = {
+            0, 1, 2,
+            2, 3, 1
+        };
+
+        // Index buffer lets us reuse vertices to reduce vram consumption.
+        m_ibo.init(indices, Common::c_arr_count(indices));
+        
+        // GL_Call(glEnableVertexAttribArray(0));
+        // GL_Call(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, position)));
+        // GL_Call(glEnableVertexAttribArray(1));
+        // GL_Call(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, colour)));
+
+#pragma endregion
 
         _load_shaders();
     }
 
     void draw() {
-        unsigned int indices[] = {
-            0, 1, 2,
-            2, 3, 1
-        };
         /* Render here */
         GL_Call(glClear(GL_COLOR_BUFFER_BIT));
 
@@ -147,11 +146,13 @@ public:
 
         // We have to call this every time if we don't use VAO because there can be different types of
         // vertices for different shaders.
-        GL_Call(glBindVertexArray(m_vao));
+        // GL_Call(glBindVertexArray(m_vao));
+        m_vao.bind();
+        m_ibo.bind();
 
         // GL_Call(glDrawElements(GL_TRIANGLES, Common::c_arr_count(indices), GL_UNSIGNED_INT, &indices));
-        GL_Call(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
-
+        GL_Call(glDrawElements(GL_TRIANGLES, m_ibo.get_count(), GL_UNSIGNED_INT, 0));
+        
         /* Swap front and back buffers */
         GL_Call(glfwSwapBuffers(m_window));
 
@@ -169,26 +170,6 @@ public:
     }
 
 private:
-    void _hard_coded_vertices_and_indices() {
-        // Here are some vertices for testing
-        Vertex vertices[] = {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
-            {{0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}}, // 1
-            {{0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 2
-            {{-0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 3
-        };
-
-        unsigned int indices[] = {
-            0, 1, 2,
-            2, 3, 1
-        };
-        
-        GL_Call(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
-
-        // Try using index buffer..
-        GL_Call(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
-    }
-
     void _load_shaders() {
         // Gonna use these test shaders for testing.
         std::string hello_vertex_shader;
