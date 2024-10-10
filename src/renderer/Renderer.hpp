@@ -86,54 +86,10 @@ public:
 
         // We are using Opengl 3.3. Basically check A1.
         if (!gl3w_is_supported(3, 3)) {
-            throw std::runtime_error("OpenGL 3.1 not supported\n");
+            throw std::runtime_error("OpenGL 3.3 not supported\n");
         }
-
-        // Set vertex attribute pointers. They basically tell OpenGL the structure of a vertex, so that
-        // it can parse them into meaningful data-types once they get to the shaders. The data contained
-        // within a Vertex is called an attribute. For example, vertex.position is an attribute.
-        // https://docs.gl/gl3/glVertexAttribPointer
-        //
-        // If no shader is present, then by default: OpenGl will use the attribute @index[0] as the position.
-        //
-        // If this is confusing, check out this video to learn what an attribute is.: 
-        // https://www.youtube.com/watch?v=x0H--CL2tUI&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=5&ab_channel=TheCherno
-#pragma region TESTING
-
-        // GL_Call(glGenVertexArrays(1, &m_vao));
-        // GL_Call(glBindVertexArray(m_vao));
     
-        // Here are some vertices for testing
-        Vertex vertices[] = {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
-            {{0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}}, // 1
-            {{0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 2
-            {{-0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 3
-        };
-
-        // new stuff
-        m_vao.init(); // this should already be initialized because of the constructor...
-        m_vbo.init(vertices, sizeof(vertices));
-        
-        VertexBufferLayout layout;
-        layout.push<float>(2);
-        layout.push<float>(3);
-        m_vao.add_buffer(m_vbo, layout);
-
-        unsigned int indices[] = {
-            0, 1, 2,
-            2, 3, 1
-        };
-
-        // Index buffer lets us reuse vertices to reduce vram consumption.
-        m_ibo.init(indices, Common::c_arr_count(indices));
-        
-        // GL_Call(glEnableVertexAttribArray(0));
-        // GL_Call(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, position)));
-        // GL_Call(glEnableVertexAttribArray(1));
-        // GL_Call(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, colour)));
-
-#pragma endregion
+        _create_buffers_demo();
 
         _load_shaders();
     }
@@ -146,7 +102,6 @@ public:
 
         // We have to call this every time if we don't use VAO because there can be different types of
         // vertices for different shaders.
-        // GL_Call(glBindVertexArray(m_vao));
         m_vao.bind();
         m_ibo.bind();
 
@@ -223,5 +178,32 @@ private:
         GL_Call(glDeleteShader(compiled_fragment_shader));
         
         return program;
+    }
+
+    void _create_buffers_demo() {
+        // Here are some vertices for testing
+        Vertex vertices[] = {
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
+            {{0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}}, // 1
+            {{0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 2
+            {{-0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 3
+        };
+
+        // new stuff
+        m_vao.init(); // this should already be initialized because of the constructor...
+        m_vbo.init(vertices, sizeof(vertices));
+        
+        VertexBufferLayout layout;
+        layout.push<float>(2);
+        layout.push<float>(3);
+        m_vao.add_buffer(m_vbo, layout);
+
+        unsigned int indices[] = {
+            0, 1, 2,
+            2, 3, 1
+        };
+
+        // Index buffer lets us reuse vertices to reduce vram consumption.
+        m_ibo.init(indices, Common::c_arr_count(indices));
     }
 };
