@@ -30,6 +30,10 @@ You MUST
 #include <gl3w.h>
 #include <GLFW/glfw3.h>
 
+// We are using Opengl 3.3
+#define GL_VERSION_MAJOR 3
+#define GL_VERSION_MINOR 3
+
 // Here, I am defining what a Vertex is. This struct is used to tell OpenGL what Attributes
 // it should expect when reading in a Vertex. Using this method helps prevent hardcoding magic numbers.
 struct Vertex {
@@ -84,9 +88,8 @@ public:
             throw std::runtime_error("Failed to initialize gl3w");
         }
 
-        // We are using Opengl 3.3. Basically check A1.
-        if (!gl3w_is_supported(3, 3)) {
-            throw std::runtime_error("OpenGL 3.3 not supported\n");
+        if (!gl3w_is_supported(GL_VERSION_MAJOR, GL_VERSION_MINOR)) {
+            throw std::runtime_error("OpenGL " + std::to_string(GL_VERSION_MAJOR) + "." + std::to_string(GL_VERSION_MINOR) + " not supported\n");
         }
     
         _create_buffers_demo();
