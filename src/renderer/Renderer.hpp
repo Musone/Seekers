@@ -194,13 +194,14 @@ private:
             {{-0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 3
         };
 
-        // new stuff
         m_vao.init(); // this should already be initialized because of the constructor...
         m_vbo.init(vertices, sizeof(vertices));
         
         VertexBufferLayout layout;
         layout.push<float>(2);
         layout.push<float>(3);
+
+        // Link this Attribute layour to the VBO
         m_vao.add_buffer(m_vbo, layout);
 
         unsigned int indices[] = {
