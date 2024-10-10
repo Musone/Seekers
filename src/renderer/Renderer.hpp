@@ -103,9 +103,11 @@ public:
 
         GL_Call(glUseProgram(m_shader));
 
-        // We have to call this every time if we don't use VAO because there can be different types of
-        // vertices for different shaders.
+        // When we create the VBO layout (attrib pointer), they get linked internally by OpenGL, and
+        // and are stored in the VAO. We only need to bind the VAO after linking everything properly.
         m_vao.bind();
+
+        // We still need the IBO group Vertices to draw triangles.
         m_ibo.bind();
 
         // GL_Call(glDrawElements(GL_TRIANGLES, Common::c_arr_count(indices), GL_UNSIGNED_INT, &indices));
