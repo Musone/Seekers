@@ -89,3 +89,14 @@ struct Collision
 struct AttackCooldown {
 	float timer;
 };
+
+// New Team Component
+struct Team
+{
+	enum TeamID
+	{
+		PLAYER = 0,
+		ENEMY = 1
+	};
+	TeamID team_id = PLAYER;
+};
