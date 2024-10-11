@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <ostream>
+#include <glm/glm.hpp>
 
 namespace Common {
     inline std::vector<std::string> split_string(const std::string& str, const char& delimiter) {
