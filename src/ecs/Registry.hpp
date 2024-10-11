@@ -18,6 +18,7 @@ class Registry {
 		m_registry_list.push_back(&weapon_stats);
 		m_registry_list.push_back(&projectile_stats);
 		m_registry_list.push_back(&attack_cooldowns);
+		m_registry_list.push_back(&teams);
 	}
 public:
 	float counter = 0;
@@ -30,6 +31,7 @@ public:
 	ComponentContainer<WeaponStats> weapon_stats;
 	ComponentContainer<ProjectileStats> projectile_stats;
 	ComponentContainer<AttackCooldown> attack_cooldowns;
+	ComponentContainer<Team> teams;
 	Entity player;
 
 	Registry(Registry const&) = delete;
