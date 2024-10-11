@@ -107,51 +107,25 @@ public:
             );
         }
     
-<<<<<<< HEAD
         // This is for textures so that transparency blends properly.
         GL_Call(glEnable(GL_BLEND));
         GL_Call(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-=======
->>>>>>> c40bf06 (Refactored renderer. Created a test demo of its usage in application.hpp.)
         m_is_initialized = true;
         Log::log_success("Renderer loaded", __FILE__, __LINE__);
     }
 
-<<<<<<< HEAD
     const void begin_draw() const {
-=======
-    const void clear() const {
->>>>>>> c40bf06 (Refactored renderer. Created a test demo of its usage in application.hpp.)
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
         GL_Call(glClear(GL_COLOR_BUFFER_BIT));
     }
 
-<<<<<<< HEAD
     const void end_draw() const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
-=======
-    const void draw(const VertexArray& vao, const IndexBuffer& ibo, const Shader& shader) const {
-        if (!m_is_initialized) {
-            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
-        }
-
-        shader.bind();
-
-        // When we create the VBO layout (attrib pointer), they get linked internally by OpenGL, and
-        // and are stored in the VAO. We only need to bind the VAO after linking everything properly.
-        vao.bind();
-
-        // The IBO tells us which triplets of vertices to use for each triangle.
-        ibo.bind();
-
-        GL_Call(glDrawElements(GL_TRIANGLES, ibo.get_count(), GL_UNSIGNED_INT, nullptr));
-        
->>>>>>> c40bf06 (Refactored renderer. Created a test demo of its usage in application.hpp.)
         /* Swap front and back buffers */
         GL_Call(glfwSwapBuffers(m_window));
         /* Poll for and process events */
