@@ -63,13 +63,16 @@ public:
     // so if you need more than however many the graphics card supports, you will have to 
     // free up texture slots and manage them appropriately.
     //
-    // OPENGL ONLY SUPPORTS 32 SLOTS TOTAL: This function will crash if texture_slot > 31.
+    // OPENGL ONLY SUPPORTS 32 SLOTS TOTAL: This function will crash if not 0 < texture_slot < 32.
+    // I am using texture slot 0 as a garbage bin to prevent texture creation order from causing
+    // bugs (when using multiple textures).
     const void bind(unsigned int texture_slot) const {
-        if (texture_slot > 31) {
-            Log::log_error_and_terminate("'texture_slot' cannot exceed 31", __FILE__, __LINE__);
+        if (texture_slot > 31 || texture_slot < 1) {
+            Log::log_error_and_terminate("'texture_slot' cannot exceed 31 or be less than 1", __FILE__, __LINE__);
         }
         GL_Call(glActiveTexture(GL_TEXTURE0 + texture_slot));
         GL_Call(glBindTexture(GL_TEXTURE_2D, m_id));
+        GL_Call(glActiveTexture(GL_TEXTURE0));
     }
 
     const void unbind() const {
