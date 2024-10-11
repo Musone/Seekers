@@ -7,6 +7,7 @@
 #include <renderer/VertexArray.hpp>
 #include <renderer/VertexBufferLayout.hpp>
 #include <renderer/GLUtils.hpp>
+#include <renderer/Shader.hpp>
 
 #include <string>
 
@@ -48,7 +49,7 @@ private:
     VertexArray m_vao;
     VertexBuffer m_vbo;
     IndexBuffer m_ibo;
-    unsigned int m_shader;
+    Shader m_shader;
 public:
     // Make sure to catch, log, and terminate errors when using the renderer.
     void init() {
@@ -92,16 +93,17 @@ public:
             throw std::runtime_error("OpenGL " + std::to_string(GL_VERSION_MAJOR) + "." + std::to_string(GL_VERSION_MINOR) + " not supported\n");
         }
     
-        _create_buffers_demo();
-
-        _load_shaders();
+        _test_demo_setup();
     }
 
     void draw() {
         /* Render here */
         GL_Call(glClear(GL_COLOR_BUFFER_BIT));
 
-        GL_Call(glUseProgram(m_shader));
+        // GL_Call(glUseProgram(m_shader));
+
+        m_shader.bind();
+        m_shader.set_uniform_4f("u_coooooolor", { 0, 0, 1, 1 });
 
         // When we create the VBO layout (attrib pointer), they get linked internally by OpenGL, and
         // and are stored in the VAO. We only need to bind the VAO after linking everything properly.
@@ -130,62 +132,7 @@ public:
     }
 
 private:
-    void _load_shaders() {
-        // Gonna use these test shaders for testing.
-        std::string hello_vertex_shader;
-        std::string hello_fragment_shader;
-        
-        // this shader makes the triangle red.
-        hello_vertex_shader = FileSystem::read_file("shaders/Hello.vs.glsl");
-        hello_fragment_shader = FileSystem::read_file("shaders/Hello.fs.glsl");
-        
-        m_shader = _create_shader(hello_vertex_shader, hello_fragment_shader);
-    }
-    
-    // The Cherno goes over initializing shaders in this video. Check it out if you are curious.
-    // https://www.youtube.com/watch?v=71BLZwRGUJE&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=7&ab_channel=TheCherno
-    unsigned int _compile_shader(const int& type, const std::string& source) {
-        unsigned int id = glCreateShader(type);
-        const char* src = source.c_str();
-        GL_Call(glShaderSource(id, 1, &src, nullptr));
-        GL_Call(glCompileShader(id));
-
-        int result;
-        GL_Call(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
-
-        if (result == GL_FALSE) {
-            int length;
-            GL_Call(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
-            char* error_message = (char*)alloca(length * sizeof(char));
-            GL_Call(glGetShaderInfoLog(id, length, &length, error_message));
-            std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader" << std::endl;
-            std::cout << error_message << std::endl;
-            GL_Call(glDeleteShader(id));
-            return 0;
-        }
-
-        return id;
-    }
-
-    // The Cherno goes over initializing shaders in this video. Check it out if you are curious.
-    // https://www.youtube.com/watch?v=71BLZwRGUJE&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=7&ab_channel=TheCherno
-    unsigned int _create_shader(const std::string& vertex_shader, const std::string& fragment_shader) {
-        unsigned int program = glCreateProgram();
-        unsigned int compiled_vertex_shader = _compile_shader(GL_VERTEX_SHADER, vertex_shader);
-        unsigned int compiled_fragment_shader = _compile_shader(GL_FRAGMENT_SHADER, fragment_shader);
-
-        GL_Call(glAttachShader(program, compiled_vertex_shader));
-        GL_Call(glAttachShader(program, compiled_fragment_shader));
-        GL_Call(glLinkProgram(program));
-        GL_Call(glValidateProgram(program));
-
-        GL_Call(glDeleteShader(compiled_vertex_shader));
-        GL_Call(glDeleteShader(compiled_fragment_shader));
-        
-        return program;
-    }
-
-    void _create_buffers_demo() {
+    void _test_demo_setup() {
         // Here are some vertices for testing
         Vertex vertices[] = {
             {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
@@ -211,5 +158,8 @@ private:
 
         // Index buffer lets us reuse vertices to reduce vram consumption.
         m_ibo.init(indices, Common::c_arr_count(indices));
+
+        // this shader makes the triangle red. Shader is expected to be in src/shaders/
+        m_shader.init("Hello");
     }
 };
