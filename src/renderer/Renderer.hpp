@@ -8,6 +8,7 @@
 #include <renderer/VertexBufferLayout.hpp>
 #include <renderer/GLUtils.hpp>
 #include <renderer/Shader.hpp>
+#include <renderer/Texture.hpp>
 
 #include <string>
 
@@ -106,37 +107,42 @@ public:
             );
         }
     
+        // This is for textures so that transparency blends properly.
+        GL_Call(glEnable(GL_BLEND));
+        GL_Call(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
         m_is_initialized = true;
         Log::log_success("Renderer loaded", __FILE__, __LINE__);
     }
 
-    const void clear() const {
+    const void begin_draw() const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
         GL_Call(glClear(GL_COLOR_BUFFER_BIT));
     }
 
-    const void draw(const VertexArray& vao, const IndexBuffer& ibo, const Shader& shader) const {
+    const void end_draw() const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
-
-        shader.bind();
-
-        // When we create the VBO layout (attrib pointer), they get linked internally by OpenGL, and
-        // and are stored in the VAO. We only need to bind the VAO after linking everything properly.
-        vao.bind();
-
-        // The IBO tells us which triplets of vertices to use for each triangle.
-        ibo.bind();
-
-        GL_Call(glDrawElements(GL_TRIANGLES, ibo.get_count(), GL_UNSIGNED_INT, nullptr));
-        
         /* Swap front and back buffers */
         GL_Call(glfwSwapBuffers(m_window));
         /* Poll for and process events */
         GL_Call(glfwPollEvents());
+    }
+
+    const void draw(const VertexArray& vao, const IndexBuffer& ibo, const Shader& shader) const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
+        shader.bind();
+        // When we create the VBO layout (attrib pointer), they get linked internally by OpenGL, and
+        // and are stored in the VAO. We only need to bind the VAO after linking everything properly.
+        vao.bind();
+        // The IBO tells us which triplets of vertices to use for each triangle.
+        ibo.bind();
+        GL_Call(glDrawElements(GL_TRIANGLES, ibo.get_count(), GL_UNSIGNED_INT, nullptr));
     }
 
     bool is_terminated() {

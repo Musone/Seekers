@@ -15,6 +15,7 @@ public:
 
     void init() {
         GL_Call(glGenVertexArrays(1, &m_id));
+        GL_Call(glBindVertexArray(m_id));
         m_is_initialized = true;
     }
 
