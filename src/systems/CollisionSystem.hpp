@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../ecs/Entity.hpp"
-#include "../components/Components.hpp"
+#include "../app/Components.hpp"
 #include "../ecs/Registry.hpp"
 
 class CollisionSystem
