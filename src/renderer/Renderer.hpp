@@ -8,6 +8,7 @@
 #include <renderer/VertexBufferLayout.hpp>
 #include <renderer/GLUtils.hpp>
 #include <renderer/Shader.hpp>
+#include <renderer/Texture.hpp>
 
 #include <string>
 
@@ -44,15 +45,21 @@ struct Vertex {
 
 // Eventually going to wrap OpenGL with this class.
 class Renderer {
-private:
     GLFWwindow* m_window;
-    VertexArray m_vao;
-    VertexBuffer m_vbo;
-    IndexBuffer m_ibo;
-    Shader m_shader;
+    bool m_is_initialized;
+
+    Renderer() : m_is_initialized(false) {}
 public:
+    Renderer(Renderer const&) = delete;
+	void operator=(Renderer const&) = delete;
+
+	static Renderer& get_instance() {
+		static Renderer instance;
+		return instance;
+	}
+
     // Make sure to catch, log, and terminate errors when using the renderer.
-    void init() {
+    void init(std::string window_name, int window_width, int window_height, bool enable_vsync, bool enable_resize) {
         // Magic code that sets up OpenGL. The order of these calls matter. Best not
         // to touch it ;)
         if (!glfwInit()) {
@@ -71,12 +78,15 @@ public:
 #if __APPLE__
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-        glfwWindowHint(GLFW_RESIZABLE, 0);
+        glfwWindowHint(GLFW_RESIZABLE, (unsigned int)enable_resize);
 
-        m_window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+        // vsync
+        glfwSwapInterval((unsigned int)enable_vsync);
+
+        m_window = glfwCreateWindow(window_width, window_height, window_name.c_str(), NULL, NULL);
         if (!m_window) {
             glfwTerminate();
-            throw std::runtime_error("Failed to create window");
+            Log::log_error_and_terminate("Failed to create window", __FILE__, __LINE__);
         }
 
         glfwMakeContextCurrent(m_window);
@@ -86,80 +96,67 @@ public:
         // initialized successfully, non-zero if there was an error."
         // https://github.com/skaslev/gl3w
         if (gl3w_init()) {
-            throw std::runtime_error("Failed to initialize gl3w");
+            Log::log_error_and_terminate("Failed to initialize gl3w", __FILE__, __LINE__);
         }
 
         if (!gl3w_is_supported(GL_VERSION_MAJOR, GL_VERSION_MINOR)) {
-            throw std::runtime_error("OpenGL " + std::to_string(GL_VERSION_MAJOR) + "." + std::to_string(GL_VERSION_MINOR) + " not supported\n");
+            Log::log_error_and_terminate(
+                "OpenGL " + std::to_string(GL_VERSION_MAJOR) + "." + std::to_string(GL_VERSION_MINOR) + " not supported\n",
+                __FILE__, 
+                __LINE__
+            );
         }
     
-        _test_demo_setup();
+        // This is for textures so that transparency blends properly.
+        GL_Call(glEnable(GL_BLEND));
+        GL_Call(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+        m_is_initialized = true;
+        Log::log_success("Renderer loaded", __FILE__, __LINE__);
     }
 
-    void draw() {
-        /* Render here */
+    const void begin_draw() const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
         GL_Call(glClear(GL_COLOR_BUFFER_BIT));
+    }
 
-        // GL_Call(glUseProgram(m_shader));
-
-        m_shader.bind();
-        m_shader.set_uniform_4f("u_coooooolor", { 0, 0, 1, 1 });
-
-        // When we create the VBO layout (attrib pointer), they get linked internally by OpenGL, and
-        // and are stored in the VAO. We only need to bind the VAO after linking everything properly.
-        m_vao.bind();
-
-        // We still need the IBO group Vertices to draw triangles.
-        m_ibo.bind();
-
-        // GL_Call(glDrawElements(GL_TRIANGLES, Common::c_arr_count(indices), GL_UNSIGNED_INT, &indices));
-        GL_Call(glDrawElements(GL_TRIANGLES, m_ibo.get_count(), GL_UNSIGNED_INT, 0));
-        
+    const void end_draw() const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
         /* Swap front and back buffers */
         GL_Call(glfwSwapBuffers(m_window));
-
         /* Poll for and process events */
         GL_Call(glfwPollEvents());
     }
 
+    const void draw(const VertexArray& vao, const IndexBuffer& ibo, const Shader& shader) const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
+        shader.bind();
+        // When we create the VBO layout (attrib pointer), they get linked internally by OpenGL, and
+        // and are stored in the VAO. We only need to bind the VAO after linking everything properly.
+        vao.bind();
+        // The IBO tells us which triplets of vertices to use for each triangle.
+        ibo.bind();
+        GL_Call(glDrawElements(GL_TRIANGLES, ibo.get_count(), GL_UNSIGNED_INT, nullptr));
+    }
+
     bool is_terminated() {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
         return bool(glfwWindowShouldClose(m_window));
     }
 
     void terminate() {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
         GL_Call(glfwTerminate());
         GL_Call(glfwSetWindowShouldClose(m_window, 1));
-    }
-
-private:
-    void _test_demo_setup() {
-        // Here are some vertices for testing
-        Vertex vertices[] = {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
-            {{0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}}, // 1
-            {{0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 2
-            {{-0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // 3
-        };
-
-        m_vao.init(); // this should already be initialized because of the constructor...
-        m_vbo.init(vertices, sizeof(vertices));
-        
-        VertexBufferLayout layout;
-        layout.push<float>(2);
-        layout.push<float>(3);
-
-        // Link this Attribute layour to the VBO
-        m_vao.add_buffer(m_vbo, layout);
-
-        unsigned int indices[] = {
-            0, 1, 2,
-            2, 3, 1
-        };
-
-        // Index buffer lets us reuse vertices to reduce vram consumption.
-        m_ibo.init(indices, Common::c_arr_count(indices));
-
-        // this shader makes the triangle red. Shader is expected to be in src/shaders/
-        m_shader.init("Hello");
     }
 };

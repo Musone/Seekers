@@ -6,6 +6,7 @@
 #define ANSI_COLOUR_RESET "\x1b[0m"
 
 #include <iostream>
+#include <string>
 
 namespace Log {
     inline void log_error_and_terminate(const std::string& message, const char* file, int line) {

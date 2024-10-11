@@ -1,23 +1,15 @@
-#include <ecs/Registry.hpp>
-#include <utils/FileSystem.hpp>
 #include <utils/Log.hpp>
-#include <renderer/Renderer.hpp>
-
-#include <iostream>
+#include <app/Application.hpp>
 
 int main(void) {
     try {
-        Renderer renderer;
-        renderer.init();
-        /* Loop until the user closes the window */
-        while (!renderer.is_terminated()) {
-            renderer.draw();
-        };
+        Application app;
+        // app.run_demo_basic();
+        app.run_demo_texture();
     } catch (const std::exception& e) {
         const std::string message = std::string(e.what());
         Log::log_error_and_terminate(message, __FILE__, __LINE__);
     }
-
 
     return 0;
 }
