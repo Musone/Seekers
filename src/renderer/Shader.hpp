@@ -58,7 +58,6 @@ public:
         Log::log_success("loaded " + m_vs_path + " & " + m_fs_path, __FILE__, __LINE__);
     }
 
-
     const void bind() const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
@@ -70,10 +69,27 @@ public:
         GL_Call(glUseProgram(0));
     }
 
+    void set_uniform_1i(const std::string& name, const int& value) {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
+        }
+        bind();
+        GL_Call(glUniform1i(_get_uniform_location(name), value));
+    }
+
+    void set_uniform_1f(const std::string& name, const float& value) {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
+        }
+        bind();
+        GL_Call(glUniform1f(_get_uniform_location(name), value));
+    }
+
     void set_uniform_4f(const std::string& name, const glm::vec4& vector) {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
         }
+        bind();
         GL_Call(glUniform4f(_get_uniform_location(name), vector.x, vector.y, vector.z, vector.w));
     }
 
