@@ -90,13 +90,16 @@ struct AttackCooldown {
 	float timer;
 };
 
-// New Team Component
+enum class TEAM_ID
+{
+	FRIENDLY = 0,
+	FOW = FRIENDLY + 1,
+	NEUTRAL = FOW + 1,
+	TEAM_ID_COUNT = NEUTRAL + 1
+};
+const int team_id_count = (int)TEAM_ID::TEAM_ID_COUNT;
+
 struct Team
 {
-	enum TeamID
-	{
-		PLAYER = 0,
-		ENEMY = 1
-	};
-	TeamID team_id = PLAYER;
+	TEAM_ID team_id = TEAM_ID::TEAM_ID_COUNT;
 };
