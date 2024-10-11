@@ -2,7 +2,8 @@
 
 #include <ecs/Registry.hpp>
 #include <ecs/Entity.hpp>
-
+#include <systems/CollisionSystem.hpp>
+#include <systems/PhysicsSystem.hpp>
 // stlib
 #include <vector>
 #include <random>
@@ -30,14 +31,17 @@ public:
 	// Releases all associated resources
 	~World();
 
+	// Initialize the game world
+    void init();
+
 	// Steps the game ahead by ms milliseconds
-	bool step(float elapsed_ms);
+	void step(float elapsed_ms);
 
 	// Check for collisions
 	void handle_collisions();
 
 	// Should the game be over ?
-	bool is_over()const;
+	bool is_over() const;
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -65,6 +69,20 @@ private:
 	Mix_Chunk* salmon_eat_sound;
 
 	// C++ random number generator
-	std::default_random_engine rng;
-	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+    std::default_random_engine rng;
+    std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+
+	// ECS registry
+	Registry m_registry;
+
+	// Collision system
+	CollisionSystem m_collisionSystem;
+
+	// Physics system
+	PhysicsSystem m_physicsSystem;
+
+	// Helper functions for specific collision handling
+	void handle_projectile_collisions(Entity projectile, Entity target);
+	void handle_player_enemy_collisions(Entity player, Entity enemy);
+	void apply_damage(Entity attacker, Entity target, float damage);
 };
