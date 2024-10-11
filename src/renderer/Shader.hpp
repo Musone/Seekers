@@ -58,6 +58,10 @@ public:
         Log::log_success("loaded " + m_vs_path + " & " + m_fs_path, __FILE__, __LINE__);
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> c40bf06 (Refactored renderer. Created a test demo of its usage in application.hpp.)
     const void bind() const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
