@@ -50,15 +50,13 @@ public:
         IndexBuffer ibo;
         ibo.init(indices, Common::c_arr_count(indices));
         
-        Texture player_texture("player.png");
-        Texture skeleton_texture("skeleton.png");
-        
         VertexArray player_vao;
         VertexBuffer player_vbo;
         player_vao.init();
         player_vbo.init(player_vertices, sizeof(player_vertices));
         player_vao.add_buffer(player_vbo, layout);
-        const unsigned int player_texture_slot = 0;
+        Texture player_texture("player.png");
+        const unsigned int player_texture_slot = 1;
         player_texture.bind(player_texture_slot);
         
         float skeleton_vertices[] = {
@@ -72,7 +70,8 @@ public:
         skeleton_vao.init();
         skeleton_vbo.init(skeleton_vertices, sizeof(skeleton_vertices));
         skeleton_vao.add_buffer(skeleton_vbo, layout);
-        const unsigned int skeleton_texture_slot = 1;
+        Texture skeleton_texture("skeleton.png");
+        const unsigned int skeleton_texture_slot = 2;
         skeleton_texture.bind(skeleton_texture_slot);
 
         // src/shaders/TextureDemo.vs.glsl & src/shaders/TextureDemo.fs.glsl
@@ -148,7 +147,6 @@ public:
             //      ...
             //      uniform vec4 u_coooooolor;
             //      ...
-            shader.bind();
             shader.set_uniform_4f("u_coooooolor", blue);
 
             renderer.draw(vao, ibo, shader);
