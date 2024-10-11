@@ -1,7 +1,6 @@
 #version 330 core
 
 uniform vec4 u_coooooolor;
-uniform vec4 u_balls;
 
 out vec4 FragColor;
 

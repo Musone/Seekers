@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ecs/ComponentContainer.hpp>
-#include <components/Components.hpp>
+#include <app/Components.hpp>
 #include <ecs/IComponentContainer.hpp>
 
 #include <iostream>

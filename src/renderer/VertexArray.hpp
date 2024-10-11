@@ -24,12 +24,12 @@ public:
         }
     }
 
-    void bind() {
+    const void bind() const {
         if (!m_is_initialized) Log::log_error_and_terminate("Vertex Array not initialized", __FILE__, __LINE__);
         GL_Call(glBindVertexArray(m_id));
     }
 
-    void unbind() {
+    const void unbind() const {
         if (!m_is_initialized) Log::log_error_and_terminate("Vertex Array not initialized", __FILE__, __LINE__);
         GL_Call(glBindVertexArray(0));
     }
