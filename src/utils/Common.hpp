@@ -36,4 +36,9 @@ namespace Common {
         (void)array;
         return N;
     }
+
+    inline glm::vec2 normalize(glm::vec2 in) {
+        float mag = sqrtf(in.x * in.x + in.y * in.y);
+        return {in.x / mag, in.y / mag};
+    }
 }

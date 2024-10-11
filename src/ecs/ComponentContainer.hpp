@@ -50,6 +50,12 @@ public:
 		return components[map_entity_componentID[e]];
 	}
 
+	// A wrapper to return the component of an entity specified by id
+	Component& get(unsigned int entity_id) {
+		assert(map_entity_componentID.count(entity_id) > 0 && "Entity not contained in ECS registry");
+		return components[map_entity_componentID[entity_id]];
+	}
+
 	// Check if entity has a component of type 'Component'
 	bool has(Entity entity) {
 		return map_entity_componentID.count(entity) > 0;
