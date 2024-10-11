@@ -85,6 +85,9 @@ namespace InputManager {
                     projectile_stats.damage = weapon_stats.damage;
                     projectile_stats.range_remaining = weapon_stats.range;
 
+                    Team& team = registry.teams.emplace(projectile);
+                    team.team_id = registry.teams.get(registry.player).team_id;
+
                     registry.attack_cooldowns.emplace(registry.player, weapon_stats.attack_cooldown);
                 }
             }
