@@ -20,9 +20,14 @@ void World::init() {
 }
 
 void World::step(float elapsed_ms) {
-    m_physicsSystem.step(m_registry, elapsed_ms);
+    // TODO: Update the game world
+    // 1. Update physics
+    m_physicsSystem.step(elapsed_ms);
+    
+    // 2. Check and handle collisions
     m_collisionSystem.check_collisions();
     handle_collisions();
+  
     // TODO: handle_inputs_per_frame()
     // TODO: Write down a for loop for AttackCooldown component, loop through them, decrease timer, remove component if timer hits zero
 }

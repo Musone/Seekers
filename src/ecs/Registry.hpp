@@ -6,6 +6,15 @@
 
 #include <iostream>
 
+// used to store the state of inputs for per_frame updates
+struct InputState {
+	bool w_down = false;
+	bool a_down = false;
+	bool s_down = false;
+	bool d_down = false;
+	glm::vec2 mouse_pos = {0.f, 0.f};
+};
+
 class Registry {
 	std::vector<IComponentContainer*> m_registry_list;
 
@@ -21,7 +30,9 @@ public:
 	ComponentContainer<ProjectileStats> projectile_stats;
 	ComponentContainer<AttackCooldown> attack_cooldowns;
 	ComponentContainer<Team> teams;
+	ComponentContainer<RotateWithPlayer> rotate_with_players;
 	Entity player;
+	InputState input_state;
 
 	Registry() {
 		m_registry_list.push_back(&motions);
@@ -33,6 +44,7 @@ public:
 		m_registry_list.push_back(&projectile_stats);
 		m_registry_list.push_back(&attack_cooldowns);
 		m_registry_list.push_back(&teams);
+		m_registry_list.push_back(&rotate_with_players);
 	}
 
 	Registry(Registry const&) = delete;
