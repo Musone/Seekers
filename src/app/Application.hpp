@@ -17,6 +17,162 @@ public:
         };
     };
 
+    void run_demo_camera() {
+        Renderer& renderer = Renderer::get_instance();
+        // The renderer must be initialized before anything else.
+        renderer.init(
+            "Camera Demo",
+            1920,
+            1280,
+            true,
+            false
+        );
+        
+        float cube_vertices[] = {
+            // Front face (Red)
+            1, 1, 0,  1, 0, 0,
+            2, 1, 0,  1, 0, 0,
+            2, 2, 0,  1, 0, 0,
+            1, 2, 0,  1, 0, 0,
+
+            // Back face (Green)
+            1, 1, 1,  0, 1, 0,
+            2, 1, 1,  0, 1, 0,
+            2, 2, 1,  0, 1, 0,
+            1, 2, 1,  0, 1, 0,
+
+            // Left face (Blue)
+            1, 1, 0,  0, 0, 1,
+            1, 2, 0,  0, 0, 1,
+            1, 2, 1,  0, 0, 1,
+            1, 1, 1,  0, 0, 1,
+
+            // Right face (Yellow)
+            2, 1, 0,  1, 1, 0,
+            2, 2, 0,  1, 1, 0,
+            2, 2, 1,  1, 1, 0,
+            2, 1, 1,  1, 1, 0,
+
+            // Top face (Magenta)
+            1, 2, 0,  1, 0, 1,
+            2, 2, 0,  1, 0, 1,
+            2, 2, 1,  1, 0, 1,
+            1, 2, 1,  1, 0, 1,
+
+            // Bottom face (Cyan)
+            1, 1, 0,  0, 1, 1,
+            2, 1, 0,  0, 1, 1,
+            2, 1, 1,  0, 1, 1,
+            1, 1, 1,  0, 1, 1
+        };
+
+        unsigned int indices[] = {
+            0,  1,  2,  2,  3,  0,  // Front face
+            4,  5,  6,  6,  7,  4,  // Back face
+            8,  9,  10, 10, 11, 8,  // Left face
+            12, 13, 14, 14, 15, 12, // Right face
+            16, 17, 18, 18, 19, 16, // Top face
+            20, 21, 22, 22, 23, 20  // Bottom face
+        };
+        VertexBufferLayout layout;        
+        layout.push<float>(3); // xyz
+        layout.push<float>(3); // rgb
+
+        IndexBuffer ibo;
+        ibo.init(indices, Common::c_arr_count(indices));
+        
+        VertexArray cube_vao;
+        VertexBuffer cube_vbo;
+        cube_vao.init();
+        cube_vbo.init(cube_vertices, sizeof(cube_vertices));
+        cube_vao.add_buffer(cube_vbo, layout);
+
+        Shader shader;
+        shader.init("CameraDemo");
+
+        Camera cam;
+        cam.set_rotation({ PI / 2, 0, -PI / 4 });
+
+        while (!renderer.is_terminated()) {
+            // Timer timer;
+            renderer.begin_draw();
+
+#pragma region TEST INPUTS
+            glm::vec3 moveDirection(0.0f);
+            glm::vec3 rotateDirection(0.0f);
+
+            float moveSpeed = 0.005f;
+            float rotateSpeed = PI / 300;  // radians per frame
+
+            glm::vec3 newPosition = 1.f * cam.get_position();
+            glm::vec3 newRotation = 1.f * cam.get_rotation();
+            bool pos_changed = false;
+            bool rot_changed = false;
+
+            glm::vec3 player_input(0.0f);
+
+            // Handle keyboard input for movement
+            if (renderer.is_key_pressed(GLFW_KEY_W)) {
+                player_input.z -= moveSpeed;  // Move in negative Z
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_S)) {
+                player_input.z += moveSpeed;  // Move in positive Z
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_A)) {
+                player_input.x -= moveSpeed;  // Move in negative X
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_D)) {
+                player_input.x += moveSpeed;  // Move in positive X
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_SPACE)) {
+                player_input.y += moveSpeed;  // Move in positive Y
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_LEFT_CONTROL)) {
+                player_input.y -= moveSpeed;  // Move in negative Y
+                pos_changed = true;
+            }
+
+            // Handle keyboard input for rotation
+            if (renderer.is_key_pressed(GLFW_KEY_UP)) {
+                    rot_changed = true;
+                    newRotation.x += rotateSpeed;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_DOWN)) {
+                    rot_changed = true;
+                    newRotation.x -= rotateSpeed;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_LEFT)) {
+                    rot_changed = true;
+                    newRotation.z += rotateSpeed;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_RIGHT)) {
+                    rot_changed = true;
+                    newRotation.z -= rotateSpeed;
+            }
+
+            // Update camera position and rotation using the setter methods
+            if (rot_changed) {
+                cam.set_rotation(newRotation);
+            }
+            if (pos_changed) {
+                newPosition += cam.rotate_to_camera_direction(player_input);
+                cam.set_position(newPosition);
+            }
+#pragma endregion
+
+            // Render the player.
+            shader.set_uniform_mat4f("u_view_project", cam.get_view_project_matrix());
+            renderer.draw(cube_vao, ibo, shader);
+
+            renderer.end_draw();
+        }
+    }
+
     void run_demo_texture() {
         Renderer& renderer = Renderer::get_instance();
         // The renderer must be initialized before anything else.
