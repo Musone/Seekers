@@ -85,6 +85,14 @@ public:
         GL_Call(glUniform1f(_get_uniform_location(name), value));
     }
 
+    void set_uniform_mat4f(const std::string& name, const glm::mat4& matrix) {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
+        }
+        bind();
+        GL_Call(glUniformMatrix4fv(_get_uniform_location(name), 1, GL_FALSE, &matrix[0][0]));
+    }
+
     void set_uniform_4f(const std::string& name, const glm::vec4& vector) {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);

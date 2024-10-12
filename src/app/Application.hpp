@@ -202,7 +202,7 @@ public:
         layout.push<float>(2);
         // 2 float form a vec2 that we use for UV coordinates.
         layout.push<float>(2);
-        // The player and skeleton will use the same ibo because I made the indices match.
+        // The player and skeleton can use the same ibo because I made the indices match.
         IndexBuffer ibo;
         ibo.init(indices, Common::c_arr_count(indices));
         
@@ -310,6 +310,6 @@ public:
             renderer.end_draw();
         }
     }
-
+#pragma endregion
 private:
 };
