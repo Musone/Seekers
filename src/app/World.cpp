@@ -19,7 +19,7 @@ void World::step(float elapsed_ms)
     m_physicsSystem.step(m_registry, elapsed_ms);
 
     // 2. Check for collisions
-    m_collisionSystem.check_collisions(m_registry);
+    m_collisionSystem.check_collisions();
 
     // 3. Handle collisions
     handle_collisions();
