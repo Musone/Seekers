@@ -32,9 +32,15 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_Q) {
                 player_motion.rotation_velocity += Globals::cameraRotationSpeed;
+                for (RotateWithPlayer& rotate_with_player : registry.rotate_with_players.components) {
+                    rotate_with_player.motion.rotation_velocity += Globals::cameraRotationSpeed;
+                }
             }
             if (key == GLFW_KEY_E) {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
+                for (RotateWithPlayer& rotate_with_player : registry.rotate_with_players.components) {
+                    rotate_with_player.motion.rotation_velocity -= Globals::cameraRotationSpeed;
+                }
             }
             if (key == GLFW_KEY_SPACE) {
                 player_motion.position += Common::normalize(player_motion.velocity) * Globals::dodgeMoveMag;
@@ -59,9 +65,15 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_Q) {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
+                for (RotateWithPlayer& rotate_with_player : registry.rotate_with_players.components) {
+                    rotate_with_player.motion.rotation_velocity -= Globals::cameraRotationSpeed;
+                }
             }
             if (key == GLFW_KEY_E) {
                 player_motion.rotation_velocity += Globals::cameraRotationSpeed;
+                for (RotateWithPlayer& rotate_with_player : registry.rotate_with_players.components) {
+                    rotate_with_player.motion.rotation_velocity += Globals::cameraRotationSpeed;
+                }
             }
         }
     }

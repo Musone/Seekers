@@ -21,6 +21,7 @@ public:
 	ComponentContainer<ProjectileStats> projectile_stats;
 	ComponentContainer<AttackCooldown> attack_cooldowns;
 	ComponentContainer<Team> teams;
+	ComponentContainer<RotateWithPlayer> rotate_with_players;
 	Entity player;
 
 	Registry() {
@@ -33,6 +34,7 @@ public:
 		m_registry_list.push_back(&projectile_stats);
 		m_registry_list.push_back(&attack_cooldowns);
 		m_registry_list.push_back(&teams);
+		m_registry_list.push_back(&rotate_with_players);
 	}
 
 	Registry(Registry const&) = delete;
