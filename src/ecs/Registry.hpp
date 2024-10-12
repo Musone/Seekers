@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ecs/ComponentContainer.hpp>
-#include <app/Components.hpp>
+#include <components/Components.hpp>
 #include <ecs/IComponentContainer.hpp>
 
 #include <iostream>
@@ -9,17 +9,6 @@
 class Registry {
 	std::vector<IComponentContainer*> m_registry_list;
 
-	Registry() {
-		m_registry_list.push_back(&motions);
-		m_registry_list.push_back(&collisions);
-		m_registry_list.push_back(&attackers);
-		m_registry_list.push_back(&locomotion_stats);
-		m_registry_list.push_back(&buffs);
-		m_registry_list.push_back(&weapon_stats);
-		m_registry_list.push_back(&projectile_stats);
-		m_registry_list.push_back(&attack_cooldowns);
-		m_registry_list.push_back(&teams);
-	}
 public:
 	float counter = 0;
 
@@ -33,6 +22,18 @@ public:
 	ComponentContainer<AttackCooldown> attack_cooldowns;
 	ComponentContainer<Team> teams;
 	Entity player;
+
+	Registry() {
+		m_registry_list.push_back(&motions);
+		m_registry_list.push_back(&collisions);
+		m_registry_list.push_back(&attackers);
+		m_registry_list.push_back(&locomotion_stats);
+		m_registry_list.push_back(&buffs);
+		m_registry_list.push_back(&weapon_stats);
+		m_registry_list.push_back(&projectile_stats);
+		m_registry_list.push_back(&attack_cooldowns);
+		m_registry_list.push_back(&teams);
+	}
 
 	Registry(Registry const&) = delete;
 	void operator=(Registry const&) = delete;
@@ -70,3 +71,5 @@ public:
 			reg->remove(e);
 	}
 };
+
+extern Registry registry;
