@@ -16,7 +16,7 @@ struct Motion
 
 struct RotateWithPlayer
 {
-	Motion& motion;
+
 };
 
 struct Collision
