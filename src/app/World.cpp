@@ -16,7 +16,7 @@ void World::step(float elapsed_ms)
 {
     // TODO: Update the game world
     // 1. Update physics
-    m_physicsSystem.step(m_registry, elapsed_ms);
+    m_physicsSystem.step(elapsed_ms);
 
     // 2. Check for collisions
     m_collisionSystem.check_collisions(m_registry);
