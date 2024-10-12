@@ -14,6 +14,11 @@ struct Motion
 	float drag = 0;
 };
 
+struct RotateWithPlayer
+{
+	Motion& motion;
+};
+
 struct Collision
 {
 	Entity other;
