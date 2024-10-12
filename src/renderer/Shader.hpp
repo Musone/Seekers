@@ -130,7 +130,7 @@ private:
     // The Cherno goes over initializing shaders in this video. Check it out if you are curious.
     // https://www.youtube.com/watch?v=71BLZwRGUJE&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=7&ab_channel=TheCherno
     unsigned int _create_shader(const std::string& vertex_shader, const std::string& fragment_shader) {
-        unsigned int program = glCreateProgram();
+        GL_Call(unsigned int program = glCreateProgram());
         unsigned int compiled_vertex_shader = _compile_shader(GL_VERTEX_SHADER, vertex_shader);
         unsigned int compiled_fragment_shader = _compile_shader(GL_FRAGMENT_SHADER, fragment_shader);
 
