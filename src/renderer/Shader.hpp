@@ -85,6 +85,14 @@ public:
         GL_Call(glUniform1f(_get_uniform_location(name), value));
     }
 
+    void set_uniform_mat4f(const std::string& name, const glm::mat4& matrix) {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
+        }
+        bind();
+        GL_Call(glUniformMatrix4fv(_get_uniform_location(name), 1, GL_FALSE, &matrix[0][0]));
+    }
+
     void set_uniform_4f(const std::string& name, const glm::vec4& vector) {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
@@ -122,7 +130,7 @@ private:
     // The Cherno goes over initializing shaders in this video. Check it out if you are curious.
     // https://www.youtube.com/watch?v=71BLZwRGUJE&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=7&ab_channel=TheCherno
     unsigned int _create_shader(const std::string& vertex_shader, const std::string& fragment_shader) {
-        unsigned int program = glCreateProgram();
+        GL_Call(unsigned int program = glCreateProgram());
         unsigned int compiled_vertex_shader = _compile_shader(GL_VERTEX_SHADER, vertex_shader);
         unsigned int compiled_fragment_shader = _compile_shader(GL_FRAGMENT_SHADER, fragment_shader);
 

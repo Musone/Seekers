@@ -1,19 +1,24 @@
 #pragma once
 
-  class Timer {
-  public:
-    Timer() : start_time_(std::chrono::high_resolution_clock::now()) {};
+#include <chrono>
+#include <thread>
+#include <stdint.h>
+#include <iostream>
 
-    ~Timer() {
-      Stop();
-    }
+class Timer {
+public:
+  Timer() : start_time_(std::chrono::high_resolution_clock::now()) {};
 
-    double GetTime();
+  ~Timer() {
+    Stop();
+  }
 
-    void Sleep(const double& us_duration);
+  double GetTime();
 
-  private:
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
+  void Sleep(const double& us_duration);
 
-    void Stop();
-  };
+private:
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
+
+  void Stop();
+};

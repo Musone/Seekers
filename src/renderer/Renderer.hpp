@@ -111,6 +111,8 @@ public:
         GL_Call(glEnable(GL_BLEND));
         GL_Call(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
+        GL_Call(glEnable(GL_DEPTH_TEST));
+
         m_is_initialized = true;
         Log::log_success("Renderer loaded", __FILE__, __LINE__);
     }
@@ -119,7 +121,7 @@ public:
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
-        GL_Call(glClear(GL_COLOR_BUFFER_BIT));
+        GL_Call(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
     }
 
     const void end_draw() const {
@@ -158,5 +160,13 @@ public:
         }
         GL_Call(glfwTerminate());
         GL_Call(glfwSetWindowShouldClose(m_window, 1));
+    }
+
+    int is_key_pressed(const int& key_code) const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
+        GL_Call(int status = glfwGetKey(m_window, key_code));
+        return status == GLFW_PRESS;
     }
 };
