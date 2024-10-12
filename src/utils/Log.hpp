@@ -45,4 +45,17 @@ namespace Log {
             << '\n'
             << ANSI_COLOUR_RESET << std::endl;
     }
+
+    inline void log_info(const std::string& message, const char* file, int line) {
+        std::cout << ANSI_COLOUR_RESET
+            << "\n[INFO] "
+            << message
+            << '\n' 
+            << file 
+            << ':' 
+            << std::to_string(line) 
+            << '\n'
+            << ANSI_COLOUR_RESET 
+            << std::endl;
+    }
 }
