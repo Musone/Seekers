@@ -7,20 +7,19 @@ CollisionSystem::CollisionSystem() : m_registry(Registry::get_instance()) {}
 
 void CollisionSystem::check_collisions()
 {
-    auto& motions = m_registry.motions;
-    for (size_t i = 0; i < motions.entities.size(); ++i)
+    ComponentContainer<Motion> &motions = m_registry.motions;
+    for (uint i = 0; i < motions.components.size(); i++)
     {
+        Motion& motion_i = motions.components[i];
         Entity entity_i = motions.entities[i];
-        const Motion& motion_i = motions.components[i];
         
         // Compare with entities after i to avoid duplicate checks
-        for (size_t j = i + 1; j < motions.entities.size(); ++j)
+        for(uint j = i+1; j < motions.components.size(); j++)
         {
-            Entity entity_j = motions.entities[j];
-            const Motion& motion_j = motions.components[j];
-
+            Motion& motion_j = motions.components[j];
             if (check_collision(motion_i, motion_j))
             {
+                Entity entity_j = motions.entities[j];
                 create_collision(entity_i, entity_j);
             }
         }
@@ -36,7 +35,7 @@ bool CollisionSystem::check_collision(const Motion& motion1, const Motion& motio
     return distance < combined_radius;
 }
 
-void CollisionSystem::create_collision(const Entity& entity1, const Entity& entity2)
+void CollisionSystem::create_collision(Entity& entity1, Entity& entity2)
 {
     m_registry.collisions.emplace_with_duplicates(entity1, entity2);
     m_registry.collisions.emplace_with_duplicates(entity2, entity1);

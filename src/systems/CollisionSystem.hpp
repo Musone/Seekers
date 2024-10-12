@@ -22,7 +22,7 @@ private:
     bool check_collision(const Motion& motion1, const Motion& motion2) const;
 
     // Helper function to create a Collision component
-    void create_collision(const Entity& entity1, const Entity& entity2);
+    void create_collision(Entity& entity1, Entity& entity2);
 
     // Broad-phase collision detection
     void get_nearby_entities(const Entity& entity) const;
