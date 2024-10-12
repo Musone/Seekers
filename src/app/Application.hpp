@@ -4,6 +4,7 @@
 #include <utils/FileSystem.hpp>
 #include <ecs/Registry.hpp>
 #include <renderer/Renderer.hpp>
+#include <renderer/Camera.hpp>
 
 class Application {
     
