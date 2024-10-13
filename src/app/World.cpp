@@ -3,6 +3,8 @@
 #include "utils/Log.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "InputManager.hpp"
+
 World::World() : m_registry(Registry::get_instance()), m_collisionSystem(), m_physicsSystem() {}
 
 World::~World() = default;
@@ -28,8 +30,16 @@ void World::step(float elapsed_ms) {
     m_collisionSystem.check_collisions();
     handle_collisions();
   
-    // TODO: handle_inputs_per_frame()
-    // TODO: Write down a for loop for AttackCooldown component, loop through them, decrease timer, remove component if timer hits zero
+    InputManager::handle_inputs_per_frame();
+
+    // update attack cooldown comps
+    for (Entity& e : m_registry.attack_cooldowns.entities) {
+        auto& attack_cooldown = m_registry.attack_cooldowns.get(e);
+        attack_cooldown.timer -= elapsed_ms;
+        if (attack_cooldown.timer <= 0) {
+            m_registry.attack_cooldowns.remove(e);
+        }
+    }
 }
 
 void World::handle_collisions() {
