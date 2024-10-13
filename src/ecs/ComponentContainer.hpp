@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+#include <ostream>
 #include <ecs/Entity.hpp>
 #include <ecs/IComponentContainer.hpp>
 
@@ -62,11 +64,11 @@ public:
 	}
 
 	// Remove an component and pack the container to re-use the empty space
-	void remove(Entity e) {
-		if (has(e))
+	void remove(unsigned int entity_id) {
+		if (map_entity_componentID.count(entity_id) > 0)
 		{
 			// Get the current position
-			int cID = map_entity_componentID[e];
+			int cID = map_entity_componentID[entity_id];
 
 			// Move the last element to position cID using the move operator
 			// Note, components[cID] = components.back() would trigger the copy instead of move operator
@@ -75,12 +77,17 @@ public:
 			map_entity_componentID[entities.back()] = cID;
 
 			// Erase the old component and free its memory
-			map_entity_componentID.erase(e);
+			map_entity_componentID.erase(entity_id);
 			components.pop_back();
 			entities.pop_back();
 			// Note, one could mark the id for re-use
 		}
 	};
+
+	// Remove an component and pack the container to re-use the empty space
+	void remove(Entity e) {
+		remove((unsigned int)e);
+	}
 
 	// Remove all components of type 'Component'
 	void clear() {

@@ -12,13 +12,7 @@
 #include <app/TextureMaster.hpp>
 #include <components/RenderComponents.hpp>
 
-#if __APPLE__
-    #define WINDOW_WIDTH 1920 / 2
-    #define WINDOW_HEIGHT 1280 / 2
-#else
-    #define WINDOW_WIDTH 1920
-    #define WINDOW_HEIGHT 1280
-#endif
+#include <globals/Globals.h>
 
 class Application {
     
@@ -99,7 +93,7 @@ public:
         World world;
         world.demo_init();
         Registry& reg = Registry::get_instance();
-        const Motion& player_motion = reg.motions.get(reg.player);
+        //const Motion& player_motion = reg.motions.get(reg.player);
         
         Timer timer;
         float time_of_last_frame = float(timer.GetTime());
@@ -109,6 +103,7 @@ public:
             while (delta_time < 1000.0f / 60.0f) { delta_time = 0.001f * (float(timer.GetTime()) - time_of_last_frame); }
             std::cout << 1000.0f / delta_time  << '\n';
             world.step(delta_time);
+            const Motion& player_motion = reg.motions.get(reg.player);
             cam.set_position(glm::vec3(player_motion.position, CAMERA_HEIGHT));
             cam.set_rotation({ 0, 0, player_motion.angle });
 
