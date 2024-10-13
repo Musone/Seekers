@@ -4,3 +4,4 @@
 #include "CombatComponents.hpp"
 #include "AIComponents.hpp"
 #include "GameplayComponents.hpp"
+#include "RenderComponents.hpp"
