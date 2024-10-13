@@ -10,8 +10,13 @@
 #include <app/World.hpp>
 #include <app/InputManager.hpp>
 
-#define WINDOW_WIDTH 1920
-#define WINDOW_HEIGHT 1280
+#if __APPLE__
+    #define WINDOW_WIDTH 1920 / 2
+    #define WINDOW_HEIGHT 1280 / 2
+#else
+    #define WINDOW_WIDTH 1920
+    #define WINDOW_HEIGHT 1280
+#endif
 
 class Application {
     
@@ -36,8 +41,8 @@ public:
             false
         );
 
-        renderer.set_on_key_callback_fn(InputManager::on_key_pressed);
-        renderer.set_on_mouse_callback_fn(InputManager::on_mouse_move);
+        renderer.set_on_key_callback_fn((void*)InputManager::on_key_pressed);
+        renderer.set_on_mouse_callback_fn((void*)InputManager::on_mouse_move);
 
         // World map setup.
 #define MAP_SIZE 50
