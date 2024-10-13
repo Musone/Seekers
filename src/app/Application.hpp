@@ -7,7 +7,7 @@
 #include <renderer/Renderer.hpp>
 #include <renderer/Camera.hpp>
 #include <ecs/Registry.hpp>
-#include <app/World.hpp>
+#include <app/World.h>
 #include <app/InputManager.hpp>
 
 #if __APPLE__

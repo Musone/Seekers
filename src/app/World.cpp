@@ -1,4 +1,4 @@
-#include "World.hpp"
+#include "World.h"
 #include "EntityFactory.hpp"
 #include "utils/Log.hpp"
 #include <glm/gtc/matrix_transform.hpp>

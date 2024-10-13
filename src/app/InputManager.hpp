@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <utils/Transform.hpp>
 
+#include <app/EntityFactory.hpp>
 #include "ecs/Registry.hpp"
 #include "globals/Globals.h"
 #include "utils/Common.hpp"
@@ -66,19 +67,7 @@ namespace InputManager {
         if (action == GLFW_PRESS) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 if (!registry.attack_cooldowns.has(registry.player)) {
-                    auto projectile = Entity();
-
-                    Motion& motion = registry.motions.emplace(projectile);
-                    motion.position = registry.motions.get(registry.player).position;
-                    motion.angle = atan2(player_attacker.aim.y, player_attacker.aim.x);
-                    motion.velocity = player_attacker.aim * weapon_stats.proj_speed;
-
-                    ProjectileStats& projectile_stats = registry.projectile_stats.emplace(projectile);
-                    projectile_stats.damage = weapon_stats.damage;
-                    projectile_stats.range_remaining = weapon_stats.range;
-
-                    Team& team = registry.teams.emplace(projectile);
-                    team.team_id = registry.teams.get(registry.player).team_id;
+                    EntityFactory::create_projectile(registry.motions.get(registry.player).position, player_attacker, weapon_stats, TEAM_ID::FRIENDLY);
 
                     registry.attack_cooldowns.emplace(registry.player, weapon_stats.attack_cooldown);
                 }
@@ -114,4 +103,4 @@ namespace InputManager {
         // update aim
         player_attacker.aim = Common::normalize(player_motion.position - input_state.mouse_pos);
     }
-}
+};
