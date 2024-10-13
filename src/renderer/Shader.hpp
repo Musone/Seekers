@@ -101,6 +101,14 @@ public:
         GL_Call(glUniform4f(_get_uniform_location(name), vector.x, vector.y, vector.z, vector.w));
     }
 
+    void set_uniform_3f(const std::string& name, const glm::vec3& vector) {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
+        }
+        bind();
+        GL_Call(glUniform3f(_get_uniform_location(name), vector.x, vector.y, vector.z));
+    }
+
 private:
     // The Cherno goes over initializing shaders in this video. Check it out if you are curious.
     // https://www.youtube.com/watch?v=71BLZwRGUJE&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=7&ab_channel=TheCherno
