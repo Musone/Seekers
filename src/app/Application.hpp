@@ -1,10 +1,17 @@
 #pragma once
 
+#include <utils/Transform.hpp>
 #include <utils/Log.hpp>
 #include <utils/FileSystem.hpp>
-#include <ecs/Registry.hpp>
+#include <utils/Timer.h>
 #include <renderer/Renderer.hpp>
 #include <renderer/Camera.hpp>
+#include <ecs/Registry.hpp>
+#include <app/World.hpp>
+#include <app/InputManager.hpp>
+
+#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1280
 
 class Application {
     
@@ -18,13 +25,117 @@ public:
         };
     };
 
+    void run_demo_world() {
+        Renderer& renderer = Renderer::get_instance();
+        // The renderer must be initialized before anything else.
+        renderer.init(
+            "World Demo",
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT,
+            true,
+            false
+        );
+
+        renderer.set_on_key_callback_fn(InputManager::on_key_pressed);
+        renderer.set_on_mouse_callback_fn(InputManager::on_mouse_move);
+
+        // World map setup.
+#define MAP_SIZE 50
+        float map_vertices[] = {
+            -MAP_SIZE, -MAP_SIZE, 0,   0, 0, // 0
+             MAP_SIZE, -MAP_SIZE, 0,   1, 0, // 1
+             MAP_SIZE,  MAP_SIZE, 0,   1, 1, // 2
+            -MAP_SIZE,  MAP_SIZE, 0,   0, 1, // 3
+        };
+        unsigned int world_indices[] = {
+            0, 1, 2,
+            0, 2, 3
+        };
+        IndexBuffer world_ibo(world_indices, Common::c_arr_count(world_indices));
+        VertexBufferLayout layout;
+        layout.push<float>(3); // position
+        layout.push<float>(2); // uv
+        VertexArray world_vao;
+        world_vao.init();
+        VertexBuffer world_vbo(map_vertices, sizeof(map_vertices));
+        world_vao.add_buffer(world_vbo, layout);
+
+        Texture map_texture("disnie_map.jpg");
+        int map_tex_slot = 1;
+        map_texture.bind(map_tex_slot);
+        Shader shader("MapDemo");
+
+        Camera cam(renderer.get_window_width(), renderer.get_window_height());
+#define CAMERA_HEIGHT 20
+        cam.set_position({ 0, 0, CAMERA_HEIGHT });
+
+        // Player model setup.
+        unsigned int player_indices[] = {
+            0, 1, 2,
+            0, 2, 3
+        };
+        IndexBuffer player_ibo;
+        player_ibo.init(player_indices, Common::c_arr_count(player_indices));
+
+        float player_vertices[] = {
+            -1.0f, -1.0f, 0.1f,   0.0f, 0.0f,
+             1.0f, -1.0f, 0.1f,   1.0f, 0.0f,
+             1.0f,  1.0f, 0.1f,   1.0f, 1.0f,
+            -1.0f,  1.0f, 0.1f,   0.0f, 1.0f
+        };
+        VertexArray player_vao;
+        VertexBuffer player_vbo;
+        player_vao.init();
+        player_vbo.init(player_vertices, sizeof(player_vertices));
+        player_vao.add_buffer(player_vbo, layout);
+        Texture player_texture("player.png");
+        const unsigned int player_tex_slot = 2;
+        player_texture.bind(player_tex_slot);
+
+        World world;
+        world.demo_init();
+        Registry& reg = Registry::get_instance();
+        const Motion& player_motion = reg.motions.get(reg.player);
+        
+        Timer timer;
+        float time_of_last_frame = float(timer.GetTime());
+
+        while (!renderer.is_terminated()) {
+            world.step(float(timer.GetTime()) - time_of_last_frame);
+            cam.set_position(glm::vec3(player_motion.position, CAMERA_HEIGHT));
+            cam.set_rotation({ 0, 0, player_motion.angle });
+
+            // _handle_free_camera_inputs(renderer, cam);
+            renderer.begin_draw();
+
+            shader.set_uniform_mat4f("u_mvp", cam.get_view_project_matrix());
+            shader.set_uniform_1i("u_texture", map_tex_slot);
+            renderer.draw(world_vao, world_ibo, shader);
+
+            shader.set_uniform_1i("u_texture", player_tex_slot);
+            shader.set_uniform_mat4f(
+                "u_mvp", 
+                cam.get_view_project_matrix() * Transform::create_model_matrix(
+                    glm::vec3(player_motion.position, 0), 
+                    { 0, 0, player_motion.angle }, 
+                    // glm::vec3(player_motion.scale, 1.0)
+                    glm::vec3(1)
+                )
+            );
+            renderer.draw(player_vao, player_ibo, shader);
+
+            renderer.end_draw();
+            time_of_last_frame = float(timer.GetTime());
+        }
+    }
+
     void run_demo_camera() {
         Renderer& renderer = Renderer::get_instance();
         // The renderer must be initialized before anything else.
         renderer.init(
             "Camera Demo",
-            1920,
-            1280,
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT,
             true,
             false
         );
@@ -91,80 +202,14 @@ public:
         Shader shader;
         shader.init("CameraDemo");
 
-        Camera cam;
+        Camera cam(renderer.get_window_width(), renderer.get_window_height());
         cam.set_rotation({ PI / 2, 0, -PI / 4 });
 
         while (!renderer.is_terminated()) {
             // Timer timer;
             renderer.begin_draw();
 
-#pragma region TEST INPUTS
-            glm::vec3 moveDirection(0.0f);
-            glm::vec3 rotateDirection(0.0f);
-
-            float moveSpeed = 0.005f;
-            float rotateSpeed = PI / 300;  // radians per frame
-
-            glm::vec3 newPosition = 1.f * cam.get_position();
-            glm::vec3 newRotation = 1.f * cam.get_rotation();
-            bool pos_changed = false;
-            bool rot_changed = false;
-
-            glm::vec3 player_input(0.0f);
-
-            // Handle keyboard input for movement
-            if (renderer.is_key_pressed(GLFW_KEY_W)) {
-                player_input.z -= moveSpeed;  // Move in negative Z
-                pos_changed = true;
-            }
-            if (renderer.is_key_pressed(GLFW_KEY_S)) {
-                player_input.z += moveSpeed;  // Move in positive Z
-                pos_changed = true;
-            }
-            if (renderer.is_key_pressed(GLFW_KEY_A)) {
-                player_input.x -= moveSpeed;  // Move in negative X
-                pos_changed = true;
-            }
-            if (renderer.is_key_pressed(GLFW_KEY_D)) {
-                player_input.x += moveSpeed;  // Move in positive X
-                pos_changed = true;
-            }
-            if (renderer.is_key_pressed(GLFW_KEY_SPACE)) {
-                player_input.y += moveSpeed;  // Move in positive Y
-                pos_changed = true;
-            }
-            if (renderer.is_key_pressed(GLFW_KEY_LEFT_CONTROL)) {
-                player_input.y -= moveSpeed;  // Move in negative Y
-                pos_changed = true;
-            }
-
-            // Handle keyboard input for rotation
-            if (renderer.is_key_pressed(GLFW_KEY_UP)) {
-                    rot_changed = true;
-                    newRotation.x += rotateSpeed;
-            }
-            if (renderer.is_key_pressed(GLFW_KEY_DOWN)) {
-                    rot_changed = true;
-                    newRotation.x -= rotateSpeed;
-            }
-            if (renderer.is_key_pressed(GLFW_KEY_LEFT)) {
-                    rot_changed = true;
-                    newRotation.z += rotateSpeed;
-            }
-            if (renderer.is_key_pressed(GLFW_KEY_RIGHT)) {
-                    rot_changed = true;
-                    newRotation.z -= rotateSpeed;
-            }
-
-            // Update camera position and rotation using the setter methods
-            if (rot_changed) {
-                cam.set_rotation(newRotation);
-            }
-            if (pos_changed) {
-                newPosition += cam.rotate_to_camera_direction(player_input);
-                cam.set_position(newPosition);
-            }
-#pragma endregion
+            _handle_free_camera_inputs(renderer, cam);
 
             // Render the player.
             shader.set_uniform_mat4f("u_view_project", cam.get_view_project_matrix());
@@ -179,8 +224,8 @@ public:
         // The renderer must be initialized before anything else.
         renderer.init(
             "Texture Demo",
-            1920,
-            1280,
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT,
             true,
             false
         );
@@ -266,8 +311,8 @@ public:
         // The renderer must be initialized before anything else.
         renderer.init(
             "Hello World",
-            1920,
-            1280,
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT,
             true,
             false
         );
@@ -313,4 +358,71 @@ public:
     }
 #pragma endregion
 private:
+    void _handle_free_camera_inputs(const Renderer& renderer, Camera& cam) {
+        glm::vec3 moveDirection(0.0f);
+            glm::vec3 rotateDirection(0.0f);
+
+            float moveSpeed = 0.005f;
+            float rotateSpeed = PI / 300;  // radians per frame
+
+            glm::vec3 newPosition = 1.f * cam.get_position();
+            glm::vec3 newRotation = 1.f * cam.get_rotation();
+            bool pos_changed = false;
+            bool rot_changed = false;
+
+            glm::vec3 player_input(0.0f);
+
+            // Handle keyboard input for movement
+            if (renderer.is_key_pressed(GLFW_KEY_W)) {
+                player_input.z -= moveSpeed;  // Move in negative Z
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_S)) {
+                player_input.z += moveSpeed;  // Move in positive Z
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_A)) {
+                player_input.x -= moveSpeed;  // Move in negative X
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_D)) {
+                player_input.x += moveSpeed;  // Move in positive X
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_SPACE)) {
+                player_input.y += moveSpeed;  // Move in positive Y
+                pos_changed = true;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_LEFT_CONTROL)) {
+                player_input.y -= moveSpeed;  // Move in negative Y
+                pos_changed = true;
+            }
+
+            // Handle keyboard input for rotation
+            if (renderer.is_key_pressed(GLFW_KEY_UP)) {
+                    rot_changed = true;
+                    newRotation.x += rotateSpeed;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_DOWN)) {
+                    rot_changed = true;
+                    newRotation.x -= rotateSpeed;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_LEFT)) {
+                    rot_changed = true;
+                    newRotation.z += rotateSpeed;
+            }
+            if (renderer.is_key_pressed(GLFW_KEY_RIGHT)) {
+                    rot_changed = true;
+                    newRotation.z -= rotateSpeed;
+            }
+
+            // Update camera position and rotation using the setter methods
+            if (rot_changed) {
+                cam.set_rotation(newRotation);
+            }
+            if (pos_changed) {
+                newPosition += cam.rotate_to_camera_direction(player_input);
+                cam.set_position(newPosition);
+            }
+    }
 };
