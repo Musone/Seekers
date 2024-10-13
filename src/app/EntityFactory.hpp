@@ -31,7 +31,7 @@ namespace EntityFactory {
         texture.name = "player.png";
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        bounding_box.radius = 11.3f;
+        bounding_box.radius = glm::max(motion.scale.x, motion.scale.y);
 
         return entity;
     }
@@ -43,12 +43,12 @@ namespace EntityFactory {
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
+        motion.scale = glm::vec2(0.5f, 0.5f);
 
-        auto weapon_entity = Entity();
-        auto& weapon_stats = registry.weapon_stats.emplace(weapon_entity);
+        auto& weapon_stats = registry.weapon_stats.emplace(entity);
         weapon_stats.damage = damage;
         weapon_stats.range = 100.0f;
-        weapon_stats.proj_speed = 300.0f;
+        weapon_stats.proj_speed = 10.0f;
         weapon_stats.attack_cooldown = 1.0f;
         weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
 
@@ -85,20 +85,20 @@ namespace EntityFactory {
         texture.name = "skeleton.png";
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        bounding_box.radius = 11.3f;
+        bounding_box.radius = glm::max(motion.scale.x, motion.scale.y);
 
         return entity;
     }
 
-    inline Entity create_projectile(glm::vec2 position, Attacker& attacker, WeaponStats& weapon, TEAM_ID team_id) {
+    inline Entity create_projectile(Motion& attacker_motion, Attacker& attacker, WeaponStats& weapon, TEAM_ID team_id) {
         Registry& registry = Registry::get_instance();
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
-        motion.position = position;
+        motion.position = attacker_motion.position;
         motion.angle = atan2(attacker.aim.y, attacker.aim.x);
-        motion.velocity = attacker.aim * weapon.proj_speed;;
-        motion.scale = glm::vec2(0.025f, 0.025f);  // Projectile size
+        motion.velocity = attacker.aim * weapon.proj_speed + attacker_motion.velocity;;
+        motion.scale = glm::vec2(0.25f, 0.25f);  // Projectile size
 
         auto& projectile = registry.projectile_stats.emplace(entity);
         projectile.damage = weapon.damage;
@@ -112,7 +112,7 @@ namespace EntityFactory {
         texture.name = "projectile.png";
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        bounding_box.radius = 144.0f;
+        bounding_box.radius = glm::max(motion.scale.x, motion.scale.y);
 
         return entity;
     }

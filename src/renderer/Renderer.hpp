@@ -5,7 +5,6 @@
 #include <renderer/VertexBuffer.hpp>
 #include <renderer/IndexBuffer.hpp>
 #include <renderer/VertexArray.hpp>
-#include <renderer/VertexBufferLayout.hpp>
 #include <renderer/GLUtils.hpp>
 #include <renderer/Shader.hpp>
 #include <renderer/Texture.hpp>

@@ -22,7 +22,7 @@ namespace PhysicsSystem
         for (Entity& e : registry.move_withs.entities) {
             Motion& follower = registry.motions.get(e);
             Motion& following = registry.motions.get(registry.move_withs.get(e).following_entity_id);
-            follower.position = following.position;
+            follower.position = following.position + glm::vec2(1.0f, 0.0f);
         }
         for (Entity& e : registry.rotate_withs.entities) {
             Motion& follower = registry.motions.get(e);

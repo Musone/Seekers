@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdexcept>
 #include <GLFW/glfw3.h>
 #include <utils/Transform.hpp>
 
@@ -67,7 +66,7 @@ namespace InputManager {
         if (action == GLFW_PRESS) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 if (!registry.attack_cooldowns.has(registry.player)) {
-                    EntityFactory::create_projectile(registry.motions.get(registry.player).position, player_attacker, weapon_stats, TEAM_ID::FRIENDLY);
+                    EntityFactory::create_projectile(registry.motions.get(registry.player), player_attacker, weapon_stats, TEAM_ID::FRIENDLY);
 
                     registry.attack_cooldowns.emplace(registry.player, weapon_stats.attack_cooldown);
                 }
@@ -75,10 +74,10 @@ namespace InputManager {
         }
     }
 
-    inline void on_mouse_move(GLFWwindow* window, float x, float y) {
+    inline void on_mouse_move(GLFWwindow* window, double x, double y) {
         Registry& registry = Registry::get_instance();
 
-        registry.input_state.mouse_pos = glm::vec2(x, y);
+        registry.input_state.mouse_pos = glm::vec2(x, WINDOW_HEIGHT - y);
     }
 
     // handle inputs that need updates every frame which should be called in World::step()
@@ -101,6 +100,8 @@ namespace InputManager {
         player_motion.velocity = { temp.x, temp.y };
 
         // update aim
-        player_attacker.aim = Common::normalize(player_motion.position - input_state.mouse_pos);
+        player_attacker.aim = Common::normalize(input_state.mouse_pos - glm::vec2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2));
+        temp = Transform::create_rotation_matrix({0, 0, player_motion.angle}) * glm::vec4(player_attacker.aim, 0, 1);
+        player_attacker.aim = { temp.x, temp.y };
     }
 };

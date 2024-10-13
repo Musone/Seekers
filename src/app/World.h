@@ -2,12 +2,7 @@
 
 #include <ecs/Registry.hpp>
 #include <ecs/Entity.hpp>
-#include <systems/CollisionSystem.hpp>
-#include <systems/PhysicsSystem.hpp>
-#include <systems/GameplaySystem.hpp>
 #include <vector>
-#include <memory>
-#include <glm/glm.hpp>
 
 class World {
 public:
@@ -28,5 +23,4 @@ private:
 	void handle_entity_collision(const Entity& entity1, const Entity& entity2);
 
 	Registry& m_registry;
-	CollisionSystem m_collisionSystem;
 };
