@@ -54,6 +54,7 @@ struct Attacker
 struct AttackCooldown
 {
     float timer;
+    AttackCooldown(float t) : timer(t) {}
 };
 
 struct ProjectileStats
