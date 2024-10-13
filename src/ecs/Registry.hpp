@@ -32,6 +32,8 @@ public:
 	ComponentContainer<Team> teams;
 	ComponentContainer<MoveWith> move_withs;
 	ComponentContainer<RotateWith> rotate_withs;
+	ComponentContainer<TextureName> textures;
+	ComponentContainer<BoundingBox> bounding_boxes;
 	Entity player;
 	InputState input_state;
 
@@ -47,6 +49,8 @@ public:
 		m_registry_list.push_back(&teams);
 		m_registry_list.push_back(&move_withs);
 		m_registry_list.push_back(&rotate_withs);
+		m_registry_list.push_back(&textures);
+		m_registry_list.push_back(&bounding_boxes);
 	}
 
 	Registry(Registry const&) = delete;

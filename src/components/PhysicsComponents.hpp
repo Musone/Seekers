@@ -31,3 +31,7 @@ struct Collision
 	Entity other;
 	Collision(Entity &other) { this->other = other; };
 };
+
+struct BoundingBox {
+	float radius;
+};
