@@ -14,9 +14,16 @@ struct Motion
 	float drag = 0;
 };
 
-struct RotateWithPlayer
+struct MoveWith
 {
+	unsigned int following_entity_id;
+	MoveWith(unsigned int id) : following_entity_id(id) {}
+};
 
+struct RotateWith
+{
+	unsigned int following_entity_id;
+	RotateWith(unsigned int id) : following_entity_id(id) {}
 };
 
 struct Collision

@@ -4,6 +4,7 @@
 #include <ecs/Entity.hpp>
 #include <systems/CollisionSystem.hpp>
 #include <systems/PhysicsSystem.hpp>
+#include <systems/GameplaySystem.hpp>
 #include <vector>
 #include <memory>
 #include <glm/glm.hpp>
@@ -28,5 +29,4 @@ private:
 
 	Registry& m_registry;
 	CollisionSystem m_collisionSystem;
-	PhysicsSystem m_physicsSystem;
 };

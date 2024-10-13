@@ -5,14 +5,14 @@
 
 #include "InputManager.hpp"
 
-World::World() : m_registry(Registry::get_instance()), m_collisionSystem(), m_physicsSystem() {}
+World::World() : m_registry(Registry::get_instance()), m_collisionSystem() {}
 
 World::~World() = default;
 
 void World::demo_init() {
     // Create Player
     auto player = EntityFactory::create_player(glm::vec2(400.0f, 300.0f));
-    auto weapon = EntityFactory::create_weapon(glm::vec2(400.0f, 300.0f), 10.0f);
+    auto weapon = EntityFactory::create_weapon(glm::vec2(400.0f, 300.0f), 10.0f, player);
     m_registry.attackers.get(player).weapon_id = weapon;
     m_players.push_back(player);
 
@@ -20,7 +20,7 @@ void World::demo_init() {
     for (int i = 0; i < 5; ++i) {
         glm::vec2 pos = glm::vec2(100.0f + i * 100.0f, 100.0f);
         auto enemy = EntityFactory::create_enemy(pos);
-        auto enemy_weapon = EntityFactory::create_weapon(pos, 5.0f);
+        auto enemy_weapon = EntityFactory::create_weapon(pos, 5.0f, enemy);
         m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
         m_enemies.push_back(enemy);
     }
@@ -29,7 +29,7 @@ void World::demo_init() {
 void World::step(float elapsed_ms) {
     // TODO: Update the game world
     // 1. Update physics
-    m_physicsSystem.step(elapsed_ms);
+    PhysicsSystem::step(elapsed_ms);
     
     // 2. Check and handle collisions
     m_collisionSystem.check_collisions();
@@ -37,14 +37,7 @@ void World::step(float elapsed_ms) {
   
     InputManager::handle_inputs_per_frame();
 
-    // update attack cooldown comps
-    for (Entity& e : m_registry.attack_cooldowns.entities) {
-        auto& attack_cooldown = m_registry.attack_cooldowns.get(e);
-        attack_cooldown.timer -= elapsed_ms;
-        if (attack_cooldown.timer <= 0) {
-            m_registry.attack_cooldowns.remove(e);
-        }
-    }
+    GameplaySystem::update_cooldowns(elapsed_ms);
 }
 
 void World::handle_collisions() {
