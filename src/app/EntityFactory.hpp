@@ -30,7 +30,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    Entity create_weapon(glm::vec2 position, float damage) {
+    Entity create_weapon(glm::vec2 position, float damage, unsigned int following) {
         Registry& registry = Registry::get_instance();
 
         auto entity = Entity();
@@ -46,7 +46,8 @@ namespace EntityFactory {
         weapon_stats.attack_cooldown = 1.0f;
         weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
 
-        registry.rotate_with_players.emplace(entity);
+        registry.move_withs.emplace(entity, following);
+        registry.rotate_withs.emplace(entity, following);
 
         return entity;
     }
@@ -69,7 +70,7 @@ namespace EntityFactory {
 
         registry.attackers.emplace(entity);
 
-        registry.rotate_with_players.emplace(entity);
+        registry.rotate_withs.emplace(entity, registry.player);
 
         return entity;
     }

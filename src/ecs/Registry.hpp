@@ -30,7 +30,8 @@ public:
 	ComponentContainer<ProjectileStats> projectile_stats;
 	ComponentContainer<AttackCooldown> attack_cooldowns;
 	ComponentContainer<Team> teams;
-	ComponentContainer<RotateWithPlayer> rotate_with_players;
+	ComponentContainer<MoveWith> move_withs;
+	ComponentContainer<RotateWith> rotate_withs;
 	Entity player;
 	InputState input_state;
 
@@ -44,7 +45,8 @@ public:
 		m_registry_list.push_back(&projectile_stats);
 		m_registry_list.push_back(&attack_cooldowns);
 		m_registry_list.push_back(&teams);
-		m_registry_list.push_back(&rotate_with_players);
+		m_registry_list.push_back(&move_withs);
+		m_registry_list.push_back(&rotate_withs);
 	}
 
 	Registry(Registry const&) = delete;
