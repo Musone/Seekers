@@ -47,6 +47,8 @@ struct Vertex {
 class Renderer {
     GLFWwindow* m_window;
     bool m_is_initialized;
+    int m_window_width;
+    int m_window_height;
 
     Renderer() : m_is_initialized(false) {}
 public:
@@ -60,6 +62,9 @@ public:
 
     // Make sure to catch, log, and terminate errors when using the renderer.
     void init(std::string window_name, int window_width, int window_height, bool enable_vsync, bool enable_resize) {
+        m_window_width = window_width;
+        m_window_height = window_height;
+        
         // Magic code that sets up OpenGL. The order of these calls matter. Best not
         // to touch it ;)
         if (!glfwInit()) {
@@ -134,6 +139,9 @@ public:
         GL_Call(glfwPollEvents());
     }
 
+    const int get_window_width() const { return m_window_width; }
+    const int get_window_height() const { return m_window_height; }
+
     const void draw(const VertexArray& vao, const IndexBuffer& ibo, const Shader& shader) const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
@@ -168,5 +176,15 @@ public:
         }
         GL_Call(int status = glfwGetKey(m_window, key_code));
         return status == GLFW_PRESS;
+    }
+
+    // https://www.glfw.org/docs/latest/input_guide.html
+    void set_on_key_callback_fn(const void* callback) const {
+        GL_Call(glfwSetKeyCallback(m_window, (GLFWkeyfun)callback));
+    }
+
+    // https://www.glfw.org/docs/latest/input_guide.html
+    void set_on_mouse_callback_fn(const void* callback) const {
+        GL_Call(glfwSetCursorPosCallback(m_window, (GLFWcursorposfun)callback));
     }
 };

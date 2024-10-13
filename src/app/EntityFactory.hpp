@@ -18,7 +18,7 @@ namespace EntityFactory {
         auto& locomotion = registry.locomotion_stats.emplace(entity);
         locomotion.health = 100.0f;
         locomotion.max_health = 100.0f;
-        locomotion.movement_speed = 100.0f;
+        locomotion.movement_speed = 5.0f;
         locomotion.energy = 100.0f;
         locomotion.max_energy = 100.0f;
 
