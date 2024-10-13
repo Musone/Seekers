@@ -56,8 +56,8 @@ public:
         GL_Call(glDeleteTextures(1, &m_id));
     }
 
-    inline unsigned int get_width() { return m_width; }
-    inline unsigned int get_height() { return m_height; }
+    inline unsigned int get_width() const { return m_width; }
+    inline unsigned int get_height() const { return m_height; }
 
     // GPU texture slots are limited. The graphics card has a fixed number of texture slots,
     // so if you need more than however many the graphics card supports, you will have to 

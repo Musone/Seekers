@@ -59,7 +59,7 @@ namespace InputManager {
         }
     }
 
-    inline void on_mouse_button_pressed(int button, int action, int mods) {
+    inline void on_mouse_button_pressed(GLFWwindow* window, int button, int action, int mods) {
         Registry& registry = Registry::get_instance();
         Attacker& player_attacker = registry.attackers.get(registry.player);
         WeaponStats& weapon_stats = registry.weapon_stats.get(player_attacker.weapon_id);

@@ -13,8 +13,13 @@ struct TextureInfo {
 class TextureMaster {
     unsigned int m_count;
     std::unordered_map<std::string, TextureInfo> m_cache;
-public:
+    std::vector<Texture*> m_ptr_textures;
     TextureMaster() : m_count(0) {}
+public:
+    static TextureMaster& get_instance() {
+		static TextureMaster instance;
+		return instance;
+	}
 
     ~TextureMaster() {
         // throw new "SORRY BUT THE TEXTURE MASTER DESTRUCTOR NOT IMPLEMENTED";
@@ -24,10 +29,12 @@ public:
         if (m_cache.find(texture_name) != m_cache.end()) {
             return m_cache[texture_name];
         }
-        Texture texture(texture_name);
+        // m_textures.emplace_back(texture_name);
+        m_ptr_textures.push_back(new Texture(texture_name));
+        const Texture* texture = m_ptr_textures[m_count];
         const unsigned int texture_slot = ++m_count;
-        texture.bind(texture_slot);
-        m_cache[texture_name] = { texture.get_width(), texture.get_height(), texture_slot };
+        texture->bind(texture_slot);
+        m_cache[texture_name] = { texture_slot, texture->get_width(), texture->get_height() };
         return m_cache[texture_name];
     }
 };

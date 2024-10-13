@@ -9,6 +9,8 @@
 #include <ecs/Registry.hpp>
 #include <app/World.h>
 #include <app/InputManager.hpp>
+#include <app/TextureMaster.hpp>
+#include <components/RenderComponents.hpp>
 
 #if __APPLE__
     #define WINDOW_WIDTH 1920 / 2
@@ -42,7 +44,8 @@ public:
         );
 
         renderer.set_on_key_callback_fn((void*)InputManager::on_key_pressed);
-        renderer.set_on_mouse_callback_fn((void*)InputManager::on_mouse_move);
+        renderer.set_on_mouse_move_callback_fn((void*)InputManager::on_mouse_move);
+        renderer.set_on_mouse_click_callback_fn((void*)InputManager::on_mouse_button_pressed);
 
         // World map setup.
 #define MAP_SIZE 50
@@ -65,9 +68,8 @@ public:
         VertexBuffer world_vbo(map_vertices, sizeof(map_vertices));
         world_vao.add_buffer(world_vbo, layout);
 
-        Texture map_texture("disnie_map.jpg");
-        int map_tex_slot = 1;
-        map_texture.bind(map_tex_slot);
+        TextureMaster& master = TextureMaster::get_instance();
+        TextureInfo map_texture_info = master.get_texture("disnie_map.jpg");
         Shader shader("MapDemo");
 
         Camera cam(renderer.get_window_width(), renderer.get_window_height());
@@ -82,7 +84,7 @@ public:
         IndexBuffer player_ibo;
         player_ibo.init(player_indices, Common::c_arr_count(player_indices));
 
-        float player_vertices[] = {
+        float entity_vertices[] = {
             -1.0f, -1.0f, 0.1f,   0.0f, 0.0f,
              1.0f, -1.0f, 0.1f,   1.0f, 0.0f,
              1.0f,  1.0f, 0.1f,   1.0f, 1.0f,
@@ -91,11 +93,8 @@ public:
         VertexArray player_vao;
         VertexBuffer player_vbo;
         player_vao.init();
-        player_vbo.init(player_vertices, sizeof(player_vertices));
+        player_vbo.init(entity_vertices, sizeof(entity_vertices));
         player_vao.add_buffer(player_vbo, layout);
-        Texture player_texture("player.png");
-        const unsigned int player_tex_slot = 2;
-        player_texture.bind(player_tex_slot);
 
         World world;
         world.demo_init();
@@ -117,20 +116,30 @@ public:
             renderer.begin_draw();
 
             shader.set_uniform_mat4f("u_mvp", cam.get_view_project_matrix());
-            shader.set_uniform_1i("u_texture", map_tex_slot);
+            shader.set_uniform_1i("u_texture", map_texture_info.texture_slot_id);
             renderer.draw(world_vao, world_ibo, shader);
 
-            shader.set_uniform_1i("u_texture", player_tex_slot);
-            shader.set_uniform_mat4f(
-                "u_mvp", 
-                cam.get_view_project_matrix() * Transform::create_model_matrix(
-                    glm::vec3(player_motion.position, 0), 
-                    { 0, 0, player_motion.angle }, 
-                    // glm::vec3(player_motion.scale, 1.0)
-                    glm::vec3(1)
-                )
-            );
-            renderer.draw(player_vao, player_ibo, shader);
+            for (const auto& textured_entity : reg.textures.entities) {
+                if (!reg.motions.has(textured_entity)) {
+                    continue;
+                }
+
+                const auto& motion = reg.motions.get(textured_entity);
+                const auto& tex_name = reg.textures.get(textured_entity);
+                TextureInfo texture_info = master.get_texture(tex_name.name);
+
+                shader.set_uniform_1i("u_texture", texture_info.texture_slot_id);
+                shader.set_uniform_mat4f(
+                    "u_mvp", 
+                    cam.get_view_project_matrix() * Transform::create_model_matrix(
+                        glm::vec3(motion.position, 0), 
+                        { 0, 0, motion.angle }, 
+                        glm::vec3(motion.scale, 1.0)
+                        // glm::vec3(1)
+                    )
+                );
+                renderer.draw(player_vao, player_ibo, shader);
+            }
 
             renderer.end_draw();
             time_of_last_frame = float(timer.GetTime());

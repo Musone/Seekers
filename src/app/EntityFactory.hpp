@@ -67,7 +67,7 @@ namespace EntityFactory {
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
-        motion.scale = glm::vec2(40.0f, 40.0f);  // Enemy size
+        motion.scale = glm::vec2(1.0f, 1.0f);  // Enemy size
 
         auto& locomotion = registry.locomotion_stats.emplace(entity);
         locomotion.health = 50.0f;
