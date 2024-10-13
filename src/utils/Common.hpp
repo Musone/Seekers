@@ -40,6 +40,7 @@ namespace Common {
 
     inline glm::vec2 normalize(glm::vec2 in) {
         float mag = sqrtf(in.x * in.x + in.y * in.y);
+        if (mag == 0) return { 0, 0 };
         return {in.x / mag, in.y / mag};
     }
 }

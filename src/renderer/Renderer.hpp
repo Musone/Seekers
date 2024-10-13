@@ -177,4 +177,14 @@ public:
         GL_Call(int status = glfwGetKey(m_window, key_code));
         return status == GLFW_PRESS;
     }
+
+    // https://www.glfw.org/docs/latest/input_guide.html
+    void set_on_key_callback_fn(const void* callback) const {
+        GL_Call(glfwSetKeyCallback(m_window, (GLFWkeyfun)callback));
+    }
+
+    // https://www.glfw.org/docs/latest/input_guide.html
+    void set_on_mouse_callback_fn(const void* callback) const {
+        GL_Call(glfwSetCursorPosCallback(m_window, (GLFWcursorposfun)callback));
+    }
 };

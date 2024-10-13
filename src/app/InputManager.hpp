@@ -2,13 +2,14 @@
 
 #include <stdexcept>
 #include <GLFW/glfw3.h>
+#include <utils/Transform.hpp>
 
 #include "ecs/Registry.hpp"
 #include "globals/Globals.h"
 #include "utils/Common.hpp"
 
 namespace InputManager {
-    inline void on_key_pressed(int key, int scancode, int action, int mods) {
+    inline void on_key_pressed(GLFWwindow* window, int key, int scancode, int action, int mods) {
         Registry& registry = Registry::get_instance();
         Motion& player_motion = registry.motions.get(registry.player);
 
@@ -85,7 +86,7 @@ namespace InputManager {
         }
     }
 
-    inline void on_mouse_move(int x, int y) {
+    inline void on_mouse_move(GLFWwindow* window, float x, float y) {
         Registry& registry = Registry::get_instance();
 
         registry.input_state.mouse_pos = glm::vec2(x, y);
@@ -105,12 +106,10 @@ namespace InputManager {
         if (input_state.s_down) {move_dir.y -= 1.f;}
         if (input_state.a_down) {move_dir.x -= 1.f;}
         if (input_state.d_down) {move_dir.x += 1.f;}
-        if (move_dir.x != 0.f && move_dir.y != 0.f) {move_dir = Common::normalize(move_dir);}
-        float v_x = move_dir.x * player_stats.movement_speed * cos(player_motion.angle + M_PI / 2.f)
-                    + move_dir.y * player_stats.movement_speed * cos(player_motion.angle);
-        float v_y = move_dir.x * player_stats.movement_speed * sin(player_motion.angle + M_PI / 2.f)
-                    + move_dir.y * player_stats.movement_speed * sin(player_motion.angle);
-        player_motion.velocity = glm::vec2(v_x, v_y);
+        move_dir = Common::normalize(move_dir);
+        move_dir *= player_stats.movement_speed;
+        glm::vec4 temp = Transform::create_rotation_matrix({ 0, 0, player_motion.angle }) * glm::vec4(move_dir, 0, 1);
+        player_motion.velocity = { temp.x, temp.y };
 
         // update aim
         player_attacker.aim = Common::normalize(player_motion.position - input_state.mouse_pos);

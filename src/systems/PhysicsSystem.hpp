@@ -9,13 +9,13 @@ namespace PhysicsSystem
 {
     inline void step(float elapsed_ms) {
         Registry& registry = Registry::get_instance();
-
+        
         // update the motions
         for (Motion& motion : registry.motions.components) {
             glm::vec2 drag = -Common::normalize(motion.velocity) * motion.drag;
-            motion.velocity += (motion.acceleration + drag) * elapsed_ms;
-            motion.position += motion.velocity * elapsed_ms;
-            motion.angle += motion.rotation_velocity * elapsed_ms;
+            motion.velocity += (motion.acceleration + drag) * (elapsed_ms / 1000.0f);
+            motion.position += motion.velocity * (elapsed_ms / 1000.0f);
+            motion.angle += motion.rotation_velocity * (elapsed_ms / 1000.0f);
         }
 
         // update motion of follower entities

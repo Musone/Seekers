@@ -89,5 +89,3 @@ public:
 			reg->remove(e);
 	}
 };
-
-extern Registry registry;

@@ -3,7 +3,7 @@
 #include "utils/Log.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "InputManager.hpp"
+#include <app/InputManager.hpp>
 
 World::World() : m_registry(Registry::get_instance()), m_collisionSystem() {}
 
@@ -11,10 +11,11 @@ World::~World() = default;
 
 void World::demo_init() {
     // Create Player
-    auto player = EntityFactory::create_player(glm::vec2(400.0f, 300.0f));
-    auto weapon = EntityFactory::create_weapon(glm::vec2(400.0f, 300.0f), 10.0f, player);
+    auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
+    auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f, player);
     m_registry.attackers.get(player).weapon_id = weapon;
     m_players.push_back(player);
+    m_registry.player = player;
 
     // Create some enemies
     for (int i = 0; i < 5; ++i) {
@@ -42,7 +43,7 @@ void World::step(float elapsed_ms) {
 
 void World::handle_collisions() {
     auto& collisions = m_registry.collisions;
-    for (uint i = 0; i < collisions.components.size(); i++) {
+    for (unsigned int i = 0; i < collisions.components.size(); i++) {
         // The entity and its collider
         Entity entity = collisions.entities[i];
         Entity entity_other = collisions.components[i].other;
