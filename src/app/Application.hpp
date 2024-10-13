@@ -106,7 +106,10 @@ public:
         float time_of_last_frame = float(timer.GetTime());
 
         while (!renderer.is_terminated()) {
-            world.step(float(timer.GetTime()) - time_of_last_frame);
+            float delta_time = 0.001f * float(timer.GetTime()) - time_of_last_frame;
+            while (delta_time < 1000.0f / 60.0f) { delta_time = 0.001f * (float(timer.GetTime()) - time_of_last_frame); }
+            std::cout << 1000.0f / delta_time  << '\n';
+            world.step(delta_time);
             cam.set_position(glm::vec3(player_motion.position, CAMERA_HEIGHT));
             cam.set_rotation({ 0, 0, player_motion.angle });
 
