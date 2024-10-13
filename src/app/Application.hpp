@@ -71,7 +71,6 @@ public:
         World world;
         world.demo_init();
         Registry& reg = Registry::get_instance();
-        //const Motion& player_motion = reg.motions.get(reg.player);
         
         Timer timer;
         float time_of_last_frame = float(timer.GetTime());
