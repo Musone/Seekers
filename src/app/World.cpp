@@ -1,5 +1,5 @@
 #include "World.hpp"
-#include "WorldInit.hpp"
+#include "EntityFactory.hpp"
 #include "utils/Log.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -9,14 +9,19 @@ World::World() : m_registry(Registry::get_instance()), m_collisionSystem(), m_ph
 
 World::~World() = default;
 
-void World::init() {
-    // Create initial entities
-    auto player = WorldInit::create_player(glm::vec2(400.0f, 300.0f));
+void World::demo_init() {
+    // Create Player
+    auto player = EntityFactory::create_player(glm::vec2(400.0f, 300.0f));
+    auto weapon = EntityFactory::create_weapon(glm::vec2(400.0f, 300.0f), 10.0f);
+    m_registry.attackers.get(player).weapon_id = weapon;
     m_players.push_back(player);
 
     // Create some enemies
     for (int i = 0; i < 5; ++i) {
-        auto enemy = WorldInit::create_enemy(glm::vec2(100.0f + i * 100.0f, 100.0f));
+        glm::vec2 pos = glm::vec2(100.0f + i * 100.0f, 100.0f);
+        auto enemy = EntityFactory::create_enemy(pos);
+        auto enemy_weapon = EntityFactory::create_weapon(pos, 5.0f);
+        m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
         m_enemies.push_back(enemy);
     }
 }

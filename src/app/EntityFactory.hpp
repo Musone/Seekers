@@ -5,7 +5,7 @@
 #include "../components/Components.hpp"
 #include <glm/glm.hpp>
 
-namespace WorldInit {
+namespace EntityFactory {
     Entity create_player(glm::vec2 position) {
         Registry& registry = Registry::get_instance();
 
@@ -18,25 +18,35 @@ namespace WorldInit {
         auto& locomotion = registry.locomotion_stats.emplace(entity);
         locomotion.health = 100.0f;
         locomotion.max_health = 100.0f;
-        locomotion.movement_speed = 200.0f;
+        locomotion.movement_speed = 100.0f;
         locomotion.energy = 100.0f;
         locomotion.max_energy = 100.0f;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::FRIENDLY;
 
-        // Create a weapon entity
+        registry.attackers.emplace(entity);
+
+        return entity;
+    }
+
+    Entity create_weapon(glm::vec2 position, float damage) {
+        Registry& registry = Registry::get_instance();
+
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+
         auto weapon_entity = Entity();
         auto& weapon_stats = registry.weapon_stats.emplace(weapon_entity);
-        weapon_stats.damage = 10.0f;
+        weapon_stats.damage = damage;
         weapon_stats.range = 100.0f;
         weapon_stats.proj_speed = 300.0f;
         weapon_stats.attack_cooldown = 1.0f;
         weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
 
-        // Create and set up the Attacker component for the player
-        auto& attacker = registry.attackers.emplace(entity);
-        attacker.weapon_id = weapon_entity;
+        registry.rotate_with_players.emplace(entity);
 
         return entity;
     }
@@ -57,18 +67,9 @@ namespace WorldInit {
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::FOW;
 
-        // Create a weapon entity for the enemy
-        auto weapon_entity = Entity();
-        auto& weapon_stats = registry.weapon_stats.emplace(weapon_entity);
-        weapon_stats.damage = 5.0f;
-        weapon_stats.range = 50.0f;
-        weapon_stats.proj_speed = 200.0f;
-        weapon_stats.attack_cooldown = 2.0f;
-        weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
+        registry.attackers.emplace(entity);
 
-        // Create and set up the Attacker component for the enemy
-        auto& attacker = registry.attackers.emplace(entity);
-        attacker.weapon_id = weapon_entity;
+        registry.rotate_with_players.emplace(entity);
 
         return entity;
     }

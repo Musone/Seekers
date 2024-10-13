@@ -13,7 +13,7 @@ public:
 	World();
 	~World();
 
-	void init();
+	void demo_init();
 	void step(float elapsed_ms);
 	void handle_collisions();
 
