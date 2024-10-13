@@ -42,53 +42,31 @@ public:
         renderer.set_on_mouse_click_callback_fn((void*)InputManager::on_mouse_button_pressed);
 
         // World map setup.
-#define MAP_SIZE 50
-        float map_vertices[] = {
-            -MAP_SIZE, -MAP_SIZE, 0,   0, 0, // 0
-             MAP_SIZE, -MAP_SIZE, 0,   1, 0, // 1
-             MAP_SIZE,  MAP_SIZE, 0,   1, 1, // 2
-            -MAP_SIZE,  MAP_SIZE, 0,   0, 1, // 3
+        float vertices[] = {
+            -0.5, -0.5, 0,   0, 0, // 0
+             0.5, -0.5, 0,   1, 0, // 1
+             0.5,  0.5, 0,   1, 1, // 2
+            -0.5,  0.5, 0,   0, 1, // 3
         };
-        unsigned int world_indices[] = {
+        unsigned int indices[] = {
             0, 1, 2,
             0, 2, 3
         };
-        IndexBuffer world_ibo(world_indices, Common::c_arr_count(world_indices));
+        IndexBuffer ibo(indices, Common::c_arr_count(indices));
         VertexBufferLayout layout;
         layout.push<float>(3); // position
         layout.push<float>(2); // uv
-        VertexArray world_vao;
-        world_vao.init();
-        VertexBuffer world_vbo(map_vertices, sizeof(map_vertices));
-        world_vao.add_buffer(world_vbo, layout);
+        VertexArray vao;
+        vao.init();
+        VertexBuffer vbo(vertices, sizeof(vertices));
+        vao.add_buffer(vbo, layout);
 
         TextureMaster& master = TextureMaster::get_instance();
         TextureInfo map_texture_info = master.get_texture("disnie_map.jpg");
         Shader shader("MapDemo");
 
         Camera cam(renderer.get_window_width(), renderer.get_window_height());
-#define CAMERA_HEIGHT 20
-        cam.set_position({ 0, 0, CAMERA_HEIGHT });
-
-        // Player model setup.
-        unsigned int player_indices[] = {
-            0, 1, 2,
-            0, 2, 3
-        };
-        IndexBuffer player_ibo;
-        player_ibo.init(player_indices, Common::c_arr_count(player_indices));
-
-        float entity_vertices[] = {
-            -1.0f, -1.0f, 0.1f,   0.0f, 0.0f,
-             1.0f, -1.0f, 0.1f,   1.0f, 0.0f,
-             1.0f,  1.0f, 0.1f,   1.0f, 1.0f,
-            -1.0f,  1.0f, 0.1f,   0.0f, 1.0f
-        };
-        VertexArray player_vao;
-        VertexBuffer player_vbo;
-        player_vao.init();
-        player_vbo.init(entity_vertices, sizeof(entity_vertices));
-        player_vao.add_buffer(player_vbo, layout);
+        cam.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
 
         World world;
         world.demo_init();
@@ -98,44 +76,109 @@ public:
         Timer timer;
         float time_of_last_frame = float(timer.GetTime());
 
+        Shader health_shader("MapDemoHealth");
+
         while (!renderer.is_terminated()) {
             float delta_time = 0.001f * float(timer.GetTime()) - time_of_last_frame;
             while (delta_time < 1000.0f / 60.0f) { delta_time = 0.001f * (float(timer.GetTime()) - time_of_last_frame); }
-            std::cout << 1000.0f / delta_time  << '\n';
+            // std::cout << 1000.0f / delta_time  << '\n';
             world.step(delta_time);
             const Motion& player_motion = reg.motions.get(reg.player);
-            cam.set_position(glm::vec3(player_motion.position, CAMERA_HEIGHT));
+            cam.set_position(glm::vec3(player_motion.position, CAMERA_DISTANCE_FROM_WORLD));
             cam.set_rotation({ 0, 0, player_motion.angle });
 
             // _handle_free_camera_inputs(renderer, cam);
             renderer.begin_draw();
 
-            shader.set_uniform_mat4f("u_mvp", cam.get_view_project_matrix());
+            // Render world
+            shader.set_uniform_mat4f(
+                "u_mvp", 
+                cam.get_view_project_matrix()
+                * Transform::create_scaling_matrix({ MAP_WIDTH, MAP_HEIGHT, 1 })
+            );
             shader.set_uniform_1i("u_texture", map_texture_info.texture_slot_id);
-            renderer.draw(world_vao, world_ibo, shader);
+            renderer.draw(vao, ibo, shader);
 
-            for (const auto& textured_entity : reg.textures.entities) {
-                if (!reg.motions.has(textured_entity)) {
-                    continue;
+            // Render entities
+            {
+                float i = 0;
+                float or_something = 0.001;
+                for (const auto& textured_entity : reg.textures.entities) {
+                    if (!reg.motions.has(textured_entity)) {
+                        continue;
+                    }
+
+                    const auto& motion = reg.motions.get(textured_entity);
+                    const auto& tex_name = reg.textures.get(textured_entity);
+                    const TextureInfo texture_info = master.get_texture(tex_name.name);
+
+                    float z_index = 0.1 + (i++) * or_something;
+                    if (reg.weapon_stats.has(textured_entity)) {
+                        // Gonna put the weapon above entities.
+                        z_index += 0.1;
+                    }
+                    
+                    shader.set_uniform_1i("u_texture", texture_info.texture_slot_id);
+                    shader.set_uniform_mat4f(
+                        "u_mvp", 
+                        cam.get_view_project_matrix() * Transform::create_model_matrix(
+                            glm::vec3(motion.position, z_index), 
+                            { 0, 0, motion.angle }, 
+                            glm::vec3(motion.scale, 1.0)
+                        )
+                    );
+                    renderer.draw(vao, ibo, shader);
                 }
-
-                const auto& motion = reg.motions.get(textured_entity);
-                const auto& tex_name = reg.textures.get(textured_entity);
-                TextureInfo texture_info = master.get_texture(tex_name.name);
-
-                shader.set_uniform_1i("u_texture", texture_info.texture_slot_id);
-                shader.set_uniform_mat4f(
-                    "u_mvp", 
-                    cam.get_view_project_matrix() * Transform::create_model_matrix(
-                        glm::vec3(motion.position, 0), 
-                        { 0, 0, motion.angle }, 
-                        glm::vec3(motion.scale, 1.0)
-                        // glm::vec3(1)
-                    )
-                );
-                renderer.draw(player_vao, player_ibo, shader);
             }
 
+            {
+                for (const auto& loco_entity : reg.locomotion_stats.entities) {
+                    // Render health bar
+                    if (!reg.motions.has(loco_entity)) { continue; }
+                    const auto& loco = reg.locomotion_stats.get(loco_entity);
+                    const auto& loco_motion = reg.motions.get(loco_entity);
+#define HEALTH_BAR_HEIGHT 0.5f
+                    
+                    if (loco.max_health == 0) {
+                        Log::log_warning(
+                            "Entity " 
+                            + std::to_string(loco_entity.get_id()) 
+                            + " Max health is 0. division by 0 error.", 
+                            __FILE__, __LINE__
+                        );
+                        continue;
+                    }
+                    const float health_percentage = loco.health / loco.max_health;
+
+                    // Red health bar layer
+                    float z_index = 1.1;
+                    health_shader.set_uniform_mat4f(
+                        "u_mvp",
+                        cam.get_view_project_matrix()
+                        * Transform::create_model_matrix(
+                            glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
+                            glm::vec3({ 0, 0, 0 }),
+                            glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
+                        )
+                    );
+                    health_shader.set_uniform_3f("u_colour", { 1, 0, 0 });
+                    renderer.draw(vao, ibo, health_shader);
+
+                    z_index += 0.001;
+                    // Green health bar layer
+                    health_shader.set_uniform_mat4f(
+                        "u_mvp",
+                        cam.get_view_project_matrix()
+                        * Transform::create_model_matrix(
+                            glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
+                            glm::vec3({ 0, 0, 0 }),
+                            glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
+                        )
+                    );
+                    health_shader.set_uniform_3f("u_colour", { 0, 1, 0 });
+                    renderer.draw(vao, ibo, health_shader);
+                }
+            }
             renderer.end_draw();
             time_of_last_frame = float(timer.GetTime());
         }
@@ -374,7 +417,7 @@ private:
         glm::vec3 moveDirection(0.0f);
             glm::vec3 rotateDirection(0.0f);
 
-            float moveSpeed = 0.005f;
+            float moveSpeed = 0.05f;
             float rotateSpeed = PI / 300;  // radians per frame
 
             glm::vec3 newPosition = 1.f * cam.get_position();

@@ -43,4 +43,20 @@ namespace Common {
         if (mag == 0) return { 0, 0 };
         return {in.x / mag, in.y / mag};
     }
+
+    inline float max_of(const float x, const float y) {
+        return (x >= y) * x + (y > x) * y;
+    }
+
+    inline int max_of(const int x, const int y) {
+        return (x >= y) * x + (y > x) * y;
+    }
+
+    inline unsigned int max_of(const unsigned int x, const unsigned int y) {
+        return (x >= y) * x + (y > x) * y;
+    }
+
+    inline float max_of(const glm::vec2 v) {
+        return (v.x >= v.y) * v.x + (v.y > v.x) * v.y;
+    }
 }

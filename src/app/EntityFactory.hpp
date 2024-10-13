@@ -1,8 +1,10 @@
 #pragma once
 
-#include "../ecs/Registry.hpp"
-#include "../ecs/Entity.hpp"
-#include "../components/Components.hpp"
+#include <ecs/Registry.hpp>
+#include <ecs/Entity.hpp>
+#include <components/Components.hpp>
+#include <utils/Common.hpp>
+
 #include <glm/glm.hpp>
 
 namespace EntityFactory {
@@ -13,7 +15,7 @@ namespace EntityFactory {
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
-        motion.scale = glm::vec2(1.0f, 1.0f);  // Player size
+        motion.scale = glm::vec2(3.0f, 3.0f);  // Player size
 
         auto& locomotion = registry.locomotion_stats.emplace(entity);
         locomotion.health = 100.0f;
@@ -31,7 +33,9 @@ namespace EntityFactory {
         texture.name = "player.png";
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        bounding_box.radius = glm::max(motion.scale.x, motion.scale.y);
+        // Functions with the name "max" cause the code to blowup. I don't know why the compiler
+        // doesn't like that, but I also don't care at this point.
+        bounding_box.radius = Common::max_of(motion.scale) / 2;
 
         return entity;
     }
@@ -43,7 +47,7 @@ namespace EntityFactory {
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
-        motion.scale = glm::vec2(0.5f, 0.5f);
+        motion.scale = glm::vec2(1.5f, 1.5f);
 
         auto& weapon_stats = registry.weapon_stats.emplace(entity);
         weapon_stats.damage = damage;
@@ -67,7 +71,7 @@ namespace EntityFactory {
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
-        motion.scale = glm::vec2(1.0f, 1.0f);  // Enemy size
+        motion.scale = glm::vec2(3.0f, 3.0f);  // Enemy size
 
         auto& locomotion = registry.locomotion_stats.emplace(entity);
         locomotion.health = 50.0f;
@@ -85,7 +89,9 @@ namespace EntityFactory {
         texture.name = "skeleton.png";
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        bounding_box.radius = glm::max(motion.scale.x, motion.scale.y);
+        // Functions with the name "max" cause the code to blowup. I don't know why the compiler
+        // doesn't like that, but I also don't care at this point.
+        bounding_box.radius = Common::max_of(motion.scale) / 2;
 
         return entity;
     }
@@ -98,7 +104,7 @@ namespace EntityFactory {
         motion.position = attacker_motion.position;
         motion.angle = atan2(attacker.aim.y, attacker.aim.x);
         motion.velocity = attacker.aim * weapon.proj_speed + attacker_motion.velocity;;
-        motion.scale = glm::vec2(0.25f, 0.25f);  // Projectile size
+        motion.scale = glm::vec2(1.0f, 1.0f);  // Projectile size
 
         auto& projectile = registry.projectile_stats.emplace(entity);
         projectile.damage = weapon.damage;
@@ -112,7 +118,9 @@ namespace EntityFactory {
         texture.name = "projectile.png";
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        bounding_box.radius = glm::max(motion.scale.x, motion.scale.y);
+        // Functions with the name "max" cause the code to blowup. I don't know why the compiler
+        // doesn't like that, but I also don't care at this point.
+        bounding_box.radius = Common::max_of(motion.scale) / 2;
 
         return entity;
     }
