@@ -19,7 +19,7 @@ void World::demo_init() {
 
     // Create some enemies
     for (int i = 0; i < 5; ++i) {
-        glm::vec2 pos = glm::vec2(100.0f + i * 100.0f, 100.0f);
+        glm::vec2 pos = glm::vec2(10.0f + i * 10.0f, 10.0f);
         auto enemy = EntityFactory::create_enemy(pos);
         auto enemy_weapon = EntityFactory::create_weapon(pos, 5.0f, enemy);
         m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
@@ -33,8 +33,8 @@ void World::step(float elapsed_ms) {
     PhysicsSystem::step(elapsed_ms);
     
     // 2. Check and handle collisions
-    m_collisionSystem.check_collisions();
-    handle_collisions();
+    // m_collisionSystem.check_collisions();
+    // handle_collisions();
   
     InputManager::handle_inputs_per_frame();
 

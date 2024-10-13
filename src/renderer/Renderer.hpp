@@ -184,7 +184,11 @@ public:
     }
 
     // https://www.glfw.org/docs/latest/input_guide.html
-    void set_on_mouse_callback_fn(const void* callback) const {
+    void set_on_mouse_move_callback_fn(const void* callback) const {
         GL_Call(glfwSetCursorPosCallback(m_window, (GLFWcursorposfun)callback));
+    }
+
+    void set_on_mouse_click_callback_fn(const void* callback) const {
+        GL_Call(glfwSetMouseButtonCallback(m_window, (GLFWmousebuttonfun)callback));
     }
 };
