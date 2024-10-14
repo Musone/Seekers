@@ -6,6 +6,7 @@
 #include <vector>
 #include <glm/geometric.hpp>
 
+#include "AISystem.hpp"
 #include "utils/Log.hpp"
 
 namespace CollisionSystem {
@@ -85,6 +86,9 @@ namespace CollisionSystem {
         overlap = registry.bounding_boxes.get(loco).radius + registry.bounding_boxes.get(fixed).radius - glm::length(delta);
         if (overlap > 0.0f) {
             loco_motion.position += direction * (overlap + 0.04f);
+        }
+        if (registry.ais.has(loco)) {
+            AISystem::update_target_position(registry.ais.get(loco));
         }
         if (registry.in_dodges.has(loco)) {registry.in_dodges.remove(loco);}
     }

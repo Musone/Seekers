@@ -6,6 +6,7 @@
 
 #include "systems/GameplaySystem.hpp"
 #include "systems/PhysicsSystem.hpp"
+#include "systems/AISystem.hpp"
 
 #include <components/RenderComponents.hpp> // For Motion component
 #include <app/GenerateRandomTrees.hpp>
@@ -90,6 +91,8 @@ void World::step(float elapsed_ms) {
 
     CollisionSystem::check_collisions();
     CollisionSystem::handle_collisions();
+
+    AISystem::AI_step();
 
     InputManager::handle_inputs_per_frame();
 

@@ -12,4 +12,5 @@ namespace Globals {
     bool is_3d_mode = true;
     float dodgeDuration = 0.3f;
     Timer timer = Timer();
+    float ai_distance_epsilon = 0.2f;
 }

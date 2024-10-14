@@ -76,12 +76,18 @@ namespace EntityFactory {
         auto& locomotion = registry.locomotion_stats.emplace(entity);
         locomotion.health = 50.0f;
         locomotion.max_health = 50.0f;
-        locomotion.movement_speed = 100.0f;
+        locomotion.movement_speed = 5.0f;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::FOW;
 
         registry.attackers.emplace(entity);
+
+        AIComponent& ai = registry.ais.emplace(entity);
+        ai.current_state = AI_STATE::PATROL;
+        ai.patrol_points.push_back(position);
+        ai.patrol_points.push_back(position + glm::vec2(10.0f, 0.0f));
+        ai.target_position = position;
 
         registry.rotate_withs.emplace(entity, registry.player);
 
