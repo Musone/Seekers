@@ -41,7 +41,7 @@ namespace CollisionSystem {
 
         registry.locomotion_stats.get(loco).health -= registry.projectile_stats.get(proj).damage;
         registry.remove_all_components_of(proj);
-        Log::log_info("Projectile hit target.", __FILE__, __LINE__);
+        //Log::log_info("Projectile hit target.", __FILE__, __LINE__);
         if (registry.locomotion_stats.get(loco).health <= 0) {
             unsigned int weapon_id = registry.attackers.get(loco).weapon_id;
             registry.move_withs.remove(weapon_id);

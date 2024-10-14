@@ -33,15 +33,6 @@ void World::demo_init() {
     m_players.push_back(player);
     m_registry.player = player;
 
-    // Create some enemies
-    for (int i = 0; i < 5; ++i) {
-        glm::vec2 pos = glm::vec2(10.0f + i * 10.0f, 10.0f);
-        auto enemy = EntityFactory::create_enemy(pos);
-        auto enemy_weapon = EntityFactory::create_weapon(pos, 5.0f, enemy);
-        m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
-        m_enemies.push_back(enemy);
-    }
-
     // Bottom wall (with entrance in the middle)
     for (int i = 0; i < 6; ++i) {
         glm::vec2 pos = glm::vec2(-14.0f + i * 2.0f, -14.0f);
@@ -71,12 +62,16 @@ void World::demo_init() {
     }
 
 
-    // Place a tree
+    // Place a tree and some enemies
     std::vector<glm::vec2> trees = GenerateSomeTree::generateNonOverlappingTrees(100, MAP_WIDTH, MAP_HEIGHT, 2.0f);
     unsigned int i = 0;
     for (auto& tree_pos : trees) {
         if (glm::length(tree_pos) <= 20 || (++i % 4 == 0)) {
-            EntityFactory::create_enemy(tree_pos);
+            if (glm::length(tree_pos) >= 23) {
+                Entity enemy = EntityFactory::create_enemy(tree_pos);
+                auto enemy_weapon = EntityFactory::create_weapon(tree_pos, 5.0f, enemy);
+                m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
+            }
             continue;
         }
         EntityFactory::create_tree(tree_pos);
