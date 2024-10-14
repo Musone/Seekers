@@ -11,6 +11,7 @@
 #include <app/InputManager.hpp>
 #include <app/TextureMaster.hpp>
 #include <components/RenderComponents.hpp>
+#include <components/CombatComponents.hpp>
 
 #include <globals/Globals.h>
 
@@ -41,26 +42,82 @@ public:
         renderer.set_on_mouse_move_callback_fn((void*)InputManager::on_mouse_move);
         renderer.set_on_mouse_click_callback_fn((void*)InputManager::on_mouse_button_pressed);
 
-        // World map setup.
-        float vertices[] = {
+#pragma region Setup for Square
+        float square_vertices[] = {
             -0.5, -0.5, 0,   0, 0, // 0
              0.5, -0.5, 0,   1, 0, // 1
              0.5,  0.5, 0,   1, 1, // 2
             -0.5,  0.5, 0,   0, 1, // 3
         };
-        unsigned int indices[] = {
+        unsigned int square_indices[] = {
             0, 1, 2,
             0, 2, 3
         };
-        IndexBuffer ibo(indices, Common::c_arr_count(indices));
+        IndexBuffer square_ibo(square_indices, Common::c_arr_count(square_indices));
         VertexBufferLayout layout;
         layout.push<float>(3); // position
         layout.push<float>(2); // uv
-        VertexArray vao;
-        vao.init();
-        VertexBuffer vbo(vertices, sizeof(vertices));
-        vao.add_buffer(vbo, layout);
+        VertexArray square_vao;
+        square_vao.init();
+        VertexBuffer square_vbo(square_vertices, sizeof(square_vertices));
+        square_vao.add_buffer(square_vbo, layout);
+#pragma endregion
 
+#pragma region Setup for Cube
+        float cube_vertices[] = {
+            // Front face (Z = -0.5)
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+            // Back face (Z = 0.5)
+            -0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+
+            // Left face (X = -0.5)
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+            // Right face (X = 0.5)
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+
+            // Top face (Y = 0.5)
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
+
+            // Bottom face (Y = -0.5)
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f
+        };
+
+        unsigned int cube_indices[] = {
+            0,  1,  2,  2,  3,  0,  // Front face
+            4,  5,  6,  6,  7,  4,  // Back face
+            8,  9,  10, 10, 11, 8,  // Left face
+            12, 13, 14, 14, 15, 12, // Right face
+            16, 17, 18, 18, 19, 16, // Top face
+            20, 21, 22, 22, 23, 20  // Bottom face
+        };
+        IndexBuffer cube_ibo(cube_indices, Common::c_arr_count(cube_indices));
+        VertexArray cube_vao;
+        cube_vao.init();
+        VertexBuffer cube_vbo(cube_vertices, sizeof(cube_vertices));
+        cube_vao.add_buffer(cube_vbo, layout);
+#pragma endregion
+
+        // World map setup.
         TextureMaster& master = TextureMaster::get_instance();
         TextureInfo map_texture_info = master.get_texture("disnie_map.jpg");
         Shader shader("MapDemo");
@@ -103,13 +160,15 @@ public:
             renderer.begin_draw();
 
             // Render world
-            shader.set_uniform_mat4f(
-                "u_mvp", 
-                cam.get_view_project_matrix()
-                * Transform::create_scaling_matrix({ MAP_WIDTH, MAP_HEIGHT, 1 })
-            );
-            shader.set_uniform_1i("u_texture", map_texture_info.texture_slot_id);
-            renderer.draw(vao, ibo, shader);
+            {
+                shader.set_uniform_mat4f(
+                    "u_mvp", 
+                    cam.get_view_project_matrix()
+                    * Transform::create_scaling_matrix({ MAP_WIDTH, MAP_HEIGHT, 1 })
+                );
+                shader.set_uniform_1i("u_texture", map_texture_info.texture_slot_id);
+                renderer.draw(square_vao, square_ibo, shader);
+            }
 
             // Render entities
             {
@@ -125,7 +184,28 @@ public:
                     const auto& tex_name = reg.textures.get(textured_entity);
                     const TextureInfo texture_info = master.get_texture(tex_name.name);
 
+                    // If the entity is a wall... Use the cube geomety... We should really just use a tag, this is so hacky.
+                    if (reg.teams.has(textured_entity) && reg.teams.get(textured_entity).team_id == TEAM_ID::NEUTRAL) {
+                        if (!reg.rotate_withs.has(textured_entity)) {
+                            shader.set_uniform_1i("u_texture", texture_info.texture_slot_id);
+                            shader.set_uniform_mat4f(
+                                "u_mvp", 
+                                cam.get_view_project_matrix()
+                                * Transform::create_model_matrix(
+                                    { motion.position.x, motion.position.y, motion.scale.y / 2 - 0.01},
+                                    { 0, 0, motion.angle },
+                                    { motion.scale.x, motion.scale.y, 3 }
+                                )
+                            );
+                            renderer.draw(cube_vao, cube_ibo, shader);
+                            continue; // Just go to next entity when you are done. There is nothing else to do lmao.
+                        }
+                    }
+
                     float z_index = 0.1 + (i++) * or_something;
+                    // If the weapon is being held, I want it to come in front of the player
+                    // that is holding it. There is also code for 3d-mode in here to adjust the
+                    // position of the sword.
                     if (reg.weapon_stats.has(textured_entity)) {
                         z_index += 0.1;
                         // Gonna put the weapon above entities.
@@ -152,9 +232,10 @@ public:
                         }
                     }
                     
+                    // Now we use whatever we found to render the entity... This is going to get messy...
                     shader.set_uniform_1i("u_texture", texture_info.texture_slot_id);
                     if (Globals::is_3d_mode) {
-                    shader.set_uniform_mat4f(
+                        shader.set_uniform_mat4f(
                             "u_mvp", 
                             cam.get_view_project_matrix() * Transform::create_model_matrix(
                                 glm::vec3(motion_pos.x - z_index * cam_dir.x, motion_pos.y - z_index * cam_dir.y, motion.scale.y / 2), 
@@ -162,6 +243,8 @@ public:
                                 glm::vec3(motion.scale, 1.0)
                             )
                         );
+
+
                     } else {
                         shader.set_uniform_mat4f(
                             "u_mvp", 
@@ -172,10 +255,11 @@ public:
                             )
                         );
                     }
-                    renderer.draw(vao, ibo, shader);
+                    renderer.draw(square_vao, square_ibo, shader);
                 }
             }
 
+            // Render Health Bars
             {
                 for (const auto& loco_entity : reg.locomotion_stats.entities) {
                     // Render health bar
@@ -220,7 +304,7 @@ public:
                             )
                         );
                         health_shader.set_uniform_3f("u_colour", { 1, 0, 0 });
-                        renderer.draw(vao, ibo, health_shader);
+                        renderer.draw(square_vao, square_ibo, health_shader);
 
                         // Green health bar layer
                         health_shader.set_uniform_mat4f(
@@ -233,7 +317,7 @@ public:
                             )
                         );
                         health_shader.set_uniform_3f("u_colour", { 0, 1, 0 });
-                        renderer.draw(vao, ibo, health_shader);
+                        renderer.draw(square_vao, square_ibo, health_shader);
                     } else {
                         health_shader.set_uniform_mat4f(
                             "u_mvp",
@@ -245,7 +329,7 @@ public:
                             )
                         );
                         health_shader.set_uniform_3f("u_colour", { 1, 0, 0 });
-                        renderer.draw(vao, ibo, health_shader);
+                        renderer.draw(square_vao, square_ibo, health_shader);
 
                         z_index += 0.001;
                         // Green health bar layer
@@ -259,7 +343,7 @@ public:
                             )
                         );
                         health_shader.set_uniform_3f("u_colour", { 0, 1, 0});
-                        renderer.draw(vao, ibo, health_shader);
+                        renderer.draw(square_vao, square_ibo, health_shader);
                     }
                 }
             }
@@ -267,20 +351,22 @@ public:
             // Draw the aim trajectory for the player
             // I'm using the Health bar shader because well... I just wanted
             // to draw rectangles with static colours instead of textures...
-            health_shader.set_uniform_3f("u_colour", { 1, 0, 0.5 }); // fuschia croshair (pink)
-            glm::vec3 crosshair_pos = { player_motion.position.x, player_motion.position.y, player_motion.scale.y / 2.0f };
-            const float crosshair_length = 1000;
-            crosshair_pos += glm::vec3(cam_dir, 0) * (crosshair_length / 2.0f);
-            health_shader.set_uniform_mat4f(
-                "u_mvp",
-                cam.get_view_project_matrix()
-                * Transform::create_model_matrix(
-                    crosshair_pos,
-                    glm::vec3({ 0, 0, player_motion.angle }),
-                    glm::vec3({ 0.2, crosshair_length, 1 })
-                )
-            );
-            renderer.draw(vao, ibo, health_shader);
+            if (Globals::is_3d_mode){
+                health_shader.set_uniform_3f("u_colour", { 1, 0, 0.5 }); // fuschia croshair (pink)
+                glm::vec3 crosshair_pos = { player_motion.position.x, player_motion.position.y, player_motion.scale.y / 2.0f };
+                const float crosshair_length = 1000;
+                crosshair_pos += glm::vec3(cam_dir, 0) * (crosshair_length / 2.0f);
+                health_shader.set_uniform_mat4f(
+                    "u_mvp",
+                    cam.get_view_project_matrix()
+                    * Transform::create_model_matrix(
+                        crosshair_pos,
+                        glm::vec3({ 0, 0, player_motion.angle }),
+                        glm::vec3({ 0.2, crosshair_length, 1 })
+                    )
+                );
+                renderer.draw(square_vao, square_ibo, health_shader);
+            }
 
             renderer.end_draw();
             time_of_last_frame = float(timer.GetTime());
