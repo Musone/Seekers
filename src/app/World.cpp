@@ -27,16 +27,26 @@ void World::demo_init() {
         m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
         m_enemies.push_back(enemy);
     }
+
+    // Create some walls
+    for (int i = 0; i < 5; ++i) {
+        glm::vec2 pos = glm::vec2(5.0f + i * 2.0f, 5.0f);
+        EntityFactory::create_wall(pos, 0.0f);
+    }
+    for (int i = 0; i < 5; ++i) {
+        glm::vec2 pos = glm::vec2(5.0f, (i + 1) * 2.0f + 5.0f);
+        EntityFactory::create_wall(pos, PI / 2.0f);
+    }
 }
 
 void World::step(float elapsed_ms) {
     // TODO: Update the game world
     // 1. Update physics
     PhysicsSystem::step(elapsed_ms);
-    
+
     CollisionSystem::check_collisions();
     CollisionSystem::handle_collisions();
-  
+
     InputManager::handle_inputs_per_frame();
 
     GameplaySystem::update_cooldowns(elapsed_ms);

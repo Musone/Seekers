@@ -124,4 +124,25 @@ namespace EntityFactory {
 
         return entity;
     }
+
+    inline Entity create_wall(glm::vec2 position, float angle) {
+        Registry& registry = Registry::get_instance();
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.angle = angle;
+        motion.scale = glm::vec2(2.0f, 2.0f);
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& texture = registry.textures.emplace(entity);
+        texture.name = "tileset_1.png";
+
+        auto& bounding_box = registry.bounding_boxes.emplace(entity);
+        bounding_box.radius = sqrt(motion.scale.x * motion.scale.x + motion.scale.y * motion.scale.y) * 0.5f;
+
+        return entity;
+    }
 };
