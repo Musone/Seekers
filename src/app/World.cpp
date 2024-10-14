@@ -46,6 +46,7 @@ void World::step(float elapsed_ms) {
     // TODO: Update the game world
     // 1. Update physics
     PhysicsSystem::step(elapsed_ms);
+    PhysicsSystem::update_interpolations();
 
     CollisionSystem::check_collisions();
     CollisionSystem::handle_collisions();

@@ -7,6 +7,7 @@
 #include "ecs/Registry.hpp"
 #include "globals/Globals.h"
 #include "utils/Common.hpp"
+#include "utils/Timer.h"
 
 namespace InputManager {
     inline void on_key_pressed(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -33,7 +34,9 @@ namespace InputManager {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
             }
             if (key == GLFW_KEY_SPACE) {
-                player_motion.position += Common::normalize(player_motion.velocity) * Globals::dodgeMoveMag;
+                if (!registry.in_dodges.has(registry.player)) {
+                    registry.in_dodges.emplace(registry.player, player_motion.position, player_motion.position + Common::normalize(player_motion.velocity) * Globals::dodgeMoveMag, Globals::timer.GetTime(), Globals::dodgeDuration);
+                }
             }
         }
         if (action == GLFW_RELEASE) {
