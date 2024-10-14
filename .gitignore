@@ -10,3 +10,6 @@ cmake-build-debug/
 # Temporary files and folders
 z_*
 z_*/
+
+.vs/
+out/

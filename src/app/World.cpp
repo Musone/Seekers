@@ -9,11 +9,20 @@
 
 #include <components/RenderComponents.hpp> // For Motion component
 
-World::World() : m_registry(Registry::get_instance()){}
+World::World() : m_registry(Registry::get_instance()), m_audioSystem(AudioSystem::get_instance()) {}
 
 World::~World() = default;
 
 void World::demo_init() {
+    // Initialize, load sounds and play background music
+    m_audioSystem.initialize();
+    m_audioSystem.load_music(audio_path("music.wav"));
+    m_audioSystem.load_sound_effect(audio_path("footstep.wav"));
+    m_audioSystem.load_sound_effect(audio_path("teleport.wav"));
+    m_audioSystem.load_sound_effect(audio_path("attack.wav"));
+    m_audioSystem.set_music_volume(16);
+    m_audioSystem.play_music(-1);
+
     // Create Player
     auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
     auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f, player);

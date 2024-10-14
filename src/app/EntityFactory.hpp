@@ -51,9 +51,9 @@ namespace EntityFactory {
 
         auto& weapon_stats = registry.weapon_stats.emplace(entity);
         weapon_stats.damage = damage;
-        weapon_stats.range = 5.0f;
-        weapon_stats.proj_speed = 10.0f;
-        weapon_stats.attack_cooldown = 1.0f;
+        weapon_stats.range = 25.0f;
+        weapon_stats.proj_speed = 20.0f;
+        weapon_stats.attack_cooldown = 0.2f;
         weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
 
         registry.move_withs.emplace(entity, following);
@@ -102,7 +102,8 @@ namespace EntityFactory {
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = attacker_motion.position;
-        motion.angle = atan2(attacker.aim.y, attacker.aim.x);
+        // motion.angle = atan2(attacker.aim.y, attacker.aim.x);
+        motion.angle = attacker_motion.angle; // Changed this so that I can render projectiles properly in 3d-mode.
         motion.velocity = attacker.aim * weapon.proj_speed + attacker_motion.velocity;;
         motion.scale = glm::vec2(1.0f, 1.0f);  // Projectile size
 
