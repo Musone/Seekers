@@ -8,6 +8,8 @@
 #include "systems/PhysicsSystem.hpp"
 
 #include <components/RenderComponents.hpp> // For Motion component
+#include <app/GenerateRandomTrees.hpp>
+#include <random>
 
 World::World() : m_registry(Registry::get_instance()), m_audioSystem(AudioSystem::get_instance()) {}
 
@@ -39,18 +41,45 @@ void World::demo_init() {
         m_enemies.push_back(enemy);
     }
 
-    // Create some walls
-    for (int i = 0; i < 5; ++i) {
-        glm::vec2 pos = glm::vec2(5.0f + i * 2.0f, 5.0f);
+    // Bottom wall (with entrance in the middle)
+    for (int i = 0; i < 6; ++i) {
+        glm::vec2 pos = glm::vec2(-14.0f + i * 2.0f, -14.0f);
         EntityFactory::create_wall(pos, 0.0f);
     }
-    for (int i = 0; i < 5; ++i) {
-        glm::vec2 pos = glm::vec2(5.0f, (i + 1) * 2.0f + 5.0f);
+    for (int i = 0; i < 6; ++i) {
+        glm::vec2 pos = glm::vec2(4.0f + i * 2.0f, -14.0f);
+        EntityFactory::create_wall(pos, 0.0f);
+    }
+
+    // Top wall
+    for (int i = 0; i < 15; ++i) {
+        glm::vec2 pos = glm::vec2(-14.0f + i * 2.0f, 14.0f);
+        EntityFactory::create_wall(pos, 0.0f);
+    }
+
+    // Left wall
+    for (int i = 0; i < 14; ++i) {
+        glm::vec2 pos = glm::vec2(-14.0f, -12.0f + i * 2.0f);
         EntityFactory::create_wall(pos, PI / 2.0f);
     }
 
+    // Right wall
+    for (int i = 0; i < 14; ++i) {
+        glm::vec2 pos = glm::vec2(14.0f, -12.0f + i * 2.0f);
+        EntityFactory::create_wall(pos, PI / 2.0f);
+    }
+
+
     // Place a tree
-    EntityFactory::create_tree(glm::vec2(15.0f, -15.0f));
+    std::vector<glm::vec2> trees = GenerateSomeTree::generateNonOverlappingTrees(100, MAP_WIDTH, MAP_HEIGHT, 2.0f);
+    unsigned int i = 0;
+    for (auto& tree_pos : trees) {
+        if (glm::length(tree_pos) <= 20 || (++i % 4 == 0)) {
+            EntityFactory::create_enemy(tree_pos);
+            continue;
+        }
+        EntityFactory::create_tree(tree_pos);
+    }
 }
 
 void World::step(float elapsed_ms) {

@@ -52,7 +52,7 @@ namespace CollisionSystem {
     inline void loco_loco_collision(Entity& loco1, Entity& loco2) {
         Registry& registry = Registry::get_instance();
 
-        Log::log_info("Locomotion entities collided.", __FILE__, __LINE__);
+        // Log::log_info("Locomotion entities collided.", __FILE__, __LINE__);
         Motion& motion1 = registry.motions.get(loco1);
         Motion& motion2 = registry.motions.get(loco2);
         glm::vec2 delta = motion1.position - motion2.position;
@@ -66,13 +66,13 @@ namespace CollisionSystem {
         Registry& registry = Registry::get_instance();
 
         registry.remove_all_components_of(proj);
-        Log::log_info("Projectile hit a fixed entity.", __FILE__, __LINE__);
+        // Log::log_info("Projectile hit a fixed entity.", __FILE__, __LINE__);
     }
 
     inline void loco_fixed_collision(Entity& loco, Entity& fixed) {
         Registry& registry = Registry::get_instance();
 
-        Log::log_info("Locomotion entity collided with fixed entity.", __FILE__, __LINE__);
+        // Log::log_info("Locomotion entity collided with fixed entity.", __FILE__, __LINE__);
         Motion& loco_motion = registry.motions.get(loco);
         Motion& fixed_motion = registry.motions.get(fixed);
         glm::vec2 delta = loco_motion.position - fixed_motion.position;
