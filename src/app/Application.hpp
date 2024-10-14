@@ -119,7 +119,8 @@ public:
 
         // World map setup.
         TextureMaster& master = TextureMaster::get_instance();
-        TextureInfo map_texture_info = master.get_texture("disnie_map.jpg");
+        // TextureInfo map_texture_info = master.get_texture("disnie_map.jpg");
+        TextureInfo map_texture_info = master.get_texture("grass.jpg");
         Shader shader("MapDemo");
 
         Camera cam(renderer.get_window_width(), renderer.get_window_height());
