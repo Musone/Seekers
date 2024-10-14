@@ -83,8 +83,21 @@ public:
             // std::cout << 1000.0f / delta_time  << '\n';
             world.step(delta_time);
             const Motion& player_motion = reg.motions.get(reg.player);
-            cam.set_position(glm::vec3(player_motion.position, CAMERA_DISTANCE_FROM_WORLD));
-            cam.set_rotation({ 0, 0, player_motion.angle });
+            
+            float the_3d_angle = 0;
+            glm::vec2 cam_dir;
+            if (Globals::is_3d_mode) {
+                // Press Z to toggle 3d mode
+                cam.set_rotation({ 2 * PI / 6, 0, player_motion.angle });
+                const auto temp = cam.rotate_to_camera_direction({ 0, 0, -1 });
+                cam_dir = { temp.x, temp.y };
+                cam_dir = Common::normalize(cam_dir);
+                cam.set_position(glm::vec3(player_motion.position - (cam_dir * 5.0f), 7));
+                the_3d_angle = PI / 2;
+            } else {
+                cam.set_position(glm::vec3(player_motion.position, CAMERA_DISTANCE_FROM_WORLD));
+                cam.set_rotation({ 0, 0, player_motion.angle });
+            }
 
             // _handle_free_camera_inputs(renderer, cam);
             renderer.begin_draw();
@@ -108,24 +121,57 @@ public:
                     }
 
                     const auto& motion = reg.motions.get(textured_entity);
+                    glm::vec2 motion_pos = { motion.position.x, motion.position.y };
                     const auto& tex_name = reg.textures.get(textured_entity);
                     const TextureInfo texture_info = master.get_texture(tex_name.name);
 
                     float z_index = 0.1 + (i++) * or_something;
                     if (reg.weapon_stats.has(textured_entity)) {
-                        // Gonna put the weapon above entities.
                         z_index += 0.1;
+                        // Gonna put the weapon above entities.
+                        for (const auto& attacker_entity : reg.attackers.entities) {
+                            if (reg.attackers.get(attacker_entity).weapon_id == textured_entity.get_id()) {
+                                // Move the weapon to the attacker position in 3d mode... We should really be using
+                                // child components and a Scene Graph for this...
+                                if (!reg.motions.has(attacker_entity)) { 
+                                    Log::log_warning(
+                                        "Why doesn't attacker entity " + std::to_string(attacker_entity.get_id()) + " have a motion?",
+                                        __FILE__, __LINE__
+                                    );
+                                    break; 
+                                }
+                                const auto& attacker_motion = reg.motions.get(attacker_entity);
+                                motion_pos = attacker_motion.position;
+                                const auto temp = Transform::create_rotation_matrix({ 0, 0, -PI / 2 }) * glm::vec4(cam_dir, 0, 1);
+                                glm::vec2 shift_weapon_to_the_right = { temp.x, temp.y };
+                                shift_weapon_to_the_right = Common::normalize(shift_weapon_to_the_right);
+                                shift_weapon_to_the_right *= 1.0f; // move it by 1 world unit
+                                motion_pos += shift_weapon_to_the_right;
+                                break;
+                            }
+                        }
                     }
                     
                     shader.set_uniform_1i("u_texture", texture_info.texture_slot_id);
+                    if (Globals::is_3d_mode) {
                     shader.set_uniform_mat4f(
-                        "u_mvp", 
-                        cam.get_view_project_matrix() * Transform::create_model_matrix(
-                            glm::vec3(motion.position, z_index), 
-                            { 0, 0, motion.angle }, 
-                            glm::vec3(motion.scale, 1.0)
-                        )
-                    );
+                            "u_mvp", 
+                            cam.get_view_project_matrix() * Transform::create_model_matrix(
+                                glm::vec3(motion_pos.x - z_index * cam_dir.x, motion_pos.y - z_index * cam_dir.y, motion.scale.y / 2), 
+                                { the_3d_angle, 0, motion.angle }, 
+                                glm::vec3(motion.scale, 1.0)
+                            )
+                        );
+                    } else {
+                        shader.set_uniform_mat4f(
+                            "u_mvp", 
+                            cam.get_view_project_matrix() * Transform::create_model_matrix(
+                                glm::vec3(motion.position, z_index), 
+                                { 0, 0, motion.angle }, 
+                                glm::vec3(motion.scale, 1.0)
+                            )
+                        );
+                    }
                     renderer.draw(vao, ibo, shader);
                 }
             }
@@ -151,33 +197,91 @@ public:
 
                     // Red health bar layer
                     float z_index = 1.1;
-                    health_shader.set_uniform_mat4f(
-                        "u_mvp",
-                        cam.get_view_project_matrix()
-                        * Transform::create_model_matrix(
-                            glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
-                            glm::vec3({ 0, 0, 0 }),
-                            glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
-                        )
-                    );
-                    health_shader.set_uniform_3f("u_colour", { 1, 0, 0 });
-                    renderer.draw(vao, ibo, health_shader);
+                    if (Globals::is_3d_mode) {
+                        glm::vec3 health_bar_pos;
+                        glm::vec3 health_bar_angle;
+                        if (loco_entity.get_id() == reg.player.get_id()) {
+                            health_bar_pos = glm::vec3(cam.get_position());
+                            const auto cam_dir_3d = glm::normalize(cam.rotate_to_camera_direction({ 0, 0, -1 }));
+                            const auto& temp = Transform::create_rotation_matrix({ cam.get_rotation().x - PI / 2, cam.get_rotation().y, cam.get_rotation().z }) * glm::vec4(0, 0, -1, 1);
+                            health_bar_pos += (2.5f * glm::vec3(temp.x, temp.y, temp.z)) + (3.0f * cam_dir_3d);
+                        } else {
+                            health_bar_pos = glm::vec3({ loco_motion.position.x, loco_motion.position.y, loco_motion.scale.y + HEALTH_BAR_HEIGHT / 2 + 0.5});
+                        }
+                            health_bar_angle = cam.get_rotation();
 
-                    z_index += 0.001;
-                    // Green health bar layer
-                    health_shader.set_uniform_mat4f(
-                        "u_mvp",
-                        cam.get_view_project_matrix()
-                        * Transform::create_model_matrix(
-                            glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
-                            glm::vec3({ 0, 0, 0 }),
-                            glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
-                        )
-                    );
-                    health_shader.set_uniform_3f("u_colour", { 0, 1, 0 });
-                    renderer.draw(vao, ibo, health_shader);
+                        health_shader.set_uniform_mat4f(
+                            "u_mvp",
+                            cam.get_view_project_matrix()
+                            * Transform::create_model_matrix(
+                                health_bar_pos,
+                                health_bar_angle,
+                                glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
+                            )
+                        );
+                        health_shader.set_uniform_3f("u_colour", { 1, 0, 0 });
+                        renderer.draw(vao, ibo, health_shader);
+
+                        // Green health bar layer
+                        health_shader.set_uniform_mat4f(
+                            "u_mvp",
+                            cam.get_view_project_matrix()
+                            * Transform::create_model_matrix(
+                                health_bar_pos - (0.001f * cam.rotate_to_camera_direction({ 0, 0, -1 })),
+                                health_bar_angle,
+                                glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
+                            )
+                        );
+                        health_shader.set_uniform_3f("u_colour", { 0, 1, 0 });
+                        renderer.draw(vao, ibo, health_shader);
+                    } else {
+                        health_shader.set_uniform_mat4f(
+                            "u_mvp",
+                            cam.get_view_project_matrix()
+                            * Transform::create_model_matrix(
+                                glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
+                                glm::vec3({ 0, 0, 0 }),
+                                glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
+                            )
+                        );
+                        health_shader.set_uniform_3f("u_colour", { 1, 0, 0 });
+                        renderer.draw(vao, ibo, health_shader);
+
+                        z_index += 0.001;
+                        // Green health bar layer
+                        health_shader.set_uniform_mat4f(
+                            "u_mvp",
+                            cam.get_view_project_matrix()
+                            * Transform::create_model_matrix(
+                                glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
+                                glm::vec3({ 0, 0, Globals::is_3d_mode ? player_motion.angle : 0 }),
+                                glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
+                            )
+                        );
+                        health_shader.set_uniform_3f("u_colour", { 0, 1, 0});
+                        renderer.draw(vao, ibo, health_shader);
+                    }
                 }
             }
+
+            // Draw the aim trajectory for the player
+            // I'm using the Health bar shader because well... I just wanted
+            // to draw rectangles with static colours instead of textures...
+            health_shader.set_uniform_3f("u_colour", { 1, 0, 0.5 }); // fuschia croshair (pink)
+            glm::vec3 crosshair_pos = { player_motion.position.x, player_motion.position.y, player_motion.scale.y / 2.0f };
+            const float crosshair_length = 1000;
+            crosshair_pos += glm::vec3(cam_dir, 0) * (crosshair_length / 2.0f);
+            health_shader.set_uniform_mat4f(
+                "u_mvp",
+                cam.get_view_project_matrix()
+                * Transform::create_model_matrix(
+                    crosshair_pos,
+                    glm::vec3({ 0, 0, player_motion.angle }),
+                    glm::vec3({ 0.2, crosshair_length, 1 })
+                )
+            );
+            renderer.draw(vao, ibo, health_shader);
+
             renderer.end_draw();
             time_of_last_frame = float(timer.GetTime());
         }

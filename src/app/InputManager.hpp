@@ -15,6 +15,9 @@ namespace InputManager {
         Motion& player_motion = registry.motions.get(registry.player);
 
         if (action == GLFW_PRESS) {
+            if (key == GLFW_KEY_Z) {
+                Globals::is_3d_mode = !Globals::is_3d_mode;
+            }
             if (key == GLFW_KEY_W) {
                 registry.input_state.w_down = true;
             }
@@ -103,8 +106,14 @@ namespace InputManager {
         player_motion.velocity = { temp.x, temp.y };
 
         // update aim
-        player_attacker.aim = Common::normalize(input_state.mouse_pos - glm::vec2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2));
-        temp = Transform::create_rotation_matrix({0, 0, player_motion.angle}) * glm::vec4(player_attacker.aim, 0, 1);
-        player_attacker.aim = { temp.x, temp.y };
+        if (Globals::is_3d_mode) {
+            // Shoot straight when in 3d-mode
+            const auto& temp2 = Transform::create_rotation_matrix({ 0, 0, player_motion.angle }) * glm::vec4(0, 1, 0, 1);
+            player_attacker.aim = { temp2.x, temp2.y };
+        } else {
+            player_attacker.aim = Common::normalize(input_state.mouse_pos - glm::vec2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2));
+            temp = Transform::create_rotation_matrix({0, 0, player_motion.angle}) * glm::vec4(player_attacker.aim, 0, 1);
+            player_attacker.aim = { temp.x, temp.y };
+        }
     }
 };
