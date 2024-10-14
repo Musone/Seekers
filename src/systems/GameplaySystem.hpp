@@ -8,7 +8,7 @@ namespace GameplaySystem {
 
         for (Entity& e : registry.attack_cooldowns.entities) {
             auto& attack_cooldown = registry.attack_cooldowns.get(e);
-            attack_cooldown.timer -= elapsed_ms;
+            attack_cooldown.timer -= elapsed_ms / 1000.0f;
             if (attack_cooldown.timer <= 0) {
                 registry.attack_cooldowns.remove(e);
             }
