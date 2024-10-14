@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <unordered_map>
+#include <utils/Common.hpp>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -73,6 +74,34 @@ public:
         }
     }
 
+    // Play footstep sound effect
+    int play_footstep() {
+        if (!footstep_playing) {
+            footstep_channel = play_sound_effect(audio_path("footstep.wav"), -1);
+            footstep_playing = true;
+        }
+        return footstep_channel;
+    }
+
+    // Stop footstep sound effect
+    void stop_footstep(int channel) {
+        if (footstep_playing) {
+            // Stop sound on the channel
+            Mix_HaltChannel(channel);
+            footstep_playing = false;
+        }
+    }
+
+    // Play attack sound effect
+    void play_attack() {
+        play_sound_effect(audio_path("attack.wav"), 0);
+    }
+
+    // Play dodge sound effect
+    void play_dodge() {
+        play_sound_effect(audio_path("teleport.wav"), 0);
+    }
+
     // Stop a sound effect playing on a specific channel
     void stop_sound_effect(int channel) {
         Mix_HaltChannel(channel);
@@ -101,4 +130,7 @@ private:
 
     Mix_Music* background_music;
     std::unordered_map<std::string, Mix_Chunk*> sound_effects;
+
+    bool footstep_playing = false;
+    int footstep_channel = -1;
 };
