@@ -134,6 +134,7 @@ public:
 
         Shader health_shader("MapDemoHealth");
 
+        bool is_cursor_locked = false;
         while (!renderer.is_terminated()) {
             float delta_time = 0.001f * float(timer.GetTime()) - time_of_last_frame;
             while (delta_time < 1000.0f / 60.0f) { delta_time = 0.001f * (float(timer.GetTime()) - time_of_last_frame); }
@@ -151,9 +152,11 @@ public:
                 cam_dir = Common::normalize(cam_dir);
                 cam.set_position(glm::vec3(player_motion.position - (cam_dir * 5.0f), 7));
                 the_3d_angle = PI / 2;
+                if (!is_cursor_locked) { renderer.lock_cursor(); is_cursor_locked = true; }
             } else {
                 cam.set_position(glm::vec3(player_motion.position, CAMERA_DISTANCE_FROM_WORLD));
                 cam.set_rotation({ 0, 0, player_motion.angle });
+                if (is_cursor_locked) { renderer.unlock_cursor(); is_cursor_locked = false; }
             }
 
             // _handle_free_camera_inputs(renderer, cam);

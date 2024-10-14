@@ -190,4 +190,12 @@ public:
     void set_on_mouse_click_callback_fn(const void* callback) const {
         GL_Call(glfwSetMouseButtonCallback(m_window, (GLFWmousebuttonfun)callback));
     }
+
+    void lock_cursor() const {
+        GL_Call(glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED));
+    }
+
+    void unlock_cursor() const {
+        GL_Call(glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL));
+    }
 };

@@ -105,7 +105,10 @@ namespace InputManager {
 
     inline void on_mouse_move(GLFWwindow* window, double x, double y) {
         Registry& registry = Registry::get_instance();
-
+        if (Globals::is_3d_mode) {
+            auto& player_motion = registry.motions.get(registry.player);
+            player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
+        }
         registry.input_state.mouse_pos = glm::vec2(x, WINDOW_HEIGHT - y);
     }
 
