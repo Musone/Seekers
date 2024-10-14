@@ -3,6 +3,7 @@
 #include <ecs/Registry.hpp>
 #include <ecs/Entity.hpp>
 #include <vector>
+#include <globals/Globals.h>
 
 class World {
 public:
@@ -21,6 +22,7 @@ private:
 	void restart_game();
 	void handle_projectile_collision(const Entity& projectile, const Entity& target);
 	void handle_entity_collision(const Entity& entity1, const Entity& entity2);
+	void enforce_boundaries(Entity entity); // Method to enforce boundaries
 
 	Registry& m_registry;
 };
