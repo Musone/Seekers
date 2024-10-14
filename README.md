@@ -21,6 +21,21 @@ Seekers is a top-down 2D action RPG that melds dungeon crawling with open-world 
 - Advanced enemy AI with state machines and pathfinding
 - Physics-based interactions for projectiles and environmental effects
 
+### Game Controls
+
+- **Movement**: WASD keys
+  - W: Move forward
+  - A: Move left
+  - S: Move backward
+  - D: Move right
+- **Camera Rotation**: Q and E keys
+  - Q: Rotate camera left
+  - E: Rotate camera right
+- **Attack (Shoot Projectile)**: Left mouse button
+- **Dodge**: Spacebar
+- **Toggle 3D Mode**: Z key
+- **Aim**: Mouse movement (in 2D mode)
+
 ### Getting Started
 
 #### Prerequisites
