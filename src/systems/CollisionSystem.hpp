@@ -58,8 +58,8 @@ namespace CollisionSystem {
         glm::vec2 delta = motion1.position - motion2.position;
         float overlap = registry.bounding_boxes.get(loco1).radius + registry.bounding_boxes.get(loco2).radius - glm::length(delta);
         glm::vec2 direction = glm::normalize(delta);
-        motion1.position += direction * overlap + 0.01f;
-        motion2.position -= direction * overlap + 0.01f;
+        motion1.position += direction * (overlap + 0.04f);
+        motion2.position -= direction * (overlap + 0.04f);
     }
 
     inline void proj_fixed_collision(Entity& proj, Entity& fixed) {
@@ -73,6 +73,7 @@ namespace CollisionSystem {
         Registry& registry = Registry::get_instance();
 
         // Log::log_info("Locomotion entity collided with fixed entity.", __FILE__, __LINE__);
+        if (!registry.motions.has(loco) || !registry.motions.has(fixed)) {return;}
         Motion& loco_motion = registry.motions.get(loco);
         Motion& fixed_motion = registry.motions.get(fixed);
         auto pushback_dir = Common::normalize(loco_motion.velocity) * -1.0f;
@@ -80,6 +81,11 @@ namespace CollisionSystem {
         float overlap = registry.bounding_boxes.get(loco).radius + registry.bounding_boxes.get(fixed).radius - glm::length(delta);
         glm::vec2 direction = glm::normalize(delta);
         loco_motion.position += pushback_dir * (overlap + 0.04f);
+        delta = loco_motion.position - fixed_motion.position;
+        overlap = registry.bounding_boxes.get(loco).radius + registry.bounding_boxes.get(fixed).radius - glm::length(delta);
+        if (overlap > 0.0f) {
+            loco_motion.position += direction * (overlap + 0.04f);
+        }
         if (registry.in_dodges.has(loco)) {registry.in_dodges.remove(loco);}
     }
 
