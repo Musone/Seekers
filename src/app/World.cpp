@@ -6,9 +6,12 @@
 
 #include "systems/GameplaySystem.hpp"
 #include "systems/PhysicsSystem.hpp"
-#include <random>
+
+#include "systems/AISystem.hpp"
 
 #include <components/RenderComponents.hpp> // For Motion component
+#include <app/GenerateRandomTrees.hpp>
+#include <random>
 
 World::World() : m_registry(Registry::get_instance()), m_audioSystem(AudioSystem::get_instance()) {}
 
@@ -31,118 +34,50 @@ void World::demo_init() {
     m_players.push_back(player);
     m_registry.player = player;
 
-    // Create some enemies
-    std::random_device rd;
-    std::mt19937 eng(rd());
-    std:: uniform_real_distribution<float> distr_pos(-70.0f, 70.0f);
-    for (int i = 0; i < 100; ++i) {
-        // glm::vec2 pos = glm::vec2(10.0f + i * 10.0f, 10.0f);
-        // auto enemy = EntityFactory::create_enemy(pos);
-        // auto enemy_weapon = EntityFactory::create_weapon(pos, 5.0f, enemy);
-        // m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
-        // m_enemies.push_back(enemy);
-        glm::vec2 pos = glm::vec2(distr_pos(eng), distr_pos(eng));
-        if (pos.x >= -70.f && pos.x <= 70.f && pos.y >= -70.f && pos.y <= 70.f) {
-            auto enemy = EntityFactory::create_enemy(pos);
-            auto enemy_weapon = EntityFactory::create_weapon(pos, 5.0f, enemy);
-            m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
-            m_enemies.push_back(enemy);
-        }
-    }
-
-    // Create wall around the whole map
-    // horizontal
-    for (int i = -74; i < 75; ++i) {
-        EntityFactory::create_wall(glm::vec2(i, 74.f), 0.0f);
-        EntityFactory::create_wall(glm::vec2(i, -74.f), 0.0f);
-    }
-
-    //vertical
-    for (int i = -74; i < 75; ++i) {
-        EntityFactory::create_wall(glm::vec2(74.f, i), PI / 2.0f);
-        EntityFactory::create_wall(glm::vec2(-74.f, i), PI / 2.0f);
-    }
-
-    // Create some test walls
-    for (int i = 0; i < 5; ++i) {
-        glm::vec2 pos = glm::vec2(5.0f + i * 2.0f, 5.0f);
+    // Bottom wall (with entrance in the middle)
+    for (int i = 0; i < 6; ++i) {
+        glm::vec2 pos = glm::vec2(-14.0f + i * 2.0f, -14.0f);
         EntityFactory::create_wall(pos, 0.0f);
     }
-    for (int i = 0; i < 5; ++i) {
-        glm::vec2 pos = glm::vec2(5.0f, (i + 1) * 2.0f + 5.0f);
+    for (int i = 0; i < 6; ++i) {
+        glm::vec2 pos = glm::vec2(4.0f + i * 2.0f, -14.0f);
+        EntityFactory::create_wall(pos, 0.0f);
+    }
+
+    // Top wall
+    for (int i = 0; i < 15; ++i) {
+        glm::vec2 pos = glm::vec2(-14.0f + i * 2.0f, 14.0f);
+
+        EntityFactory::create_wall(pos, 0.0f);
+    }
+
+    // Left wall
+    for (int i = 0; i < 14; ++i) {
+        glm::vec2 pos = glm::vec2(-14.0f, -12.0f + i * 2.0f);
         EntityFactory::create_wall(pos, PI / 2.0f);
     }
 
-    // random tree walls generation
-    std::uniform_real_distribution<float> distr_x(-70.f, 70.f);
-    std::uniform_int_distribution<int> distr_trees(3, 6);
-
-    // y offsets
-    float y_arr[] = {-65.f, -50.f, -35.f, -20.f, -5.f, 10.f, 25.f, 40.f, 55.f, 70.f};
-
-    for (int i = 0; i <sizeof(y_arr) / sizeof(y_arr[0]); ++i) {
-        float start_x = distr_x(eng);
-        int num_trees = distr_trees(eng);
-
-        for (int j = 0; j < num_trees; ++j) {
-            float x_pos = start_x + j * 3.3f;
-            float x_neg = start_x - j * 3.3f;
-
-            if (x_pos >= -70.f && x_pos <= 70.f) {
-                EntityFactory::create_tree(glm::vec2(x_pos, y_arr[i]));
-            }
-
-            if (x_neg >= -70.f && x_neg <= 70.f) {
-                EntityFactory::create_tree(glm::vec2(x_neg, y_arr[i]));
-            }
-        }
-
-        float column_x = start_x + (std::uniform_int_distribution<int>(0, num_trees - 1)(eng) * 3.3f);
-        int num_column_trees = distr_trees(eng);
-
-        for (int k = 0; k < num_column_trees; ++k) {
-            float y_pos = y_arr[i] + k * 3.3f;
-            float y_neg = y_arr[i] - k * 3.3f;
-
-            if (column_x >= -70.f && column_x <= 70.f) {
-                if (y_pos >= -70.f && y_pos <= 70.f) {
-                    EntityFactory::create_tree(glm::vec2(column_x, y_pos));
-                }
-                if (y_neg >= -70.f && y_neg <= 70.f) {
-                    EntityFactory::create_tree(glm::vec2(column_x, y_neg));
-                }
-            }
-        }
+    // Right wall
+    for (int i = 0; i < 14; ++i) {
+        glm::vec2 pos = glm::vec2(14.0f, -12.0f + i * 2.0f);
+        EntityFactory::create_wall(pos, PI / 2.0f);
     }
 
-    // Create some tree cluster
 
-    // number of cluster
-    std::uniform_int_distribution<int> cluster_count_dist(20, 30);
-    // offset from cluster center
-    std::uniform_real_distribution<float> distr_offset(-5.f, 5.f);
-    // number of tree per clusters
-    std::uniform_int_distribution<int> cluster_trees(10, 20);
-    // cluster center
-    std::uniform_real_distribution<float> cluster_center(-70.f, 70.f);
-    
-    int num_clusters = cluster_count_dist(eng);
-
-    for (int c = 0; c < cluster_count_dist(eng); ++c) {
-        glm::vec2 center(cluster_center(eng), cluster_center(eng));
-
-        int tree_cluster_num = cluster_trees(eng);
-
-        for (int i = 0; i < tree_cluster_num; ++i) {
-            float offset_x = distr_offset(eng);
-            float offset_y = distr_offset(eng);
-
-            glm::vec2 tree_pos = center + glm::vec2(offset_x, offset_y);
-
-            if (tree_pos.x >= -70.f && tree_pos.x <= 70.f && tree_pos.y >= -70.f && tree_pos.y <= 70.f) {
-                EntityFactory::create_tree(tree_pos);
+    // Place a tree and some enemies
+    std::vector<glm::vec2> trees = GenerateSomeTree::generateNonOverlappingTrees(100, MAP_WIDTH, MAP_HEIGHT, 2.0f);
+    unsigned int i = 0;
+    for (auto& tree_pos : trees) {
+        if (glm::length(tree_pos) <= 20 || (++i % 4 == 0)) {
+            if (glm::length(tree_pos) >= 23) {
+                Entity enemy = EntityFactory::create_enemy(tree_pos);
+                auto enemy_weapon = EntityFactory::create_weapon(tree_pos, 5.0f, enemy);
+                m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
             }
+            continue;
         }
+        EntityFactory::create_tree(tree_pos);
+
     }
 }
 
@@ -154,6 +89,8 @@ void World::step(float elapsed_ms) {
 
     CollisionSystem::check_collisions();
     CollisionSystem::handle_collisions();
+
+    AISystem::AI_step();
 
     InputManager::handle_inputs_per_frame();
 

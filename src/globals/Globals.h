@@ -23,4 +23,5 @@ namespace Globals {
     extern bool is_3d_mode;
     extern float dodgeDuration;
     extern Timer timer;
+    extern float ai_distance_epsilon;
 }
