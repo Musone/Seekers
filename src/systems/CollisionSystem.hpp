@@ -75,10 +75,11 @@ namespace CollisionSystem {
         // Log::log_info("Locomotion entity collided with fixed entity.", __FILE__, __LINE__);
         Motion& loco_motion = registry.motions.get(loco);
         Motion& fixed_motion = registry.motions.get(fixed);
+        auto pushback_dir = Common::normalize(loco_motion.velocity) * -1.0f;
         glm::vec2 delta = loco_motion.position - fixed_motion.position;
         float overlap = registry.bounding_boxes.get(loco).radius + registry.bounding_boxes.get(fixed).radius - glm::length(delta);
         glm::vec2 direction = glm::normalize(delta);
-        loco_motion.position += direction * overlap + 0.1f;
+        loco_motion.position += pushback_dir * (overlap + 0.04f);
         if (registry.in_dodges.has(loco)) {registry.in_dodges.remove(loco);}
     }
 
