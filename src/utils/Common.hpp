@@ -6,6 +6,10 @@
 #include <ostream>
 #include <glm/glm.hpp>
 
+#include "../ext/project_path.hpp"
+inline std::string data_path() { return std::string(PROJECT_SOURCE_DIR) + "src"; };
+inline std::string audio_path(const std::string& name) { return data_path() + "/audio/" + std::string(name); };
+
 namespace Common {
     inline std::vector<std::string> split_string(const std::string& str, const char& delimiter) {
         std::string token;

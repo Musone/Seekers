@@ -4,6 +4,8 @@
 #include <ecs/Entity.hpp>
 #include <vector>
 #include <globals/Globals.h>
+#include <utils/Common.hpp>
+#include <systems/AudioSystem.hpp>
 
 class World {
 public:
@@ -25,4 +27,5 @@ private:
 	void enforce_boundaries(Entity entity); // Method to enforce boundaries
 
 	Registry& m_registry;
+	AudioSystem& m_audioSystem;
 };

@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include <utils/Transform.hpp>
+#include <systems/AudioSystem.hpp>
 
 #include <app/EntityFactory.hpp>
 #include "ecs/Registry.hpp"
@@ -13,10 +14,21 @@ namespace InputManager {
     inline void on_key_pressed(GLFWwindow* window, int key, int scancode, int action, int mods) {
         Registry& registry = Registry::get_instance();
         Motion& player_motion = registry.motions.get(registry.player);
+        AudioSystem& audio_system = AudioSystem::get_instance();
+
+        static bool footstep_playing = false;
+        static int footstep_channel = -1;
 
         if (action == GLFW_PRESS) {
             if (key == GLFW_KEY_Z) {
                 Globals::is_3d_mode = !Globals::is_3d_mode;
+            }
+            if (key == GLFW_KEY_W || key == GLFW_KEY_S || key == GLFW_KEY_A || key == GLFW_KEY_D) {
+                // Play footstep sound if it's not already playing
+                if (!footstep_playing) {
+                    footstep_channel = audio_system.play_sound_effect(audio_path("footstep.wav"), -1);
+                    footstep_playing = true;
+                }
             }
             if (key == GLFW_KEY_W) {
                 registry.input_state.w_down = true;
@@ -37,6 +49,7 @@ namespace InputManager {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
             }
             if (key == GLFW_KEY_SPACE) {
+                audio_system.play_sound_effect(audio_path("teleport.wav"), 0);
                 if (!registry.in_dodges.has(registry.player)) {
                     registry.in_dodges.emplace(registry.player, player_motion.position, player_motion.position + Common::normalize(player_motion.velocity) * Globals::dodgeMoveMag, Globals::timer.GetTime(), Globals::dodgeDuration);
                 }
@@ -54,6 +67,14 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_D) {
                 registry.input_state.d_down = false;
+            }
+            // stop footstep
+            if (!registry.input_state.w_down && !registry.input_state.s_down &&
+                !registry.input_state.a_down && !registry.input_state.d_down) {
+                if (footstep_playing) {
+                    audio_system.stop_sound_effect(footstep_channel);
+                    footstep_playing = false;
+                }
             }
             if (key == GLFW_KEY_Q) {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
