@@ -6,6 +6,7 @@
 
 #include "systems/GameplaySystem.hpp"
 #include "systems/PhysicsSystem.hpp"
+
 #include "systems/AISystem.hpp"
 
 #include <components/RenderComponents.hpp> // For Motion component
@@ -46,6 +47,7 @@ void World::demo_init() {
     // Top wall
     for (int i = 0; i < 15; ++i) {
         glm::vec2 pos = glm::vec2(-14.0f + i * 2.0f, 14.0f);
+
         EntityFactory::create_wall(pos, 0.0f);
     }
 
@@ -75,6 +77,7 @@ void World::demo_init() {
             continue;
         }
         EntityFactory::create_tree(tree_pos);
+
     }
 }
 
