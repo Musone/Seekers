@@ -8,5 +8,7 @@
 
 namespace Globals {
     float cameraRotationSpeed = 2.5f;
-    float dodgeMoveMag = 10.0f;
+    float dodgeMoveMag = 7.0f;
+    float dodgeDuration = 0.3f;
+    Timer timer = Timer();
 }

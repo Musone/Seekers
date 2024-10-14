@@ -95,3 +95,11 @@ struct Interactable
     INTERACTABLE_TYPE type;
     unsigned int associated_id; // For items, dungeons, or NPCs
 };
+
+struct InDodge {
+    glm::vec2 source;
+    glm::vec2 destination;
+    float origin_time;
+    float duration;
+    InDodge(glm::vec2 source, glm::vec2 destination, float origin_time, float duration) : source(source), destination(destination), origin_time(origin_time), duration(duration) {}
+};

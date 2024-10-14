@@ -34,6 +34,7 @@ public:
 	ComponentContainer<RotateWith> rotate_withs;
 	ComponentContainer<TextureName> textures;
 	ComponentContainer<BoundingBox> bounding_boxes;
+	ComponentContainer<InDodge> in_dodges;
 	Entity player;
 	InputState input_state;
 
@@ -51,6 +52,7 @@ public:
 		m_registry_list.push_back(&rotate_withs);
 		m_registry_list.push_back(&textures);
 		m_registry_list.push_back(&bounding_boxes);
+		m_registry_list.push_back(&in_dodges);
 	}
 
 	Registry(Registry const&) = delete;

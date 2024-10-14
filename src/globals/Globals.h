@@ -15,8 +15,11 @@
 #define MAP_WIDTH 150
 #define MAP_HEIGHT 150
 #define CAMERA_DISTANCE_FROM_WORLD 20
+#include <utils/Timer.h>
 
 namespace Globals {
     extern float cameraRotationSpeed;
     extern float dodgeMoveMag;
+    extern float dodgeDuration;
+    extern Timer timer;
 }

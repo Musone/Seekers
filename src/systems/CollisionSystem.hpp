@@ -79,6 +79,7 @@ namespace CollisionSystem {
         float overlap = registry.bounding_boxes.get(loco).radius + registry.bounding_boxes.get(fixed).radius - glm::length(delta);
         glm::vec2 direction = glm::normalize(delta);
         loco_motion.position += direction * overlap + 0.1f;
+        if (registry.in_dodges.has(loco)) {registry.in_dodges.remove(loco);}
     }
 
     inline void handle_collisions()
