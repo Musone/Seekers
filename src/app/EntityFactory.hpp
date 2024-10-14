@@ -20,7 +20,7 @@ namespace EntityFactory {
         auto& locomotion = registry.locomotion_stats.emplace(entity);
         locomotion.health = 100.0f;
         locomotion.max_health = 100.0f;
-        locomotion.movement_speed = 5.0f;
+        locomotion.movement_speed = 15.0f;
         locomotion.energy = 100.0f;
         locomotion.max_energy = 100.0f;
 
@@ -51,9 +51,9 @@ namespace EntityFactory {
 
         auto& weapon_stats = registry.weapon_stats.emplace(entity);
         weapon_stats.damage = damage;
-        weapon_stats.range = 25.0f;
-        weapon_stats.proj_speed = 20.0f;
-        weapon_stats.attack_cooldown = 0.2f;
+        weapon_stats.range = 30.0f;
+        weapon_stats.proj_speed = 40.0f;
+        weapon_stats.attack_cooldown = 0.15f;
         weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
 
         registry.move_withs.emplace(entity, following);

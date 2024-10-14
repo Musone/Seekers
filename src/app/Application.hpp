@@ -123,6 +123,8 @@ public:
         TextureInfo map_texture_info = master.get_texture("grass.jpg");
         Shader shader("MapDemo");
 
+        TextureInfo carpet_texture_info = master.get_texture("tileset_7.png");
+
         Camera cam(renderer.get_window_width(), renderer.get_window_height());
         cam.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
 
@@ -171,6 +173,14 @@ public:
                     * Transform::create_scaling_matrix({ MAP_WIDTH, MAP_HEIGHT, 1 })
                 );
                 shader.set_uniform_1i("u_texture", map_texture_info.texture_slot_id);
+                renderer.draw(square_vao, square_ibo, shader);
+
+                shader.set_uniform_mat4f(
+                    "u_mvp", 
+                    cam.get_view_project_matrix()
+                    * Transform::create_translation_matrix({ 0, 0, 0.01 }) * Transform::create_scaling_matrix({ 2*15, 2*15, 1 })
+                );
+                shader.set_uniform_1i("u_texture", carpet_texture_info.texture_slot_id);
                 renderer.draw(square_vao, square_ibo, shader);
             }
 
