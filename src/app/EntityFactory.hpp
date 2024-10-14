@@ -145,4 +145,26 @@ namespace EntityFactory {
 
         return entity;
     }
+
+    inline Entity create_tree(glm::vec2 position) {
+        Registry& registry = Registry::get_instance();
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.scale = glm::vec2(4.0f, 4.0f);
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& texture = registry.textures.emplace(entity);
+        texture.name = "tree_jungle.png";
+
+        auto& bounding_box = registry.bounding_boxes.emplace(entity);
+        bounding_box.radius = Common::max_of(motion.scale) / 2;
+
+        registry.rotate_withs.emplace(entity, registry.player);
+
+        return entity;
+    }
 };

@@ -37,6 +37,9 @@ void World::demo_init() {
         glm::vec2 pos = glm::vec2(5.0f, (i + 1) * 2.0f + 5.0f);
         EntityFactory::create_wall(pos, PI / 2.0f);
     }
+
+    // Place a tree
+    EntityFactory::create_tree(glm::vec2(15.0f, -15.0f));
 }
 
 void World::step(float elapsed_ms) {
