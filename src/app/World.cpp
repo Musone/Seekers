@@ -53,4 +53,5 @@ void World::step(float elapsed_ms) {
     InputManager::handle_inputs_per_frame();
 
     GameplaySystem::update_cooldowns(elapsed_ms);
+    GameplaySystem::update_projectile_range(elapsed_ms);
 }
