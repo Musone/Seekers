@@ -89,11 +89,13 @@ namespace InputManager {
         Registry& registry = Registry::get_instance();
         Attacker& player_attacker = registry.attackers.get(registry.player);
         WeaponStats& weapon_stats = registry.weapon_stats.get(player_attacker.weapon_id);
+        AudioSystem& audio_system = AudioSystem::get_instance();
 
         if (action == GLFW_PRESS) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 if (!registry.attack_cooldowns.has(registry.player)) {
                     EntityFactory::create_projectile(registry.motions.get(registry.player), player_attacker, weapon_stats, TEAM_ID::FRIENDLY);
+                    audio_system.play_sound_effect(audio_path("attack.wav"), 0);
 
                     registry.attack_cooldowns.emplace(registry.player, weapon_stats.attack_cooldown);
                 }

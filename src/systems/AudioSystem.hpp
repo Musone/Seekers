@@ -47,6 +47,13 @@ public:
         }
     }
 
+    // Set music volume (0 to 128)
+    void set_music_volume(int volume) {
+        if (volume < 0) volume = 0;
+        if (volume > MIX_MAX_VOLUME) volume = MIX_MAX_VOLUME;
+        Mix_VolumeMusic(volume);
+    }
+
     // play background music
     void play_music(int loops = -1) {
         if (background_music != nullptr) {
