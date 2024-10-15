@@ -52,8 +52,8 @@ Seekers is a top-down 2D action RPG that melds dungeon crawling with open-world 
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-repo/seekers.git
-   cd seekers
+   git clone https://github.students.cs.ubc.ca/CPSC427-2024W-T1/Team23.git
+   cd Team23
    ```
 
 2. Create a build directory and navigate to it:
