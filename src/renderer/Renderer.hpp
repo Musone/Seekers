@@ -7,7 +7,7 @@
 #include <renderer/VertexArray.hpp>
 #include <renderer/GLUtils.hpp>
 #include <renderer/Shader.hpp>
-#include <renderer/Texture.hpp>
+#include <renderer/Texture2D.hpp>
 
 #include <string>
 

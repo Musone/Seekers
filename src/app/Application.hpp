@@ -6,6 +6,7 @@
 #include <utils/Timer.h>
 #include <renderer/Renderer.hpp>
 #include <renderer/Camera.hpp>
+#include <renderer/SkyboxTexture.hpp>
 #include <ecs/Registry.hpp>
 #include <app/World.h>
 #include <app/InputManager.hpp>
@@ -120,10 +121,13 @@ public:
         // World map setup.
         TextureMaster& master = TextureMaster::get_instance();
         // TextureInfo map_texture_info = master.get_texture("disnie_map.jpg");
-        TextureInfo map_texture_info = master.get_texture("grass.jpg");
+        // TextureInfo map_texture_info = master.get_texture_info("grass.jpg");
+        // TextureInfo map_texture_info = master.get_texture_info("8bit_flower_garden.jpg");
+        TextureInfo map_texture_info = master.get_texture_info("jungle_tile_1.jpg");
         Shader shader("MapDemo");
 
-        TextureInfo carpet_texture_info = master.get_texture("tileset_7.png");
+        // TextureInfo carpet_texture_info = master.get_texture_info("tileset_7.png");
+        TextureInfo carpet_texture_info = master.get_texture_info("tileset_4.png");
 
         Camera cam(renderer.get_window_width(), renderer.get_window_height());
         cam.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
@@ -136,6 +140,19 @@ public:
         float time_of_last_frame = float(timer.GetTime());
 
         Shader health_shader("MapDemoHealth");
+        health_shader.bind();
+
+        Shader skybox_shader("Skybox");
+        skybox_shader.bind();
+
+        Texture2D* carpet_texture = master.get_texture(carpet_texture_info.texture_slot_id);
+        carpet_texture->enable_wrapping();
+
+        Texture2D* map_texture = master.get_texture(map_texture_info.texture_slot_id);
+        map_texture->enable_wrapping();
+
+
+        TextureInfo skybox_info = master.load_skybox("random_skybox.png");
 
         bool is_cursor_locked = false;
         while (!renderer.is_terminated()) {
@@ -165,6 +182,20 @@ public:
             // _handle_free_camera_inputs(renderer, cam);
             renderer.begin_draw();
 
+            // Render skybox.
+            {
+                // Stinky code that I'm using just to get things to work. Needs to be refactored:
+                GL_Call(glDepthFunc(GL_LEQUAL));
+                skybox_shader.set_uniform_mat4f(
+                    "u_view_project", 
+                    cam.get_view_project_matrix() 
+                    * Transform::create_scaling_matrix({ 500, 500, 500 })
+                );
+                skybox_shader.set_uniform_1i("u_skybox", skybox_info.texture_slot_id);
+                renderer.draw(cube_vao, cube_ibo, skybox_shader);
+                GL_Call(glDepthFunc(GL_LESS));
+            }
+
             // Render world
             {
                 shader.set_uniform_mat4f(
@@ -173,6 +204,7 @@ public:
                     * Transform::create_scaling_matrix({ MAP_WIDTH, MAP_HEIGHT, 1 })
                 );
                 shader.set_uniform_1i("u_texture", map_texture_info.texture_slot_id);
+                shader.set_uniform_3f("u_scale", { MAP_WIDTH / 8, MAP_HEIGHT / 8, 1});
                 renderer.draw(square_vao, square_ibo, shader);
 
                 shader.set_uniform_mat4f(
@@ -181,8 +213,12 @@ public:
                     * Transform::create_translation_matrix({ 0, 0, 0.01 }) * Transform::create_scaling_matrix({ 2*15, 2*15, 1 })
                 );
                 shader.set_uniform_1i("u_texture", carpet_texture_info.texture_slot_id);
+                shader.set_uniform_3f("u_scale", { 2*15, 2*15, 1});
                 renderer.draw(square_vao, square_ibo, shader);
             }
+
+            // this is my hacky way of making the floor textures repeat, and nothing else.
+            shader.set_uniform_3f("u_scale", { 1, 1, 1 });
 
             // Render entities
             {
@@ -196,7 +232,7 @@ public:
                     const auto& motion = reg.motions.get(textured_entity);
                     glm::vec2 motion_pos = { motion.position.x, motion.position.y };
                     const auto& tex_name = reg.textures.get(textured_entity);
-                    const TextureInfo texture_info = master.get_texture(tex_name.name);
+                    const TextureInfo texture_info = master.get_texture_info(tex_name.name);
 
                     // If the entity is a wall... Use the cube geomety... We should really just use a tag, this is so hacky.
                     if (reg.teams.has(textured_entity) && reg.teams.get(textured_entity).team_id == TEAM_ID::NEUTRAL) {
@@ -382,6 +418,8 @@ public:
                 renderer.draw(square_vao, square_ibo, health_shader);
             }
 
+            
+
             renderer.end_draw();
             time_of_last_frame = float(timer.GetTime());
         }
@@ -515,7 +553,7 @@ public:
         player_vao.init();
         player_vbo.init(player_vertices, sizeof(player_vertices));
         player_vao.add_buffer(player_vbo, layout);
-        Texture player_texture("player.png");
+        Texture2D player_texture("player.png");
         const unsigned int player_texture_slot = 1;
         player_texture.bind(player_texture_slot);
         
@@ -530,7 +568,7 @@ public:
         skeleton_vao.init();
         skeleton_vbo.init(skeleton_vertices, sizeof(skeleton_vertices));
         skeleton_vao.add_buffer(skeleton_vbo, layout);
-        Texture skeleton_texture("skeleton.png");
+        Texture2D skeleton_texture("skeleton.png");
         const unsigned int skeleton_texture_slot = 2;
         skeleton_texture.bind(skeleton_texture_slot);
 
