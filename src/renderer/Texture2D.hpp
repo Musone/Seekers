@@ -16,7 +16,7 @@
 #define CHANNELS_RGBA 4
 #define TEXTURE_PATH "textures/"
 
-class Texture {
+class Texture2D {
     unsigned int m_id;
     std::string m_file_path;
     unsigned char* m_local_buffer;
@@ -24,7 +24,7 @@ class Texture {
     int m_height;
     int m_bits_per_pixel;
 public:
-    Texture(const std::string& name) : 
+    Texture2D(const std::string& name) : 
         m_id(0),
         m_file_path(TEXTURE_PATH + name), 
         m_local_buffer(nullptr),
@@ -51,7 +51,7 @@ public:
             GL_Call(glBindTexture(GL_TEXTURE_2D, 0));
     }
 
-    ~Texture() {
+    ~Texture2D() {
         stbi_image_free(m_local_buffer);
         GL_Call(glDeleteTextures(1, &m_id));
     }
@@ -76,6 +76,20 @@ public:
     }
 
     const void unbind() const {
+        GL_Call(glBindTexture(GL_TEXTURE_2D, 0));
+    }
+
+    const void enable_wrapping() const {
+        GL_Call(glBindTexture(GL_TEXTURE_2D, m_id));
+        GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+        GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+        GL_Call(glBindTexture(GL_TEXTURE_2D, 0));
+    }
+
+    const void disable_wrapping() const {
+        GL_Call(glBindTexture(GL_TEXTURE_2D, m_id));
+        GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
         GL_Call(glBindTexture(GL_TEXTURE_2D, 0));
     }
 };
