@@ -41,7 +41,7 @@ public:
             return m_cache[texture_name];
         }
         m_ptr_textures.push_back(new Texture2D(texture_name));
-        const Texture2D* texture = m_ptr_textures[m_count];
+        Texture2D* texture = m_ptr_textures[m_count];
         const unsigned int texture_slot = ++m_count;
         texture->bind(texture_slot);
         m_cache[texture_name] = { texture_slot, texture->get_width(), texture->get_height() };
