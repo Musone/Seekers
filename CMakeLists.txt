@@ -176,3 +176,13 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/textures"
     COMMENT "Copying textures files to the executable's directory"
 )
+
+# Copy objs to executable destination.
+set(TEXTURE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/objs")
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PROJECT_NAME}>/objs"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${TEXTURE_SOURCE_DIR}"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/objs"
+    COMMENT "Copying obj files to the executable's directory"
+)
