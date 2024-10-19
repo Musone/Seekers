@@ -8,6 +8,8 @@
 #include <renderer/GLUtils.hpp>
 #include <renderer/Shader.hpp>
 #include <renderer/Texture2D.hpp>
+#include <renderer/Camera.hpp>
+#include <renderer/Model.hpp>
 
 #include <string>
 
@@ -154,14 +156,22 @@ public:
         GL_Call(glDrawElements(GL_TRIANGLES, ibo.get_count(), GL_UNSIGNED_INT, nullptr));
     }
 
-    bool is_terminated() {
+    const void draw(const Model& model) const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
+        model.bind();
+        GL_Call(glDrawElements(GL_TRIANGLES, model.get_face_count(), GL_UNSIGNED_INT, nullptr));
+    }
+
+    bool is_terminated() const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
         return bool(glfwWindowShouldClose(m_window));
     }
 
-    void terminate() {
+    void terminate() const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }

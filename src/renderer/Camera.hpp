@@ -41,7 +41,7 @@ public:
         return { result.x, result.y, result.z };
     }
 
-    glm::mat4 get_view_project_matrix() { return m_view_project; }
+    glm::mat4 get_view_project_matrix() const { return m_view_project; }
 
     glm::vec3 get_position() const { return m_position; }
 

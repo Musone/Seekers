@@ -4,9 +4,12 @@
 #include <utils/Log.hpp>
 #include <utils/FileSystem.hpp>
 #include <utils/Timer.h>
+#include <utils/Common.hpp>
 #include <renderer/Renderer.hpp>
 #include <renderer/Camera.hpp>
 #include <renderer/SkyboxTexture.hpp>
+#include <renderer/Mesh.hpp>
+#include <renderer/Model.hpp>
 #include <ecs/Registry.hpp>
 #include <app/World.h>
 #include <app/InputManager.hpp>
@@ -27,6 +30,118 @@ public:
             throw std::runtime_error("not implemented lol");
         };
     };
+
+    void run_demo_3d_model() {
+        Renderer& renderer = Renderer::get_instance();
+        renderer.init(
+            "3d model Demo",
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT,
+            true,
+            false
+        );
+        Camera cam(renderer.get_window_width(), renderer.get_window_height());
+        cam.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
+
+#pragma region load obj file
+        std::string raw_data = FileSystem::read_file("objs/guy.obj");
+        // std::string raw_data = FileSystem::read_file("objs/Cube.obj");
+        std::vector<std::string> lines = Common::split_string(raw_data, '\n');
+        std::vector<glm::vec3> unordered_vertices;
+        std::vector<glm::vec3> unordered_normals;
+        std::vector<glm::ivec3> unordered_indices;
+
+        for (const auto& l : lines) {
+            try {
+                std::vector<std::string> tokens = Common::split_string(l, ' ');
+                if (tokens.size() < 1) continue;
+
+                if (tokens[0] == "v") {
+                    unordered_vertices.emplace_back(
+                        std::stof(tokens[1]), 
+                        std::stof(tokens[2]), 
+                        std::stof(tokens[3])
+                    );
+                } else if (tokens[0] == "vn") {
+                    unordered_normals.emplace_back(
+                        std::stof(tokens[1]), 
+                        std::stof(tokens[2]), 
+                        std::stof(tokens[3])
+                    );
+                } else if (tokens[0] == "f") {
+                    for (int i = 1; i <= 3; ++i) {
+                        const auto temp = Common::split_string(tokens[i], '/');
+                        unordered_indices.emplace_back(
+                            std::stoi(temp[0]) - 1,  // vertex index
+                            temp[1].empty() ? -1 : std::stoi(temp[1]) - 1,  // texture index (if exists)
+                            std::stoi(temp[2]) - 1  // normal index
+                        );
+                    }
+                    if (tokens.size() > 4) {  // If it's a quad, add another triangle
+                        unordered_indices.emplace_back(unordered_indices[unordered_indices.size() - 3]);
+                        unordered_indices.emplace_back(unordered_indices[unordered_indices.size() - 2]);
+                        const auto temp = Common::split_string(tokens[4], '/');
+                        unordered_indices.emplace_back(
+                            std::stoi(temp[0]) - 1,
+                            temp[1].empty() ? -1 : std::stoi(temp[1]) - 1,
+                            std::stoi(temp[2]) - 1
+                        );
+                    }
+                } 
+            } catch (const std::exception& e) {
+                const std::string message = std::string(e.what());
+                Log::log_error_and_terminate(message, __FILE__, __LINE__);
+            }
+        }
+
+        std::vector<float> vertices;
+        std::vector<unsigned int> indices;
+
+        for (size_t i = 0; i < unordered_indices.size(); ++i) {
+            const glm::vec3& pos = unordered_vertices[unordered_indices[i].x];
+            const glm::vec3& norm = unordered_normals[unordered_indices[i].z];
+
+            vertices.insert(vertices.end(), {pos.x, pos.y, pos.z, norm.x, norm.y, norm.z});
+            indices.push_back(i);
+        }
+
+        float* c_vertices = new float[vertices.size()];
+        std::copy(vertices.begin(), vertices.end(), c_vertices);
+
+        unsigned int* c_indices = new unsigned int[indices.size()];
+        std::copy(indices.begin(), indices.end(), c_indices);
+#pragma endregion
+
+        VertexBufferLayout layout;
+        layout.push<float>(3); // position
+        layout.push<float>(3); // normal
+        // Shader shader("Test");
+        Shader shader("BlinnPhong");
+        Mesh mesh(c_vertices, c_indices, vertices.size() * sizeof(float), indices.size(), layout);
+        Model model(&mesh, nullptr, &shader);
+
+        while (!renderer.is_terminated()) {
+            model.update();
+            _handle_free_camera_inputs(renderer, cam);
+            
+            renderer.begin_draw();
+            glm::vec3 light_pos = cam.get_position();
+
+            shader.set_uniform_mat4f("u_view_project", cam.get_view_project_matrix());
+
+            shader.set_uniform_3f("u_view_pos", cam.get_position());
+            shader.set_uniform_3f("u_light_pos", light_pos);
+            shader.set_uniform_3f("u_light_color", { 1, 1, 0 });
+            shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
+
+            // renderer.draw(mesh.m_vao, mesh.m_ibo, shader);
+            renderer.draw(model);
+            renderer.end_draw();
+        }
+
+        delete[] c_vertices;
+        delete[] c_indices;
+    }
 
     void run_demo_world() {
         Renderer& renderer = Renderer::get_instance();
