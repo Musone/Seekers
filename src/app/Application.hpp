@@ -19,6 +19,10 @@
 
 #include <globals/Globals.h>
 
+#include <utils/CalladaTokenizer.hpp>
+
+#include <iomanip>
+
 class Application {
     
 public:
@@ -31,7 +35,166 @@ public:
         };
     };
 
-    void run_demo_3d_model() {
+    void run_demo_callada_3d_model() {
+
+        // std::string xml_content = FileSystem::read_file("objs/Cube.dae");
+        std::string xml_content = FileSystem::read_file("objs/BlackDragon/dragon.dae");
+        // std::string xml_content = FileSystem::read_file("objs/sword.dae");
+        
+        std::vector<Token> tokens;
+        try {
+            tokens = tokenize(xml_content);
+        } catch (const std::exception& e) {
+            const std::string message = std::string(e.what());
+            Log::log_error_and_terminate(message, __FILE__, __LINE__);
+        }
+
+        // Token* polylist = tokens[0].get_tokens("polylist")[0]; // cube
+        // Token* polylist = tokens[0].get_tokens("polylist", {{"material", "Game_dragon_001-material"}})[0]; // dragon
+        Token* library_geometries = tokens[0].get_tokens("library_geometries")[0];
+        std::vector<Token*> geometry_list = library_geometries->get_tokens("geometry");
+
+        std::vector<unsigned int> indices;
+        std::vector<float> vertices;
+        unsigned int i_curret_vertex = 0;
+
+        for (const auto& geometry : geometry_list) {
+            // Token* geometry = library_geometries->get_tokens("geometry", {{"id", "Circle-mesh"}})[0];
+            Token* polylist = geometry->get_tokens("polylist")[0]; // sword
+            
+            std::string raw_indices = polylist->get_tokens("p")[0]->data;
+            std::vector<unsigned int> collada_indices;
+            for (const auto& s : Common::split_string(raw_indices, ' ')) {
+                collada_indices.push_back(std::stoi(s));
+            }
+            
+            std::string raw_vcount = polylist->get_tokens("vcount")[0]->data;
+            std::vector<unsigned int> vcounts;
+            for (const auto& s : Common::split_string(raw_vcount, ' ')) {
+                vcounts.push_back(std::stoi(s));
+            }
+
+            // std::string raw_positions = tokens[0].get_tokens("float_array", {{"id", "Cube-mesh-positions-array"}})[0]->data; // cube
+            // std::string raw_positions = tokens[0].get_tokens("float_array", {{"id", "Cube_004-mesh-positions-array"}})[0]->data; // dragon
+            std::vector<Token*> source_list = geometry->get_tokens("source");
+            std::string raw_positions = source_list[0]->get_tokens("float_array")[0]->data; // sword
+            std::vector<float> positions;
+            for (const auto& s : Common::split_string(raw_positions, ' ')) {
+                positions.push_back(std::stof(s));
+            }
+
+            // std::string raw_normals = tokens[0].get_tokens("float_array", {{"id", "Cube-mesh-normals-array"}})[0]->data; // cube
+            // std::string raw_normals = tokens[0].get_tokens("float_array", {{"id", "Cube_004-mesh-normals-array"}})[0]->data; // dragon
+            std::string raw_normals = source_list[1]->get_tokens("float_array")[0]->data; // sword
+            std::vector<float> normals;
+            for (const auto& s : Common::split_string(raw_normals, ' ')) {
+                normals.push_back(std::stof(s));
+            }
+
+            
+            // const auto elements_in_a_vertex = 2; // pos norm (cube)
+            // const auto elements_in_a_vertex = 4; // pos norm tex1 tex2 (dragon)
+            const auto elements_in_an_index_bundle = 3; // pos norm tex (sword)
+            for (unsigned int i = 0; i < vcounts.size(); ++i) {
+                auto count = vcounts[i];
+                const auto stride = i * elements_in_an_index_bundle * count; // there are 4 vertex. Each has pos and norm.
+                for (auto& offset : { 0, 1, 2 }) {
+                    const auto i_pos = 3 * collada_indices[stride + offset * elements_in_an_index_bundle];
+                    const auto i_norm = 3 * collada_indices[stride + offset * elements_in_an_index_bundle + 1];
+                    vertices.push_back(positions[i_pos]);     // x
+                    vertices.push_back(positions[i_pos + 1]); // y
+                    vertices.push_back(positions[i_pos + 2]); // z
+                    vertices.push_back(normals[i_norm]);     // x
+                    vertices.push_back(normals[i_norm + 1]); // y
+                    vertices.push_back(normals[i_norm + 2]); // z
+                    indices.push_back(i_curret_vertex++);
+                }
+                if (count > 3) { // it is a quad
+                    for (auto& offset : { 0, 2, 3 }) {
+                        const auto i_pos = 3 * collada_indices[stride + offset * elements_in_an_index_bundle];
+                        const auto i_norm = 3 * collada_indices[stride + offset * elements_in_an_index_bundle + 1];
+                        vertices.push_back(positions[i_pos]);     // x
+                        vertices.push_back(positions[i_pos + 1]); // y
+                        vertices.push_back(positions[i_pos + 2]); // z
+                        vertices.push_back(normals[i_norm]);     // x
+                        vertices.push_back(normals[i_norm + 1]); // y
+                        vertices.push_back(normals[i_norm + 2]); // z
+                        indices.push_back(i_curret_vertex++);
+                    }
+                }
+            }
+        }
+
+        unsigned int* c_indices = new unsigned int[indices.size()];
+        std::copy(indices.begin(), indices.end(), c_indices);
+
+        float * c_vertices = new float[vertices.size()];
+        std::copy(vertices.begin(), vertices.end(), c_vertices);
+
+        // std::cout << "Vertices:" << std::endl;
+        // for (size_t i = 0; i < vertices.size(); i += 6) {  // Assuming each vertex has 6 components (3 for position, 3 for normal)
+        //     std::cout << "V" << i/6 << ": Pos("
+        //             << std::setw(6) << vertices[i] << ", "
+        //             << std::setw(6) << vertices[i+1] << ", "
+        //             << std::setw(6) << vertices[i+2] << ") Norm("
+        //             << std::setw(6) << vertices[i+3] << ", "
+        //             << std::setw(6) << vertices[i+4] << ", "
+        //             << std::setw(6) << vertices[i+5] << ")" << std::endl;
+        // }
+
+        // std::cout << "\nIndices:" << std::endl;
+        // for (size_t i = 0; i < indices.size(); i += 3) {
+        //     std::cout << "Triangle " << i/3 << ": "
+        //             << indices[i] << ", "
+        //             << indices[i+1] << ", "
+        //             << indices[i+2] << std::endl;
+        // }
+
+        // Taken from run_demo_obj_3d_model()
+        Renderer& renderer = Renderer::get_instance();
+        renderer.init(
+            "3d model Demo",
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT,
+            true,
+            false
+        );
+        Camera cam(renderer.get_window_width(), renderer.get_window_height());
+        cam.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
+
+        VertexBufferLayout layout;
+        layout.push<float>(3); // position
+        layout.push<float>(3); // normal
+        // Shader shader("Test");
+        Shader shader("BlinnPhong");
+        Mesh mesh(c_vertices, c_indices, vertices.size() * sizeof(float), indices.size(), layout);
+        Model model(&mesh, nullptr, &shader, nullptr, 0);
+
+        while (!renderer.is_terminated()) {
+            model.update();
+            _handle_free_camera_inputs(renderer, cam);
+            
+            renderer.begin_draw();
+            glm::vec3 light_pos = cam.get_position();
+
+            shader.set_uniform_mat4f("u_view_project", cam.get_view_project_matrix());
+
+            shader.set_uniform_3f("u_view_pos", cam.get_position());
+            shader.set_uniform_3f("u_light_pos", light_pos);
+            shader.set_uniform_3f("u_light_color", { 1, 1, 0 });
+            shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
+
+            // renderer.draw(mesh.m_vao, mesh.m_ibo, shader);
+            renderer.draw(model);
+            renderer.end_draw();
+        }
+
+        delete[] c_vertices;
+        delete[] c_indices;
+        
+    };
+
+    void run_demo_obj_3d_model() {
         Renderer& renderer = Renderer::get_instance();
         renderer.init(
             "3d model Demo",
@@ -118,7 +281,7 @@ public:
         // Shader shader("Test");
         Shader shader("BlinnPhong");
         Mesh mesh(c_vertices, c_indices, vertices.size() * sizeof(float), indices.size(), layout);
-        Model model(&mesh, nullptr, &shader);
+        Model model(&mesh, nullptr, &shader, nullptr, 0);
 
         while (!renderer.is_terminated()) {
             model.update();
