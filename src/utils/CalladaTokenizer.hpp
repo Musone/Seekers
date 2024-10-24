@@ -45,6 +45,23 @@ public:
         }
         return results;
     }
+    
+    std::vector<Token*> get_tokens(const std::string& tag_name, const int& max_depth) {
+        std::vector<Token*> results;
+        for (auto& t : children) {
+            if (t.tag_name == tag_name) {
+                results.push_back(&t);
+            }
+
+            if (max_depth > 1) {
+                std::vector<Token*> child_results = t.get_tokens(tag_name, max_depth - 1);
+
+                results.reserve(results.size() + child_results.size());
+                std::copy(child_results.begin(), child_results.end(), std::back_inserter(results));
+            }
+        }
+        return results;
+    }
 
     std::vector<Token*> get_tokens(
         const std::string& tag_name, 

@@ -53,6 +53,16 @@ public:
         for (unsigned int i = 0; i < elements.size(); ++i) {
             const auto& element = elements[i];
             GL_Call(glEnableVertexAttribArray(i));
+            
+            if (element.type == GL_INT) {
+            GL_Call(glVertexAttribIPointer(
+                i,
+                element.count,
+                element.type,
+                layout.get_stride(),
+                (const void*)offset
+            ));
+        } else {
             GL_Call(glVertexAttribPointer(
                 i,
                 element.count,
@@ -61,6 +71,7 @@ public:
                 layout.get_stride(),
                 (const void*)offset
             ));
+        }
 
             offset += element.count * LayoutElement::get_size_of_type(element.type);
         }

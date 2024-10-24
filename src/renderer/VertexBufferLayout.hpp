@@ -15,6 +15,7 @@ struct LayoutElement {
         switch (type) {
             case GL_FLOAT: return 4;
             case GL_UNSIGNED_INT: return 4;
+            case GL_INT: return 4;
             case GL_UNSIGNED_BYTE: return 1;
             default:
                 Log::log_error_and_terminate("Type not supported", __FILE__, __LINE__);
@@ -49,6 +50,12 @@ public:
     void push<unsigned int>(unsigned int count) {
         m_elements.push_back({ GL_UNSIGNED_INT, count, false });
         m_stride += count * sizeof(unsigned int);
+    }
+
+    template<>
+    void push<int>(unsigned int count) {
+        m_elements.push_back({ GL_INT, count, false });
+        m_stride += count * sizeof(int);
     }
 
     template<>
