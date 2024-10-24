@@ -110,7 +110,8 @@ namespace EntityFactory {
         motion.position = attacker_motion.position;
         // motion.angle = atan2(attacker.aim.y, attacker.aim.x);
         motion.angle = attacker_motion.angle; // Changed this so that I can render projectiles properly in 3d-mode.
-        motion.velocity = attacker.aim * weapon.proj_speed + attacker_motion.velocity;;
+        //motion.velocity = attacker.aim * weapon.proj_speed + attacker_motion.velocity;
+        motion.velocity = attacker.aim * weapon.proj_speed;
         motion.scale = glm::vec2(1.0f, 1.0f);  // Projectile size
 
         auto& projectile = registry.projectile_stats.emplace(entity);

@@ -43,29 +43,25 @@ void World::demo_init() {
         glm::vec2 pos = glm::vec2(4.0f + i * 2.0f, -14.0f);
         EntityFactory::create_wall(pos, 0.0f);
     }
-
     // Top wall
     for (int i = 0; i < 15; ++i) {
         glm::vec2 pos = glm::vec2(-14.0f + i * 2.0f, 14.0f);
 
         EntityFactory::create_wall(pos, 0.0f);
     }
-
     // Left wall
     for (int i = 0; i < 14; ++i) {
         glm::vec2 pos = glm::vec2(-14.0f, -12.0f + i * 2.0f);
         EntityFactory::create_wall(pos, PI / 2.0f);
     }
-
     // Right wall
     for (int i = 0; i < 14; ++i) {
         glm::vec2 pos = glm::vec2(14.0f, -12.0f + i * 2.0f);
         EntityFactory::create_wall(pos, PI / 2.0f);
     }
 
-
     // Place a tree and some enemies
-    std::vector<glm::vec2> trees = GenerateSomeTree::generateNonOverlappingTrees(100, MAP_WIDTH, MAP_HEIGHT, 2.0f);
+    std::vector<glm::vec2> trees = GenerateSomeTree::generateNonOverlappingTrees(1000, MAP_WIDTH, MAP_HEIGHT, 2.0f);
     unsigned int i = 0;
     for (auto& tree_pos : trees) {
         if (glm::length(tree_pos) <= 20 || (++i % 4 == 0)) {
@@ -77,7 +73,6 @@ void World::demo_init() {
             continue;
         }
         EntityFactory::create_tree(tree_pos);
-
     }
 }
 
@@ -96,6 +91,7 @@ void World::step(float elapsed_ms) {
 
     GameplaySystem::update_cooldowns(elapsed_ms);
     GameplaySystem::update_projectile_range(elapsed_ms);
+    GameplaySystem::update_near_player();
 
     // Enforce boundaries for players
     for (const auto& player : m_players) {

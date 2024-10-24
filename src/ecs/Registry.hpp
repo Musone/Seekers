@@ -36,6 +36,7 @@ public:
 	ComponentContainer<BoundingBox> bounding_boxes;
 	ComponentContainer<InDodge> in_dodges;
 	ComponentContainer<AIComponent> ais;
+	ComponentContainer<NearPlayer> near_players;
 	Entity player;
 	InputState input_state;
 
@@ -55,6 +56,7 @@ public:
 		m_registry_list.push_back(&bounding_boxes);
 		m_registry_list.push_back(&in_dodges);
 		m_registry_list.push_back(&ais);
+		m_registry_list.push_back(&near_players);
 	}
 
 	Registry(Registry const&) = delete;
