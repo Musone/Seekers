@@ -32,9 +32,8 @@ void main() {
     float spec = pow(max(dot(norm, halfway_dir), 0.0), 32.0);
     vec3 specular = specular_strength * spec * u_light_color;
 
-    // vec3 result = (ambient + diffuse + specular) * u_object_color;
     vec3 result = (ambient + diffuse + specular) * texture(u_texture, v_uv).xyz;
     result = clamp(result, 0.0, 1.0);
-    frag_color = vec4(result, 1.0);
-    // frag_color = texture(u_texture, v_uv);
+    // frag_color = vec4(result, 1.0);
+    frag_color = texture(u_texture, v_uv);
 }

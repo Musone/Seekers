@@ -51,8 +51,67 @@ public:
 
         // Token* polylist = tokens[0].get_tokens("polylist")[0]; // cube
         // Token* polylist = tokens[0].get_tokens("polylist", {{"material", "Game_dragon_001-material"}})[0]; // dragon
-        Token* library_geometries = tokens[0].get_tokens("library_geometries")[0];
+        Token* collada = &tokens[0];
+        Token* library_geometries = collada->get_tokens("library_geometries")[0];
         std::vector<Token*> geometry_list = library_geometries->get_tokens("geometry");
+
+        Token* library_controllers = collada->get_tokens("library_controllers")[0];
+
+#pragma region trying to rig skeleton
+        std::string raw_joint_names = library_controllers->get_tokens("Name_array", {{"id", "a_Cube-skin-joints-array"}})[0]->data;
+        std::vector<std::string> joint_names = Common::split_string(raw_joint_names, ' ');
+
+        std::string raw_weights = library_controllers->get_tokens("float_array", {{"id", "a_Cube-skin-weights-array"}})[0]->data;
+        std::vector<float> weights;
+        for (const auto& s : Common::split_string(raw_weights, ' ')) {
+            weights.push_back(std::stof(s));
+        }
+
+        Token* vertex_weights = library_controllers->get_tokens("vertex_weights")[0];
+        std::string raw_joint_weight_vcounts = vertex_weights->get_tokens("vcount")[0]->data;
+        std::vector<unsigned int> joint_weight_vcounts;
+        for (const auto& s : Common::split_string(raw_joint_weight_vcounts, ' ')) {
+            joint_weight_vcounts.push_back(std::stoi(s));
+        }
+
+        std::string raw_joint_weight_indices = vertex_weights->get_tokens("v")[0]->data;
+        std::vector<unsigned int> bad_joint_weight_indices;
+        for (const auto& s : Common::split_string(raw_joint_weight_indices, ' ')) {
+            bad_joint_weight_indices.push_back(std::stoi(s));
+        }
+
+        std::vector<int> joint_weight_indices;
+        joint_weight_indices.reserve((10 + 10) * joint_weight_vcounts.size()); // at most 10 joint and 10 weight per vertex.
+        unsigned int base_of_joint_weight = 0;
+        for (unsigned int vertex_id = 0; vertex_id < joint_weight_vcounts.size(); ++vertex_id) {
+            const auto joint_count = joint_weight_vcounts[vertex_id];
+
+            // We need to add padding here so that I can use a regular stride to index joints and weights, 
+            // and push them to the VBO.
+            for (unsigned int offset = 0; offset < 10; ++offset) { 
+                // add joint indices
+                if (offset < joint_count) {
+                    joint_weight_indices.push_back(bad_joint_weight_indices[base_of_joint_weight + 2 * offset]);
+                } else {
+                    // add some padding
+                    joint_weight_indices.push_back(-1);
+                }
+            }
+
+            for (unsigned int offset = 0; offset < 10; ++offset) { 
+                if (offset < joint_count) {
+                    // add weight indices
+                    joint_weight_indices.push_back(bad_joint_weight_indices[base_of_joint_weight + 2 * offset + 1]);
+                } else {
+                    // add some padding
+                    joint_weight_indices.push_back(-1);
+                }
+            }
+
+            base_of_joint_weight += 2 * joint_count;
+        }
+
+#pragma endregion
 
         std::vector<unsigned int> indices;
         std::vector<float> vertices;
@@ -60,70 +119,148 @@ public:
 
         for (const auto& geometry : geometry_list) {
             // Token* geometry = library_geometries->get_tokens("geometry", {{"id", "Circle-mesh"}})[0];
-            Token* polylist = geometry->get_tokens("polylist")[0]; // sword
-            
-            std::string raw_indices = polylist->get_tokens("p")[0]->data;
-            std::vector<unsigned int> collada_indices;
-            for (const auto& s : Common::split_string(raw_indices, ' ')) {
-                collada_indices.push_back(std::stoi(s));
-            }
-            
-            std::string raw_vcount = polylist->get_tokens("vcount")[0]->data;
-            std::vector<unsigned int> vcounts;
-            for (const auto& s : Common::split_string(raw_vcount, ' ')) {
-                vcounts.push_back(std::stoi(s));
-            }
-
-            // std::string raw_positions = tokens[0].get_tokens("float_array", {{"id", "Cube-mesh-positions-array"}})[0]->data; // cube
-            // std::string raw_positions = tokens[0].get_tokens("float_array", {{"id", "Cube_004-mesh-positions-array"}})[0]->data; // dragon
-            std::vector<Token*> source_list = geometry->get_tokens("source");
-            std::string raw_positions = source_list[0]->get_tokens("float_array")[0]->data; // sword
-            std::vector<float> positions;
-            for (const auto& s : Common::split_string(raw_positions, ' ')) {
-                positions.push_back(std::stof(s));
-            }
-
-            // std::string raw_normals = tokens[0].get_tokens("float_array", {{"id", "Cube-mesh-normals-array"}})[0]->data; // cube
-            // std::string raw_normals = tokens[0].get_tokens("float_array", {{"id", "Cube_004-mesh-normals-array"}})[0]->data; // dragon
-            std::string raw_normals = source_list[1]->get_tokens("float_array")[0]->data; // sword
-            std::vector<float> normals;
-            for (const auto& s : Common::split_string(raw_normals, ' ')) {
-                normals.push_back(std::stof(s));
-            }
-
-            
-            // const auto elements_in_a_vertex = 2; // pos norm (cube)
-            // const auto elements_in_a_vertex = 4; // pos norm tex1 tex2 (dragon)
-            const auto elements_in_an_index_bundle = 3; // pos norm tex (sword)
-            for (unsigned int i = 0; i < vcounts.size(); ++i) {
-                auto count = vcounts[i];
-                const auto stride = i * elements_in_an_index_bundle * count; // there are 4 vertex. Each has pos and norm.
-                for (auto& offset : { 0, 1, 2 }) {
-                    const auto i_pos = 3 * collada_indices[stride + offset * elements_in_an_index_bundle];
-                    const auto i_norm = 3 * collada_indices[stride + offset * elements_in_an_index_bundle + 1];
-                    vertices.push_back(positions[i_pos]);     // x
-                    vertices.push_back(positions[i_pos + 1]); // y
-                    vertices.push_back(positions[i_pos + 2]); // z
-                    vertices.push_back(normals[i_norm]);     // x
-                    vertices.push_back(normals[i_norm + 1]); // y
-                    vertices.push_back(normals[i_norm + 2]); // z
-                    indices.push_back(i_curret_vertex++);
+            std::vector<Token*> polylist_list = geometry->get_tokens("polylist");
+            for (const auto& polylist : polylist_list) {
+                
+                std::string raw_indices = polylist->get_tokens("p")[0]->data;
+                std::vector<unsigned int> collada_indices;
+                for (const auto& s : Common::split_string(raw_indices, ' ')) {
+                    collada_indices.push_back(std::stoi(s));
                 }
-                if (count > 3) { // it is a quad
-                    for (auto& offset : { 0, 2, 3 }) {
-                        const auto i_pos = 3 * collada_indices[stride + offset * elements_in_an_index_bundle];
-                        const auto i_norm = 3 * collada_indices[stride + offset * elements_in_an_index_bundle + 1];
+                
+                std::string raw_vcount = polylist->get_tokens("vcount")[0]->data;
+                std::vector<unsigned int> vcounts;
+                for (const auto& s : Common::split_string(raw_vcount, ' ')) {
+                    vcounts.push_back(std::stoi(s));
+                }
+
+                // std::string raw_positions = tokens[0].get_tokens("float_array", {{"id", "Cube-mesh-positions-array"}})[0]->data; // cube
+                // std::string raw_positions = tokens[0].get_tokens("float_array", {{"id", "Cube_004-mesh-positions-array"}})[0]->data; // dragon
+                std::vector<Token*> source_list = geometry->get_tokens("source");
+                std::string raw_positions = source_list[0]->get_tokens("float_array")[0]->data; // sword
+                std::vector<float> positions;
+                for (const auto& s : Common::split_string(raw_positions, ' ')) {
+                    positions.push_back(std::stof(s));
+                }
+
+                // std::string raw_normals = tokens[0].get_tokens("float_array", {{"id", "Cube-mesh-normals-array"}})[0]->data; // cube
+                // std::string raw_normals = tokens[0].get_tokens("float_array", {{"id", "Cube_004-mesh-normals-array"}})[0]->data; // dragon
+                std::string raw_normals = source_list[1]->get_tokens("float_array")[0]->data; // sword
+                std::vector<float> normals;
+                for (const auto& s : Common::split_string(raw_normals, ' ')) {
+                    normals.push_back(std::stof(s));
+                }
+
+                // std::string raw_texcoords1 = source_list[2]->get_tokens("float_array")[0]->data; // sword
+                // std::string raw_texcoords0 = source_list[2]->get_tokens("float_array")[0]->data; // sword
+                std::string raw_texcoords0 = source_list[3]->get_tokens("float_array")[0]->data; // sword
+                std::vector<float> texcoords0;
+                for (const auto& s : Common::split_string(raw_texcoords0, ' ')) {
+                    texcoords0.push_back(std::stof(s));
+                }
+
+                
+                // const auto elements_in_a_vertex = 2; // pos norm (cube)
+                // const auto elements_in_a_vertex = 4; // pos norm tex1 tex2 (dragon)
+                const auto elements_in_an_index_bundle = 3; // pos norm tex (sword)
+                for (unsigned int i = 0; i < vcounts.size(); ++i) {
+                    auto count = vcounts[i];
+                    const auto base_index_bundle = i * elements_in_an_index_bundle * count; // there are 4 vertex. Each has pos and norm.
+                    
+                    for (auto& offset : { 0, 1, 2 }) {
+                        const auto i_pos = 3 * collada_indices[base_index_bundle + offset * elements_in_an_index_bundle];
+                        const auto i_norm = 3 * collada_indices[base_index_bundle + offset * elements_in_an_index_bundle + 1];
+                        const auto i_tex = 2 * collada_indices[base_index_bundle + offset * elements_in_an_index_bundle + 2];
                         vertices.push_back(positions[i_pos]);     // x
                         vertices.push_back(positions[i_pos + 1]); // y
                         vertices.push_back(positions[i_pos + 2]); // z
                         vertices.push_back(normals[i_norm]);     // x
                         vertices.push_back(normals[i_norm + 1]); // y
                         vertices.push_back(normals[i_norm + 2]); // z
+                        vertices.push_back(texcoords0[i_tex]);
+                        vertices.push_back(texcoords0[i_tex + 1]);
+
+                        // i_pos is basically the vertex id. Now we should be able to get exactly the joint and weight offset.
+                        const auto base_index_joint_weight = 20 * collada_indices[base_index_bundle + offset * elements_in_an_index_bundle];
+                        for (unsigned int j = 0; j < 20; ++j) {
+                            if (j < 10) { // joint
+                                const float joint_id = joint_weight_indices[base_index_joint_weight + j];
+                                vertices.push_back(joint_id);
+                            } else { // weight
+                                const int weight_id = joint_weight_indices[base_index_joint_weight + j];
+                                if (weight_id < 0) {
+                                    vertices.push_back(0.0f);
+                                } else {
+                                    const float weight = weights[weight_id];
+                                    vertices.push_back(weight);
+                                }
+                            }
+                        }
+                        
                         indices.push_back(i_curret_vertex++);
+                    }
+                    if (count > 3) { // it is a quad
+                        for (auto& offset : { 0, 2, 3 }) {
+                            const auto i_pos = 3 * collada_indices[base_index_bundle + offset * elements_in_an_index_bundle];
+                            const auto i_norm = 3 * collada_indices[base_index_bundle + offset * elements_in_an_index_bundle + 1];
+                            const auto i_tex = 2 * collada_indices[base_index_bundle + offset * elements_in_an_index_bundle + 2];
+                            vertices.push_back(positions[i_pos]);     // x
+                            vertices.push_back(positions[i_pos + 1]); // y
+                            vertices.push_back(positions[i_pos + 2]); // z
+                            vertices.push_back(normals[i_norm]);     // x
+                            vertices.push_back(normals[i_norm + 1]); // y
+                            vertices.push_back(normals[i_norm + 2]); // z
+                            vertices.push_back(texcoords0[i_tex]);
+                            vertices.push_back(texcoords0[i_tex + 1]);
+
+                            // i_pos is basically the vertex id. Now we should be able to get exactly the joint and weight offset.
+                            const auto base_index_joint_weight = 20 * collada_indices[base_index_bundle + offset * elements_in_an_index_bundle];
+                            for (unsigned int j = 0; j < 20; ++j) {
+                                if (j < 10) { // joint
+                                    const float joint_id = joint_weight_indices[base_index_joint_weight + j];
+                                    vertices.push_back(joint_id);
+                                } else { // weight
+                                    const int weight_id = joint_weight_indices[base_index_joint_weight + j];
+                                    if (weight_id < 0) {
+                                        vertices.push_back(0.0f);
+                                    } else {
+                                        const float weight = weights[weight_id];
+                                        vertices.push_back(weight);
+                                    }
+                                }
+                            }
+
+                            indices.push_back(i_curret_vertex++);
+                        }
                     }
                 }
             }
         }
+
+#pragma region try finding the unique vertices
+        /*
+        auto size_of_a_vertex = 3 + 3 + 2; // This is the size of a vertex. (pos, norm, uv)
+        std::set<std::string> unique_hash;
+        // for (unsigned int i = 0; i < vertices.size(); ++i) {
+        unsigned int i = 0;
+        while (i < vertices.size()) {
+            std::vector<std::string> temp;
+            for (unsigned int j = 0; j < size_of_a_vertex; ++j) {
+                temp.push_back(std::to_string(vertices[i + j]));
+            }
+
+            if (temp[temp.size() - 1].empty()) {
+                int sdaiojdiasod = 123;
+                int sdaiojdi = 123;
+                int sdaiojdiwewqasod = 123;
+            }
+
+            std::string hash = Common::join_string(temp, ' ');
+            unique_hash.insert(hash);
+            i += size_of_a_vertex;
+        }
+        */
+#pragma endregion
 
         unsigned int* c_indices = new unsigned int[indices.size()];
         std::copy(indices.begin(), indices.end(), c_indices);
@@ -165,10 +302,23 @@ public:
         VertexBufferLayout layout;
         layout.push<float>(3); // position
         layout.push<float>(3); // normal
+        layout.push<float>(2); // uv
+        layout.push<int>(2); // joints
+        layout.push<int>(2); // joints
+        layout.push<int>(2); // joints
+        layout.push<int>(2); // joints
+        layout.push<int>(2); // joints
+        layout.push<float>(2); // weights
+        layout.push<float>(2); // weights
+        layout.push<float>(2); // weights
+        layout.push<float>(2); // weights
+        layout.push<float>(2); // weights
         // Shader shader("Test");
-        Shader shader("BlinnPhong");
+        // Shader shader("BlinnPhong");
+        Shader shader("TexturedBlinnPhong");
         Mesh mesh(c_vertices, c_indices, vertices.size() * sizeof(float), indices.size(), layout);
-        Model model(&mesh, nullptr, &shader, nullptr, 0);
+        Texture2D texture("Dragon_ground_color.jpg");
+        Model model(&mesh, &texture, &shader, nullptr, 0);
 
         while (!renderer.is_terminated()) {
             model.update();
