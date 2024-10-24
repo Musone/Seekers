@@ -14,22 +14,26 @@ namespace CollisionSystem {
     {
         Registry& registry = Registry::get_instance();
 
-        for (unsigned int i = 0; i < registry.bounding_boxes.entities.size(); i++) {
-            Entity& entity_i = registry.bounding_boxes.entities[i];
-            Motion& motion_i = registry.motions.get(entity_i);
-            BoundingBox& box_i = registry.bounding_boxes.get(entity_i);
+        for (unsigned int i = 0; i < registry.near_players.entities.size(); i++) {
+            Entity& entity_i = registry.near_players.entities[i];
+            if (registry.bounding_boxes.has(entity_i)) {
+                Motion& motion_i = registry.motions.get(entity_i);
+                BoundingBox& box_i = registry.bounding_boxes.get(entity_i);
 
-            for(unsigned int j = i+1; j < registry.bounding_boxes.entities.size(); j++) {
-                Entity& entity_j = registry.bounding_boxes.entities[j];
-                Motion& motion_j = registry.motions.get(entity_j);
-                BoundingBox& box_j = registry.bounding_boxes.get(entity_j);
+                for(unsigned int j = i+1; j < registry.near_players.entities.size(); j++) {
+                    Entity& entity_j = registry.near_players.entities[j];
+                    if (registry.bounding_boxes.has(entity_j)) {
+                        Motion& motion_j = registry.motions.get(entity_j);
+                        BoundingBox& box_j = registry.bounding_boxes.get(entity_j);
 
-                if (registry.teams.get(entity_i).team_id != registry.teams.get(entity_j).team_id) {
-                    float distance = glm::length(motion_j.position - motion_i.position);
-                    float combined_radius = box_j.radius + box_i.radius;
-                    if (distance < combined_radius)
-                    {
-                        registry.collisions.emplace_with_duplicates(entity_i, entity_j);
+                        if (registry.teams.get(entity_i).team_id != registry.teams.get(entity_j).team_id) {
+                            float distance = glm::length(motion_j.position - motion_i.position);
+                            float combined_radius = box_j.radius + box_i.radius;
+                            if (distance < combined_radius)
+                            {
+                                registry.collisions.emplace_with_duplicates(entity_i, entity_j);
+                            }
+                        }
                     }
                 }
             }

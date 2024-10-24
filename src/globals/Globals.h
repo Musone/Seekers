@@ -24,4 +24,5 @@ namespace Globals {
     extern float dodgeDuration;
     extern Timer timer;
     extern float ai_distance_epsilon;
+    extern float update_distance;
 }

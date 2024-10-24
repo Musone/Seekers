@@ -103,3 +103,7 @@ struct InDodge {
     float duration;
     InDodge(glm::vec2 source, glm::vec2 destination, float origin_time, float duration) : source(source), destination(destination), origin_time(origin_time), duration(duration) {}
 };
+
+struct NearPlayer {
+
+};
