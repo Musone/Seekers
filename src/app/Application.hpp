@@ -321,7 +321,6 @@ public:
         Model model(&mesh, &texture, &shader, nullptr, 0);
 
         while (!renderer.is_terminated()) {
-            model.update();
             _handle_free_camera_inputs(renderer, cam);
             
             renderer.begin_draw();
@@ -434,7 +433,6 @@ public:
         Model model(&mesh, nullptr, &shader, nullptr, 0);
 
         while (!renderer.is_terminated()) {
-            model.update();
             _handle_free_camera_inputs(renderer, cam);
             
             renderer.begin_draw();
