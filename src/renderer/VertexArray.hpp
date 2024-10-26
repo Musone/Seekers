@@ -9,7 +9,7 @@
 
 class VertexArray {
     unsigned int m_id;
-    bool m_is_initialized;
+    bool m_is_initialized = false;
 public: 
     VertexArray(): m_is_initialized(false) {}
 

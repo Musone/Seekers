@@ -18,6 +18,7 @@
 #include <components/CombatComponents.hpp>
 
 #include <cstdint>
+#include <queue>
 
 #include <globals/Globals.h>
 
@@ -25,12 +26,15 @@
 
 #include <iomanip>
 
+#include <assimp/vector3.h>
+
 class SimpleJoint {
 public:
     int id;
     std::string name;
     std::vector<SimpleJoint*> children;
 
+    // DFS with recursion
     void update_joint_transform(glm::mat4* current_pose_matrices, glm::mat4* animated_matrices, const int& parent_id) {
         if (parent_id > -1 && id > -1) {
             animated_matrices[id] = animated_matrices[parent_id] * current_pose_matrices[id];
@@ -42,15 +46,49 @@ public:
             c->update_joint_transform(current_pose_matrices, animated_matrices, id);
         }
     }
+
+    // DFS with iteration
+    // void update_joint_transform(glm::mat4* current_pose_matrices, glm::mat4* animated_matrices, const int& parent_id) {
+    //     struct JointUpdate {
+    //         SimpleJoint* joint;
+    //         int parent_id;
+    //     };
+
+    //     std::stack<JointUpdate> update_stack;
+    //     update_stack.push({this, parent_id});
+
+    //     while (!update_stack.empty()) {
+    //         auto current = update_stack.top();
+    //         update_stack.pop();
+
+    //         SimpleJoint* joint = current.joint;
+    //         int current_parent_id = current.parent_id;
+
+    //         // Update current joint's transform
+    //         if (current_parent_id > -1 && joint->id > -1) {
+    //             animated_matrices[joint->id] = animated_matrices[current_parent_id] * current_pose_matrices[joint->id];
+    //         } else if (joint->id > -1) {
+    //             animated_matrices[joint->id] = current_pose_matrices[joint->id];
+    //         }
+
+    //         // Add children to stack (in reverse order to maintain same processing order as recursive version)
+    //         for (auto it = joint->children.rbegin(); it != joint->children.rend(); ++it) {
+    //             update_stack.push({*it, joint->id});
+    //         }
+    //     }
+    // }
 };
 
 namespace Testing {
     int the_pose_I_wanna_show = 0;
     int counting = 0;
+    std::vector<std::string> joint_names;
     glm::mat4* current_pose;
+    glm::mat4* local_bind_transforms;
     // glm::mat4 current_pose[16];
     std::vector<Token*> animation_list;
     std::unordered_map<std::string, unsigned int> joint_name_to_id;
+    const int total_animation_frames = 2;
 
     void _handle_free_camera_inputs(const Renderer& renderer, Camera& cam) {
         glm::vec3 moveDirection(0.0f);
@@ -69,10 +107,19 @@ namespace Testing {
         glm::vec3 player_input(0.0f);
 
         if (renderer.is_key_pressed(GLFW_KEY_TAB)) {
-            the_pose_I_wanna_show = ++counting % 5;
+            // Reset pose
+            for (unsigned int i = 0; i < joint_names.size(); i++) {
+                current_pose[i] = local_bind_transforms[i];
+            }
+            the_pose_I_wanna_show = ++counting % total_animation_frames;
             for (const auto& animation : animation_list) {
                 Token* channel = animation->get_tokens("channel")[0];
                 std::string joint_name = Common::split_string(channel->props["target"], '/')[0];
+                
+                if (joint_name_to_id.find(joint_name) == joint_name_to_id.end()) {
+                    continue;
+                }
+                
                 unsigned int joint_id = joint_name_to_id[joint_name];
                 const int base_index = the_pose_I_wanna_show * 16;
 
@@ -208,10 +255,65 @@ namespace Testing {
         }
     }
 
+    void try_assimp() {
+        Renderer& renderer = Renderer::get_instance();
+        renderer.init(
+            "3d animated model assimp Demo",
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT,
+            true,
+            false
+        );
+        
+        Shader shader("AnimatedBlinnPhong");
+        Model hero("objs/Hero.dae");
+        hero.set_rotation_x(PI / 2);
+        
+
+        Camera cam(renderer.get_window_width(), renderer.get_window_height());
+        cam.set_position({ 0, -200, 100 });
+        cam.set_rotation({ PI / 2, 0, 0 });
+        
+        Timer timer;
+        float time_of_last_frame = 0;
+
+        while (!renderer.is_terminated()) {
+            float delta_time = float(timer.GetTime()) - time_of_last_frame;
+            while (delta_time < 125000.0f) {
+                delta_time = float(timer.GetTime()) - time_of_last_frame;
+            }
+
+            time_of_last_frame = float(timer.GetTime());
+            // model.set_scale({20, 20, 20});
+            _handle_free_camera_inputs(renderer, cam);
+            
+            renderer.begin_draw();
+            glm::vec3 light_pos = cam.get_position();
+
+            shader.set_uniform_mat4f("u_view_project", cam.get_view_project_matrix());
+
+            shader.set_uniform_3f("u_view_pos", cam.get_position());
+            shader.set_uniform_3f("u_light_pos", light_pos);
+            shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
+            shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
+
+            hero.draw(shader);
+
+            renderer.end_draw();
+        }
+    }
 
     void do_stuff() {
+        // const std::string collada_file_name = "thin_mat_model.dae";
+        // const std::string texture_file_name = "thin_mat_model.png";
+        // const std::string collada_file_name = "BlackDragon/Dragon.dae";
+        // const std::string texture_file_name = "Dragon_ground_color.jpg";
+        const std::string collada_file_name = "Wolf_dae.dae";
+        const std::string texture_file_name = "Wolf_Body.jpg";
+
         // std::string xml_content = FileSystem::read_file("objs/BlackDragon/Dragon.dae");
-        std::string xml_content = FileSystem::read_file("objs/thin_mat_model.dae");
+        // std::string xml_content = FileSystem::read_file("objs/thin_mat_model.dae");
+        std::string xml_content = FileSystem::read_file("objs/" + collada_file_name);
         
         std::vector<Token> tokens;
         try {
@@ -228,10 +330,11 @@ namespace Testing {
         Token* library_controllers = collada->get_tokens("library_controllers")[0];
 
 #pragma region trying to rig skeleton
-        std::string raw_joint_names = library_controllers->get_tokens("Name_array", {{"id", "Armature_Cube-skin-joints-array"}})[0]->data;
-        std::vector<std::string> joint_names = Common::split_string(raw_joint_names, ' ');
+        std::vector<Token*> controller_source_list = library_controllers->get_tokens("source");
+        std::string raw_joint_names = controller_source_list[0]->get_tokens("Name_array")[0]->data;
+        joint_names = Common::split_string(raw_joint_names, ' ');
 
-        std::string raw_weights = library_controllers->get_tokens("float_array", {{"id", "Armature_Cube-skin-weights-array"}})[0]->data;
+        std::string raw_weights = controller_source_list[2]->get_tokens("float_array")[0]->data;
         std::vector<float> weights;
         for (const auto& s : Common::split_string(raw_weights, ' ')) {
             weights.push_back(std::stof(s));
@@ -389,8 +492,8 @@ namespace Testing {
                             const auto base_index_joint_weight = 20 * collada_indices[base_index_bundle + offset * elements_in_an_index_bundle];
                             for (unsigned int j = 0; j < 20; ++j) {
                                 if (j < 10) { // joint
-                                    const float joint_id = joint_weight_indices[base_index_joint_weight + j];
-                                    vertices.push_back(joint_id);
+                                    float joint_id = joint_weight_indices[base_index_joint_weight + j];
+                                    vertices.push_back(reinterpret_cast<float&>(joint_id));
                                 } else { // weight
                                     const int weight_id = joint_weight_indices[base_index_joint_weight + j];
                                     if (weight_id < 0) {
@@ -410,7 +513,7 @@ namespace Testing {
         }
 #pragma endregion
 #define SIZE_OF_MAT4 16
-        std::vector<std::string> raw_inv_bind_matrices = Common::split_string(library_controllers->get_tokens("float_array", {{ "id", "Armature_Cube-skin-bind_poses-array" }})[0]->data, ' ');
+        std::vector<std::string> raw_inv_bind_matrices = Common::split_string(controller_source_list[1]->get_tokens("float_array")[0]->data, ' ');
         std::vector<glm::mat4> inv_bind_matrices;
         inv_bind_matrices.reserve(joint_names.size());
         for (unsigned int i = 0; i < joint_names.size(); ++i) {
@@ -421,10 +524,7 @@ namespace Testing {
                 std::stof(raw_inv_bind_matrices[base_index + 2]), std::stof(raw_inv_bind_matrices[base_index + 6]), std::stof(raw_inv_bind_matrices[base_index + 10]), std::stof(raw_inv_bind_matrices[base_index + 14]),
                 std::stof(raw_inv_bind_matrices[base_index + 3]), std::stof(raw_inv_bind_matrices[base_index + 7]), std::stof(raw_inv_bind_matrices[base_index + 11]), std::stof(raw_inv_bind_matrices[base_index + 15])
             );
-            // inv_bind_matrices.emplace_back(1.0f);
         }
-
-        // _print_matrices(inv_bind_matrices);
 
         joint_name_to_id;
         joint_name_to_id.reserve(joint_names.size());
@@ -432,43 +532,71 @@ namespace Testing {
             joint_name_to_id[joint_names[i]] = i;
         }
 
-        
-
         SimpleJoint* all_joints = new SimpleJoint[joint_names.size()];
-        // Token* library_animations = collada->get_tokens("library_animations")[0];
+        local_bind_transforms = new glm::mat4[joint_names.size()];
+
+        for (unsigned int i = 0; i < joint_names.size(); i++) {
+            local_bind_transforms[i] = glm::mat4(1.0f);
+        }
+
         Token* library_visual_scenes = collada->get_tokens("library_visual_scenes")[0];
-        Token* root_node = collada->get_tokens("node", {{ "id", "Armature" }})[0];
+        Token* root_node = library_visual_scenes->get_tokens("node", 2)[0];
         SimpleJoint root;
         root.name = "root";
         root.id = -1;
         std::pair<SimpleJoint*, Token*> joint_node;
         std::stack<std::pair<SimpleJoint*, Token*>> todo;
         todo.push({&root, root_node});
+
+        std::vector<int> done;
+
         while (!todo.empty()) {
             auto current = todo.top();
             todo.pop();
             auto joint = current.first;
             auto node = current.second;
 
+            auto matrix = node->get_tokens("matrix", 1);
+            if (!matrix.empty()) {
+                std::vector<std::string> raw_bind_mat = Common::split_string(matrix[0]->data, ' ');
+                local_bind_transforms[joint->id] = glm::mat4(
+                    std::stof(raw_bind_mat[0]), std::stof(raw_bind_mat[4]), std::stof(raw_bind_mat[8]), std::stof(raw_bind_mat[12]),
+                    std::stof(raw_bind_mat[1]), std::stof(raw_bind_mat[5]), std::stof(raw_bind_mat[9]), std::stof(raw_bind_mat[13]),
+                    std::stof(raw_bind_mat[2]), std::stof(raw_bind_mat[6]), std::stof(raw_bind_mat[10]), std::stof(raw_bind_mat[14]),
+                    std::stof(raw_bind_mat[3]), std::stof(raw_bind_mat[7]), std::stof(raw_bind_mat[11]), std::stof(raw_bind_mat[15])
+                );
+            }
+
             auto child_nodes = node->get_tokens("node", 1);
             for (const auto& child : child_nodes) {
+                if (joint_name_to_id.find(child->props["id"]) == joint_name_to_id.end()) {
+                    continue;
+                }
                 SimpleJoint* target = &all_joints[joint_name_to_id[child->props["id"]]];
                 target->id = joint_name_to_id[child->props["id"]];
                 target->name = child->props["id"];
                 joint->children.push_back(target);
                 todo.push({ target, child });
+                done.push_back(target->id);
             }
         }
 
         Token* library_animations = collada->get_tokens("library_animations")[0];
         animation_list = library_animations->get_tokens("animation");
         current_pose = new glm::mat4[joint_names.size()];
-        // std::vector<glm::mat4> current_pose;
-        // current_pose.reserve(joint_names.size());
+        // reset the pose... Incase some joints have no animation.....
+        for (unsigned int i = 0; i < joint_names.size(); i++) {
+            current_pose[i] = local_bind_transforms[i];
+        }
         
         for (const auto& animation : animation_list) {
             Token* channel = animation->get_tokens("channel")[0];
             std::string joint_name = Common::split_string(channel->props["target"], '/')[0];
+
+            if (joint_name_to_id.find(joint_name) == joint_name_to_id.end()) {
+                continue;
+            }
+
             unsigned int joint_id = joint_name_to_id[joint_name];
             const int base_index = the_pose_I_wanna_show * SIZE_OF_MAT4;
 
@@ -488,7 +616,6 @@ namespace Testing {
                 keyframes[base_index + 3], keyframes[base_index + 7], keyframes[base_index + 11], keyframes[base_index + 15]
             );
 
-            // current_pose[joint_id] = glm::mat4(1.0f);
         }
 
 
@@ -508,7 +635,8 @@ namespace Testing {
             false
         );
         Camera cam(renderer.get_window_width(), renderer.get_window_height());
-        cam.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
+        cam.set_position({ 0, -10, 5 });
+        cam.set_rotation({ PI / 2, 0, 0 });
 
         VertexBufferLayout layout;
         layout.push<float>(3); // position
@@ -530,12 +658,15 @@ namespace Testing {
         Shader shader("AnimatedBlinnPhong");
         Mesh mesh(c_vertices, c_indices, vertices.size() * sizeof(float), indices.size(), layout);
         // Texture2D texture("Dragon_ground_color.jpg");
-        Texture2D texture("thin_mat_model.png");
+        Texture2D texture(texture_file_name);
         Model model(&mesh, &texture, &shader, nullptr, 0);
 
         
         glm::mat4* animated_matrices = new glm::mat4[joint_names.size()];
-        
+        for (unsigned int i = 0; i < joint_names.size(); i++) {
+            animated_matrices[i] = glm::mat4(1.0f);
+        }
+
         // debugging
         // _print_matrices(std::vector<glm::mat4>(animated_matrices, animated_matrices + sizeof(animated_matrices)/sizeof(animated_matrices[0])));
         // Print first 5 vertices only
@@ -551,7 +682,7 @@ namespace Testing {
             }
 
             time_of_last_frame = float(timer.GetTime());
-            model.update();
+            // model.set_scale({20, 20, 20});
             _handle_free_camera_inputs(renderer, cam);
 
             root.update_joint_transform(&current_pose[0], animated_matrices, -1);
@@ -582,6 +713,7 @@ namespace Testing {
         delete[] current_pose;
         delete[] all_joints;
         delete[] animated_matrices;
+        delete[] local_bind_transforms;
     };
 
 

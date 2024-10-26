@@ -10,75 +10,11 @@
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
-  <library_cameras>
-    <camera id="Camera-camera" name="Camera">
-      <optics>
-        <technique_common>
-          <perspective>
-            <xfov sid="xfov">49.13434</xfov>
-            <aspect_ratio>1.777778</aspect_ratio>
-            <znear sid="znear">0.1</znear>
-            <zfar sid="zfar">100</zfar>
-          </perspective>
-        </technique_common>
-      </optics>
-      <extra>
-        <technique profile="blender">
-          <YF_dofdist>0</YF_dofdist>
-          <shiftx>0</shiftx>
-          <shifty>0</shifty>
-        </technique>
-      </extra>
-    </camera>
-  </library_cameras>
   <library_images>
     <image id="character_Texture_png" name="character_Texture_png">
       <init_from>character%20Texture.png</init_from>
     </image>
   </library_images>
-  <library_effects>
-    <effect id="Material-effect">
-      <profile_COMMON>
-        <newparam sid="character_Texture_png-surface">
-          <surface type="2D">
-            <init_from>character_Texture_png</init_from>
-          </surface>
-        </newparam>
-        <newparam sid="character_Texture_png-sampler">
-          <sampler2D>
-            <source>character_Texture_png-surface</source>
-          </sampler2D>
-        </newparam>
-        <technique sid="common">
-          <phong>
-            <emission>
-              <color sid="emission">0 0 0 1</color>
-            </emission>
-            <ambient>
-              <color sid="ambient">0 0 0 1</color>
-            </ambient>
-            <diffuse>
-              <texture texture="character_Texture_png-sampler" texcoord="UVMap"/>
-            </diffuse>
-            <specular>
-              <color sid="specular">0.5 0.5 0.5 1</color>
-            </specular>
-            <shininess>
-              <float sid="shininess">50</float>
-            </shininess>
-            <index_of_refraction>
-              <float sid="index_of_refraction">1</float>
-            </index_of_refraction>
-          </phong>
-        </technique>
-      </profile_COMMON>
-    </effect>
-  </library_effects>
-  <library_materials>
-    <material id="Material-material" name="Material">
-      <instance_effect url="#Material-effect"/>
-    </material>
-  </library_materials>
   <library_geometries>
     <geometry id="Cube-mesh" name="Cube">
       <mesh>
@@ -692,14 +628,6 @@
   </library_controllers>
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
-      <node id="Camera" name="Camera" type="NODE">
-        <translate sid="location">10.47735 -20.45861 11.95875</translate>
-        <rotate sid="rotationZ">0 0 1 26.73652</rotate>
-        <rotate sid="rotationY">0 1 0 -2.647884</rotate>
-        <rotate sid="rotationX">1 0 0 78.07836</rotate>
-        <scale sid="scale">1 0.9999999 1</scale>
-        <instance_camera url="#Camera-camera"/>
-      </node>
       <node id="Armature" name="Armature" type="NODE">
         <translate sid="location">0 0 0</translate>
         <rotate sid="rotationZ">0 0 1 0</rotate>
@@ -875,23 +803,6 @@
             </technique>
           </extra>
         </node>
-      </node>
-      <node id="Cube" name="Cube" type="NODE">
-        <translate sid="location">0 0 0</translate>
-        <rotate sid="rotationZ">0 0 1 0</rotate>
-        <rotate sid="rotationY">0 1 0 0</rotate>
-        <rotate sid="rotationX">1 0 0 0</rotate>
-        <scale sid="scale">1 1 1</scale>
-        <instance_controller url="#Armature_Cube-skin">
-          <skeleton>#Torso</skeleton>
-          <bind_material>
-            <technique_common>
-              <instance_material symbol="Material-material" target="#Material-material">
-                <bind_vertex_input semantic="UVMap" input_semantic="TEXCOORD" input_set="0"/>
-              </instance_material>
-            </technique_common>
-          </bind_material>
-        </instance_controller>
       </node>
     </visual_scene>
   </library_visual_scenes>

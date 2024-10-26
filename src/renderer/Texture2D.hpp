@@ -20,6 +20,7 @@ class Texture2D {
     unsigned int m_id;
     unsigned int m_texture_slot;
     std::string m_file_path;
+    std::string m_file_name;
     unsigned char* m_local_buffer;
     int m_width;
     int m_height;
@@ -28,6 +29,7 @@ public:
     Texture2D(const std::string& name) : 
         m_id(0),
         m_texture_slot(0),
+        m_file_name(name),
         m_file_path(TEXTURE_PATH + name), 
         m_local_buffer(nullptr),
         m_width(0), 
@@ -46,8 +48,8 @@ public:
             // We love OpenGL!
             GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
             GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-            GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-            GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+            GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+            GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 
             GL_Call(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_local_buffer));
             GL_Call(glBindTexture(GL_TEXTURE_2D, 0));
@@ -60,6 +62,8 @@ public:
 
     inline unsigned int get_width() const { return m_width; }
     inline unsigned int get_height() const { return m_height; }
+    std::string get_file_name() const { return m_file_name; }
+    unsigned int get_id() const { return m_id; }
 
     // GPU texture slots are limited. The graphics card has a fixed number of texture slots,
     // so if you need more than however many the graphics card supports, you will have to 
