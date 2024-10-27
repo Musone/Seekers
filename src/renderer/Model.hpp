@@ -1,49 +1,43 @@
 #pragma once
 
+#include <renderer/Animator.hpp>
+#include <renderer/Animation.hpp>
 #include <renderer/GLUtils.hpp>
-#include <glm/glm.hpp>
 #include <renderer/Texture2D.hpp>
 #include <renderer/Shader.hpp>
 #include <renderer/Mesh.hpp>
-#include <renderer/Camera.hpp>
+#include <renderer/Skeleton.hpp>
 #include <utils/Transform.hpp>
-// include joint and animator later.
-#include <renderer/Joint.hpp>
+#include <utils/Log.hpp>
 
+#include <glm/glm.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 class Model {
-private:
-    struct JointInfo {
-        std::string name;
-        int id;
-        glm::mat4 inverse_bind_matrix;
-        glm::mat4 local_bind_transform;
-        std::vector<JointInfo*> children;
+public:
+    struct Attachment {
+        Model* model;
+        std::string joint_name;
+        // Optional: local offset from joint
+        glm::vec3 offset_position = glm::vec3(0.0f);
+        glm::vec3 offset_rotation = glm::vec3(0.0f);
+        glm::vec3 offset_scale = glm::vec3(1.0f);
     };
+private:
+    Skeleton m_skeleton;
+    Animator m_animator; 
+    std::vector<Animation*> m_animations; 
 
-    // Mesh* m_mesh;
-    // Texture2D* m_texture;
-    // Shader* m_shader;
-    
-    JointInfo* m_root_joint = nullptr;
-    std::vector<glm::mat4> m_inverse_bind_matrices;
-    std::vector<glm::mat4> m_joint_transforms;
-    std::vector<glm::mat4> m_current_pose;
-    
     glm::vec3 m_position;
     glm::vec3 m_rotation;
     glm::vec3 m_scale;
 
     Assimp::Importer m_importer;
     const aiScene* m_scene = nullptr;
-    aiNode* m_root_node = nullptr;
 
-    std::vector<JointInfo> m_joints;
-    std::unordered_map<std::string, int> m_joint_name_to_id;
-
+    std::vector<Attachment> m_attachments;
 public:
     std::vector<Mesh> mesh_list;
     std::vector<Texture2D> texture_list;
@@ -52,76 +46,116 @@ public:
     Model(const char* model_path) : 
         m_position(0.0f),
         m_rotation(0.0f),
-        m_scale(1.0f) {
+        m_scale(1.0f),
+        m_animator(&m_skeleton) {
         _load_model(model_path);
     }
 
-    Model(Mesh* mesh, Texture2D* texture, Shader* shader, Joint* root_joint, int joint_count) :
-        // m_mesh(mesh),
-        // m_texture(texture),
-        // m_shader(shader),
-        // m_root_joint(root_joint),
-        // m_joint_count(joint_count),
-        m_position(glm::vec3(0.0f)),
-        m_rotation(glm::vec3(0.0f)),
-        m_scale(glm::vec3(1.0f))
-        // m_joint_transforms(nullptr)
-         {
-        // if (m_joint_count > 0 && m_root_joint != nullptr) {
-            // m_root_joint->set_inverse_bind_transform(glm::mat4(1.0));
-            // m_joint_transforms = new glm::mat4[joint_count];
-        // }
-        // create an animator
-    }
-    
     ~Model() {
-        // delete[] m_joint_transforms;
+        for (auto anim : m_animations) {
+            delete anim;
+        }
     }
 
-    // Existing getters
-    glm::mat4 get_model_matrix() const { 
-        return Transform::create_model_matrix(
-            m_position,
-            m_rotation,
-            m_scale
-        ); 
+    void draw(Shader& shader) {
+        draw(shader, true);
     }
 
-    unsigned int get_face_count() const { 
-        throw new std::runtime_error("This has been deprecated."); 
-    }
-
-    void draw(Shader& shader) const {
+    void draw(Shader& shader, const bool& use_model_matrix) const {
         shader.bind();
         
-        // Set model transform
-        shader.set_uniform_mat4f("u_model", get_model_matrix());
+        if (use_model_matrix) {
+            shader.set_uniform_mat4f("u_model", get_model_matrix());
+        }
 
         // Set animation data if available
-        if (!m_joints.empty()) {
-            shader.set_uniform_mat4f_array("u_joint_transforms", m_joint_transforms.data()[0], m_joints.size());
-            shader.set_uniform_mat4f_array("u_inv_bind", m_inverse_bind_matrices.data()[0], m_joints.size());
+        if (m_skeleton.has_joints()) {
+            shader.set_uniform_mat4f_array(
+                "u_joint_transforms", 
+                *m_skeleton.get_joint_transforms().data(), 
+                m_skeleton.get_joint_count()
+            );
         }
 
         // Draw each mesh
         for (unsigned int i = 0; i < num_meshes; i++) {
-            // Bind mesh data
             mesh_list[i].bind();
             
-            // Bind texture if available
             if (mesh_list[i].m_texture) {
                 shader.set_uniform_1i("u_texture", mesh_list[i].m_texture->bind(1));
             }
 
-            // Draw
             GL_Call(glDrawElements(GL_TRIANGLES, mesh_list[i].get_face_count(), GL_UNSIGNED_INT, 0));
-            
-            // Unbind mesh data
             mesh_list[i].unbind();
+        }
+
+        // Draw attached models
+        for (const auto& attachment : m_attachments) {
+            if (attachment.model) {
+                // Get joint transform
+                const Skeleton::Joint* joint = m_skeleton.get_joint_by_name(attachment.joint_name);
+                if (joint) {
+                    // Calculate attachment transform
+                    glm::mat4 joint_transform = m_skeleton.get_joint_transforms()[joint->id];
+                    glm::mat4 attachment_transform = 
+                        get_model_matrix() * 
+                        joint_transform *
+                        Transform::create_model_matrix(
+                            attachment.offset_position,
+                            attachment.offset_rotation,
+                            attachment.offset_scale
+                        );
+
+                    // Draw attached model with combined transform
+                    shader.set_uniform_mat4f("u_model", attachment_transform);
+                    attachment.model->draw(shader, false);
+                }
+            }
         }
     }
 
-#pragma region comprehensive getters and setters
+    void update() {
+        m_animator.update();
+    }
+
+    void play_animation(size_t index) {
+        if (index < m_animations.size()) {
+            m_animator.set_animation(m_animations[index]);
+        }
+    }
+
+    size_t get_animation_count() const {
+        return m_animations.size();
+    }
+
+    unsigned int get_face_count() const {
+        Log::log_error_and_terminate("This is deprecated.", __FILE__, __LINE__);
+        return 0xdeadbeef;
+    }
+
+    void reset_to_bind_pose() {
+        if (m_skeleton.has_joints()) {
+            m_skeleton.reset_to_bind_pose();
+        }
+    }
+
+    Attachment* attach_to_joint(
+        Model* model, const std::string& joint_name, 
+        const glm::vec3& offset_pos = glm::vec3(0.0f),
+        const glm::vec3& offset_rot = glm::vec3(0.0f),
+        const glm::vec3& offset_scale = glm::vec3(1.0f)
+    ) {
+        m_attachments.push_back({
+            model, 
+            joint_name, 
+            offset_pos,
+            offset_rot,
+            offset_scale
+        });
+        return &m_attachments.back();
+    }
+
+#pragma region Transform Operations
     // Basic vector setters
     void set_position(const glm::vec3& position) { m_position = position; }
     void set_rotation(const glm::vec3& rotation) { m_rotation = rotation; }
@@ -171,6 +205,10 @@ public:
     void translate(float x, float y, float z) { m_position += glm::vec3(x, y, z); }
     void rotate(float x, float y, float z) { m_rotation += glm::vec3(x, y, z); }
     void scale(float x, float y, float z) { m_scale *= glm::vec3(x, y, z); }
+
+    glm::mat4 get_model_matrix() const { 
+        return Transform::create_model_matrix(m_position, m_rotation, m_scale); 
+    }
 #pragma endregion
 
 private:
@@ -178,7 +216,6 @@ private:
         m_scene = m_importer.ReadFile(model_path, 
             aiProcess_JoinIdenticalVertices | 
             aiProcess_Triangulate | 
-            // aiProcess_FlipUVs |
             aiProcess_GenUVCoords |
             aiProcess_LimitBoneWeights |
             aiProcess_GenNormals
@@ -196,8 +233,8 @@ private:
         for (unsigned int i = 0; i < num_meshes; ++i) {
             aiMesh* mesh = m_scene->mMeshes[i];
             if (mesh->HasBones()) {
-                _process_skeleton(mesh, m_scene);
-                break;  // Only need to process skeleton once
+                m_skeleton.init_from_mesh(mesh, m_scene);
+                break;
             }
         }
 
@@ -208,10 +245,19 @@ private:
             _process_material(m_scene->mMaterials[mesh->mMaterialIndex], i);
         }
 
-        // TODO: LOAD ANIMATIONS
-        // if (m_scene->HasAnimations()) {
-        //     _process_animations(m_scene);
-        // }
+        Log::log_success("Model loaded successfully with " + std::to_string(num_meshes) + " meshes", 
+            __FILE__, __LINE__);
+
+        // Load animations if they exist
+        if (m_scene->HasAnimations()) {
+            for (unsigned int i = 0; i < m_scene->mNumAnimations; i++) {
+                Animation* anim = Animation::from_assimp_animation(m_scene->mAnimations[i], m_scene);
+                if (anim) {
+                    m_animations.push_back(anim);
+                    Log::log_success("Loaded animation " + std::to_string(i), __FILE__, __LINE__);
+                }
+            }
+        }
     }
 
     void _process_mesh(aiMesh* mesh, unsigned int mesh_index) {
@@ -269,7 +315,7 @@ private:
                 vertices.push_back(-1);
             }
 
-            // 4 weights (as vec4)
+            // Initialize weights with 0
             for (int j = 0; j < 4; j++) {
                 vertices.push_back(0.0f);
             }
@@ -296,14 +342,14 @@ private:
             std::sort(weights.begin(), weights.end(),
                 [](const auto& a, const auto& b) { return a.second > b.second; });
 
-            size_t base_offset = i * (3 + 3 + 2 + 4 + 4); // pos norm texcoords 4joints 4weights
+            size_t base_offset = i * (3 + 3 + 2 + 4 + 4);
             size_t joint_offset = base_offset + 8;
             size_t weight_offset = joint_offset + 4;
 
             float total_weight = 0.0f;
 
             for (size_t j = 0; j < std::min(size_t(4), weights.size()); j++) {
-                vertices[joint_offset + j] = weights[j].first;
+                vertices[joint_offset + j] = reinterpret_cast<float&>(weights[j].first);
                 vertices[weight_offset + j] = weights[j].second;
                 total_weight += weights[j].second;
             }
@@ -335,67 +381,9 @@ private:
             if (texture == nullptr) {
                 texture_list.emplace_back(texture_name.c_str());
                 texture = &texture_list.back();
+                Log::log_success("Loaded texture: " + texture_name, __FILE__, __LINE__);
             }
             mesh_list[mesh_index].set_texture(texture);
-        }
-    }
-
-    void _process_skeleton(aiMesh* mesh, const aiScene* scene) {
-        m_joints.resize(mesh->mNumBones);
-        m_joint_name_to_id.reserve(mesh->mNumBones);
-        m_current_pose.resize(mesh->mNumBones, glm::mat4(1.0f));  // Initialize with identity matrices
-        m_joint_transforms.resize(mesh->mNumBones); 
-
-        for (unsigned int i = 0; i < mesh->mNumBones; i++) {
-            aiBone* bone = mesh->mBones[i];
-            m_joint_name_to_id[bone->mName.C_Str()] = i;
-            
-            aiMatrix4x4 offset = bone->mOffsetMatrix;
-            m_joints[i].inverse_bind_matrix = glm::mat4(
-                offset.a1, offset.b1, offset.c1, offset.d1,
-                offset.a2, offset.b2, offset.c2, offset.d2,
-                offset.a3, offset.b3, offset.c3, offset.d3,
-                offset.a4, offset.b4, offset.c4, offset.d4
-            );
-            
-            m_joints[i].name = bone->mName.C_Str();
-            m_joints[i].id = i;
-        }
-
-        // Initialize inverse bind matrices once
-        m_inverse_bind_matrices.reserve(m_joints.size());
-        for (const auto& joint : m_joints) {
-            m_inverse_bind_matrices.push_back(joint.inverse_bind_matrix);
-        }
-
-        _build_skeleton_hierarchy(scene->mRootNode, nullptr);
-    }
-
-    void _build_skeleton_hierarchy(aiNode* node, JointInfo* parent) {
-        auto it = m_joint_name_to_id.find(node->mName.C_Str());
-        JointInfo* current_joint = nullptr;
-
-        if (it != m_joint_name_to_id.end()) {
-            current_joint = &m_joints[it->second];
-            
-            aiMatrix4x4 transform = node->mTransformation;
-            current_joint->local_bind_transform = glm::mat4(
-                transform.a1, transform.b1, transform.c1, transform.d1,
-                transform.a2, transform.b2, transform.c2, transform.d2,
-                transform.a3, transform.b3, transform.c3, transform.d3,
-                transform.a4, transform.b4, transform.c4, transform.d4
-            );
-
-            // If this joint has no parent, it's the root
-            if (!parent) {
-                m_root_joint = current_joint;
-            } else {
-                parent->children.push_back(current_joint);
-            }
-        }
-
-        for (unsigned int i = 0; i < node->mNumChildren; i++) {
-            _build_skeleton_hierarchy(node->mChildren[i], current_joint ? current_joint : parent);
         }
     }
 
