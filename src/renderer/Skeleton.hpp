@@ -25,6 +25,7 @@ private:
     std::unordered_map<std::string, int> m_joint_name_to_id;
     std::vector<glm::mat4> m_inverse_bind_matrices;
     std::vector<glm::mat4> m_joint_transforms;
+    std::vector<glm::mat4> m_global_transforms;
     std::vector<glm::mat4> m_current_pose;
     Joint* m_root_joint = nullptr;
     bool m_is_initialized = false;
@@ -62,6 +63,13 @@ public:
             Log::log_error_and_terminate("Attempting to get transforms from uninitialized skeleton", __FILE__, __LINE__);
         }
         return m_joint_transforms; 
+    }
+
+    const std::vector<glm::mat4>& get_global_transforms() const { 
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Attempting to get transforms from uninitialized skeleton", __FILE__, __LINE__);
+        }
+        return m_global_transforms; 
     }
 
     const std::vector<glm::mat4>& get_inverse_bind_matrices() const { 
@@ -128,7 +136,6 @@ public:
             int parent_id;
         };
 
-        std::vector<glm::mat4> global_transforms(m_joints.size());
         std::stack<JointUpdate> update_stack;
 
         if (m_root_joint) {
@@ -144,14 +151,14 @@ public:
 
             // Calculate global transform
             if (parent_id > -1) {
-                global_transforms[joint->id] = global_transforms[parent_id] * m_current_pose[joint->id];
+                m_global_transforms[joint->id] = m_global_transforms[parent_id] * m_current_pose[joint->id];
             } else {
-                global_transforms[joint->id] = m_current_pose[joint->id];
+                m_global_transforms[joint->id] = m_current_pose[joint->id];
             }
 
             // Store final transform for skinning
             // Final = Global * Inverse Bind
-            m_joint_transforms[joint->id] = global_transforms[joint->id] * joint->inverse_bind_matrix;
+            m_joint_transforms[joint->id] = m_global_transforms[joint->id] * joint->inverse_bind_matrix;
 
             // Add children to stack in reverse order
             for (auto it = joint->children.rbegin(); it != joint->children.rend(); ++it) {
@@ -210,6 +217,7 @@ private:
         m_joint_name_to_id.reserve(mesh->mNumBones);
         m_current_pose.resize(mesh->mNumBones, glm::mat4(1.0f));
         m_joint_transforms.resize(mesh->mNumBones);
+        m_global_transforms.resize(mesh->mNumBones);
 
         for (unsigned int i = 0; i < mesh->mNumBones; i++) {
             aiBone* bone = mesh->mBones[i];
@@ -219,7 +227,7 @@ private:
             m_joints[i].name = bone->mName.C_Str();
             m_joints[i].id = i;
             
-            Log::log_success("Processed joint: " + std::string(bone->mName.C_Str()), __FILE__, __LINE__);
+            // Log::log_success("Processed joint: " + std::string(bone->mName.C_Str()), __FILE__, __LINE__);
         }
 
         m_inverse_bind_matrices.reserve(m_joints.size());
@@ -241,8 +249,8 @@ private:
                 Log::log_success("Found root joint: " + current_joint->name, __FILE__, __LINE__);
             } else {
                 parent->children.push_back(current_joint);
-                Log::log_success("Added joint '" + current_joint->name + "' as child of '" + parent->name + "'", 
-                    __FILE__, __LINE__);
+                // Log::log_success("Added joint '" + current_joint->name + "' as child of '" + parent->name + "'", 
+                    // __FILE__, __LINE__);
             }
         }
 

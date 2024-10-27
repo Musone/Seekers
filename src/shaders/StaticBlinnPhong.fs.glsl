@@ -2,13 +2,17 @@
 
 in vec3 v_normal;
 in vec3 v_frag_pos;
+in vec4 v_color;
 in vec2 v_uv;
 
 uniform vec3 u_light_pos;
-uniform vec3 u_view_pos;  // Camera position
+uniform vec3 u_view_pos;
 uniform vec3 u_light_color;
 uniform vec3 u_object_color;
 uniform sampler2D u_texture;
+
+uniform bool u_has_vertex_colors;
+uniform bool u_has_texture;
 
 out vec4 frag_color;
 
@@ -32,10 +36,17 @@ void main() {
     float spec = pow(max(dot(norm, halfway_dir), 0.0), 32.0);
     vec3 specular = specular_strength * spec * u_light_color;
 
-    // vec3 result = (ambient + diffuse + specular) * u_object_color;
-    vec3 result = (ambient + diffuse + specular) * texture(u_texture, v_uv).xyz;
+    // Determine base color
+    vec3 base_color;
+    if (u_has_vertex_colors) {
+        base_color = v_color.rgb;
+    } else if (u_has_texture) {
+        base_color = texture(u_texture, v_uv).rgb;
+    } else {
+        base_color = u_object_color;
+    }
+
+    vec3 result = (ambient + diffuse + specular) * base_color;
     result = clamp(result, 0.0, 1.0);
     frag_color = vec4(result, 1.0);
-    // frag_color = vec4(1.0, 0.0, 0.0, 1.0);
-    // frag_color = texture(u_texture, v_uv);
 }

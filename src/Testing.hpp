@@ -10,6 +10,8 @@
 #include <renderer/SkyboxTexture.hpp>
 #include <renderer/Mesh.hpp>
 #include <renderer/Model.hpp>
+#include <renderer/AnimatedModel.hpp>
+#include <renderer/StaticModel.hpp>
 #include <ecs/Registry.hpp>
 #include <app/World.h>
 #include <app/InputManager.hpp>
@@ -31,8 +33,9 @@
 #include <assimp/vector3.h>
 
 namespace Testing {
-    glm::vec3 child_position(-80.5f, 24.5f, -14.0f);
-    Model::Attachment* attach;
+    // glm::vec3 child_position(-80.5f, 24.5f, -14.0f);
+    glm::vec3 child_position(0.0f);
+    AnimatedModel::Attachment* attach;
 
     void _handle_free_camera_inputs(const Renderer& renderer, Camera& cam) {
         glm::vec3 moveDirection(0.0f);
@@ -203,17 +206,24 @@ namespace Testing {
             false
         );
         
-        Shader shader("AnimatedBlinnPhong");
-        Model hero("objs/Hero.dae");
+        Shader animated_shader("AnimatedBlinnPhong");
+        Shader static_shader("StaticBlinnPhong");
+        // Model hero("objs/Hero.dae");
+        AnimatedModel hero("objs/Hero.dae", &animated_shader);
+        StaticModel tree("objs/Lowpoly_tree_sample.dae", &static_shader);
+        StaticModel katana("objs/katana.obj", &static_shader);
+        tree.set_scale(20, 20, 20);
         hero.set_rotation_x(PI / 2);
         
-        Model delete_me("objs/Hero.dae");
+        // Model delete_me("objs/Lowpoly_tree_sample.dae");
+        // Model delete_me("objs/Hero.dae");
 
         attach = hero.attach_to_joint(
-            &delete_me, 
+            &katana, 
             "mixamorig_RightHand", 
             child_position, // pos 
-            glm::vec3(0, 0, 0), // rot
+            // glm::vec3(- PI / 2, - PI / 2, 0), // rot
+            glm::vec3(0, - PI / 2, PI / 2), // rot
             glm::vec3(1, 1, 1) // scale
         );
 
@@ -244,14 +254,20 @@ namespace Testing {
             renderer.begin_draw();
             glm::vec3 light_pos = cam.get_position();
 
-            shader.set_uniform_mat4f("u_view_project", cam.get_view_project_matrix());
+            animated_shader.set_uniform_mat4f("u_view_project", cam.get_view_project_matrix());
+            animated_shader.set_uniform_3f("u_view_pos", cam.get_position());
+            animated_shader.set_uniform_3f("u_light_pos", light_pos);
+            animated_shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
+            animated_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
 
-            shader.set_uniform_3f("u_view_pos", cam.get_position());
-            shader.set_uniform_3f("u_light_pos", light_pos);
-            shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
-            shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
+            static_shader.set_uniform_mat4f("u_view_project", cam.get_view_project_matrix());
+            static_shader.set_uniform_3f("u_view_pos", cam.get_position());
+            static_shader.set_uniform_3f("u_light_pos", light_pos);
+            static_shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
+            static_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
 
-            hero.draw(shader);
+            hero.draw();
+            tree.draw();
 
             renderer.end_draw();
         }
