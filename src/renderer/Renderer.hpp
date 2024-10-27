@@ -160,6 +160,7 @@ public:
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
+        Log::log_error_and_terminate("This is being depricated. Call model.draw() instead.", __FILE__, __LINE__);
         // model.bind();
         GL_Call(glDrawElements(GL_TRIANGLES, model.get_face_count(), GL_UNSIGNED_INT, nullptr));
     }

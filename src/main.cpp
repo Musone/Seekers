@@ -4,7 +4,7 @@
 
 int main(void) {
     try {
-        Application app;
+        // Application app;
         // app.run_demo_basic();
         // app.run_demo_texture();
         // app.run_demo_camera();
