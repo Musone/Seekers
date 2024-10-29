@@ -20,6 +20,19 @@ class Camera {
     float m_far;
     float m_near;
 public:
+    Camera() : m_position(0), 
+        m_rotation(0), 
+        m_translate(glm::mat4(1.0f)), 
+        m_rotate(glm::mat4(1.0f)),
+        m_fov(PI / 2),
+        m_width(0),
+        m_height(0),
+        m_far(100),
+        m_near(-1) {
+            _update_view_matrix();
+            _update_project_matrix();
+        };
+
     Camera(const int& window_width, const int& window_height) : 
         m_position(0), 
         m_rotation(0), 
@@ -35,6 +48,13 @@ public:
     }
     
     ~Camera() {}
+
+    void init(const int& window_width, const int& window_height) {
+        m_width = window_width;
+        m_height = window_height;
+        _update_view_matrix();
+        _update_project_matrix();
+    }
 
     glm::vec3 rotate_to_camera_direction(const glm::vec3& input) {
         const auto result = Transform::create_rotation_matrix(m_rotation) * glm::vec4({ input.x, input.y, input.z, 1 });

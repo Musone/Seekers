@@ -9,10 +9,12 @@ uniform vec3 u_light_pos;
 uniform vec3 u_view_pos;
 uniform vec3 u_light_color;
 uniform vec3 u_object_color;
+uniform vec3 u_scale;
 uniform sampler2D u_texture;
 
 uniform bool u_has_vertex_colors;
 uniform bool u_has_texture;
+uniform bool u_use_repeating_pattern;
 
 out vec4 frag_color;
 
@@ -41,7 +43,11 @@ void main() {
     if (u_has_vertex_colors) {
         base_color = v_color.rgb;
     } else if (u_has_texture) {
-        base_color = texture(u_texture, v_uv).rgb;
+        if (u_use_repeating_pattern) {
+            base_color = texture(u_texture, v_uv * u_scale.xy).rgb;
+        } else {
+            base_color = texture(u_texture, v_uv).rgb;
+        }
     } else {
         base_color = u_object_color;
     }

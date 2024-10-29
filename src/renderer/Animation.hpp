@@ -34,6 +34,7 @@ public:
 
 class Animation {
 private:
+    unsigned int m_id;
     float m_duration_seconds;
     std::vector<KeyFrame> m_key_frames;
 
@@ -87,17 +88,20 @@ private:
     }
 
 public:
-    Animation(std::vector<KeyFrame>&& key_frames, const float& duration_seconds) :
+    Animation(const unsigned int& id, std::vector<KeyFrame>&& key_frames, const float& duration_seconds) :
         m_key_frames(std::move(key_frames)),
-        m_duration_seconds(duration_seconds) {}
+        m_duration_seconds(duration_seconds),
+        m_id(id) {}
 
     ~Animation() = default;
+
+    unsigned int get_id() const { return m_id; }
 
     float get_duration() const { return m_duration_seconds; }
     const std::vector<KeyFrame>& get_key_frames() const { return m_key_frames; }
     size_t get_frame_count() const { return m_key_frames.size(); }
 
-    static Animation* from_assimp_animation(const aiAnimation* anim, const aiScene* scene) {
+    static Animation* from_assimp_animation(const unsigned int& id, const aiAnimation* anim, const aiScene* scene) {
         float duration = anim->mDuration / anim->mTicksPerSecond;
         
         // Find all unique timestamps
@@ -136,6 +140,6 @@ public:
             }
         }
 
-        return new Animation(std::move(keyframes), duration);
+        return new Animation(id, std::move(keyframes), duration);
     }
 };

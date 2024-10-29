@@ -13,3 +13,6 @@ z_*/
 
 .vs/
 out/
+
+# Jakob: I download random models from the internet into here.
+downloads/

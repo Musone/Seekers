@@ -67,21 +67,22 @@ public:
                     for (int x = 0; x < faceWidth; ++x) {
                         int srcX, srcY;
                         
-                        if (i == 0) { // Right face (90 degree rotation)
-                            srcX = xOffset + (faceWidth - 1 - y);
+                        if (i == 0) { // Right face 
+                            srcX = xOffset + y;
                             srcY = yOffset + x;
-                        } else if (i == 1) { // Left face (90 degree rotation in opposite direction)
-                            srcX = xOffset + (faceWidth - 1 - y);  // Invert horizontally
-                            srcY = yOffset + (faceHeight - 1 - x); // Keep the rotation
-                        } else if (i == 3) { // Back face (180 degree rotation)
+                        } else if (i == 1) { // Left
+                            srcX = xOffset + (faceWidth - 1 - y);  
+                            srcY = yOffset + (faceHeight - 1 - x); 
+                        } else if (i == 3) { // Back
                             srcX = xOffset + (faceWidth - 1 - x);
                             srcY = yOffset + y;
-                            // srcX = xOffset + x;  // Changed from (faceWidth - 1 - x) to x
-                            // srcY = yOffset + y;  // This remains the same
-                        } else if (i == 4 || i == 5) { // Top and Bottom faces (no flip)
+                        } else if (i == 4) { // Top
                             srcX = xOffset + x;
+                            srcY = yOffset + (faceHeight - 1 - y);
+                        } else if (i == 5) { // Bottom
+                            srcX = xOffset + (faceWidth - 1 - x);
                             srcY = yOffset + y;
-                        } else { // Front face (vertical flip)
+                        } else { // Front 
                             srcX = xOffset + x;
                             srcY = yOffset + (faceHeight - 1 - y);
                         }
@@ -121,13 +122,14 @@ public:
     inline unsigned int get_width() const { return m_width; }
     inline unsigned int get_height() const { return m_height; }
 
-    const void bind(unsigned int texture_slot) const {
+    unsigned int bind(unsigned int texture_slot) const {
         if (texture_slot > 31 || texture_slot < 1) {
             Log::log_error_and_terminate("'texture_slot' cannot exceed 31 or be less than 1", __FILE__, __LINE__);
         }
         GL_Call(glActiveTexture(GL_TEXTURE0 + texture_slot));
         GL_Call(glBindTexture(GL_TEXTURE_CUBE_MAP, m_id));
         GL_Call(glActiveTexture(GL_TEXTURE0));
+        return texture_slot;
     }
 
     const void unbind() const {

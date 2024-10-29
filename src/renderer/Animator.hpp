@@ -17,16 +17,26 @@ private:
     float m_animation_time;
     Animation* m_current_animation;
     Skeleton* m_skeleton;
+    bool m_should_repeat = true;
+    float m_speed = 1.0f;
 
     void _step_time() {
         float current_time = float(m_timer.GetTime()) / 1000000.0f;  // Convert microseconds to seconds
         float delta_time = current_time - m_time_of_prev_frame;
-        m_animation_time += delta_time;
+        m_animation_time += m_speed * delta_time;
         
         if (m_current_animation) {
-            m_animation_time = fmod(m_animation_time, m_current_animation->get_duration());
-            if (m_animation_time < 0) {  // fmod can return negative values
-                m_animation_time += m_current_animation->get_duration();
+            if (m_animation_time > m_current_animation->get_duration()) {
+                
+                if (!m_should_repeat) {
+                    set_animation(nullptr);
+                    return;
+                }
+
+                m_animation_time = fmod(m_animation_time, m_current_animation->get_duration());
+                if (m_animation_time < 0) {  // fmod can return negative values
+                    m_animation_time += m_current_animation->get_duration();
+                }
             }
         }
         
@@ -43,7 +53,7 @@ public:
         }
 
     ~Animator() {
-        delete m_current_animation;
+        // delete m_current_animation;
     }
 
     void update() {
@@ -54,10 +64,22 @@ public:
         step_animation();
     }
 
-    void set_animation(Animation* animation) {
+    float portion_complete() const {
+        if (m_current_animation == nullptr) {
+            return 1.0f;
+        }
+        return m_animation_time / m_current_animation->get_duration();
+    }
+
+    void set_animation(Animation* animation, const float& speed = 1.0f, const bool& should_repeat = true) {
         m_current_animation = animation;
         m_animation_time = 0.0f;
+        m_should_repeat = should_repeat;
+        m_speed = speed;
+        m_time_of_prev_frame = float(m_timer.GetTime()) / 1000000.0f;  // Convert microseconds to seconds
     }
+
+    Animation* get_current_animation() const { return m_current_animation; }
 
     void step_animation() {
         if (!m_current_animation || !m_skeleton) return;

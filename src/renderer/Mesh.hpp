@@ -9,16 +9,19 @@
 #include <utils/Log.hpp>
 
 class Mesh {
+private:
+    bool m_is_initialized = false;
+    
+    VertexArray m_vao;
+    VertexBuffer m_vbo;
+    IndexBuffer m_ibo;
 public:
     std::vector<glm::vec3> positions;
     std::vector<glm::vec3> normals;
     std::vector<glm::vec2> texcoords;
-    VertexArray m_vao;
-    VertexBuffer m_vbo;
-    IndexBuffer m_ibo;
-    Texture2D* m_texture;
-    bool m_is_initialized = false;
-public:
+    Texture2D* texture = nullptr;
+    
+
     Mesh() = default;
 
     Mesh(const void* vertices, const void* indices, const unsigned int& vertices_size, const unsigned int& indices_count, const VertexBufferLayout& layout) {
@@ -39,7 +42,7 @@ public:
 
     const void set_texture(Texture2D* texture) {
         if (!m_is_initialized) Log::log_error_and_terminate("Mesh not initialized", __FILE__, __LINE__);
-        m_texture = texture;
+        this->texture = texture;
     }
 
     void bind() const {

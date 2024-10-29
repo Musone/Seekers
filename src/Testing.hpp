@@ -9,7 +9,6 @@
 #include <renderer/Camera.hpp>
 #include <renderer/SkyboxTexture.hpp>
 #include <renderer/Mesh.hpp>
-#include <renderer/Model.hpp>
 #include <renderer/AnimatedModel.hpp>
 #include <renderer/StaticModel.hpp>
 #include <ecs/Registry.hpp>
@@ -33,7 +32,6 @@
 #include <assimp/vector3.h>
 
 namespace Testing {
-    // glm::vec3 child_position(-80.5f, 24.5f, -14.0f);
     glm::vec3 child_position(0.0f);
     AnimatedModel::Attachment* attach;
 
@@ -81,7 +79,6 @@ namespace Testing {
             child_position.z -= moveSpeed;
             attach->offset_position = child_position;
         }
-
 
         // Handle keyboard input for movement
         if (renderer.is_key_pressed(GLFW_KEY_W)) {
@@ -151,48 +148,6 @@ namespace Testing {
                 std::cout << "|\n";
             }
             std::cout << std::endl;
-    }
-}
-
-    void _print_vertex_data(const void* data, size_t vertex_count) {
-        const float* float_data = static_cast<const float*>(data);
-        const int* int_data = static_cast<const int*>(data);
-        
-        // Calculate offsets based on your layout
-        const size_t floats_before_joints = 8;  // 3 pos + 3 normal + 2 uv
-        const size_t ints_per_vertex = 10;      // 5 pairs of joint indices
-        const size_t floats_for_weights = 10;   // 5 pairs of weights
-        const size_t stride_in_floats = floats_before_joints + (ints_per_vertex * sizeof(int)/sizeof(float)) + floats_for_weights;
-        
-        for (size_t i = 0; i < vertex_count; i++) {
-            std::cout << "\nVertex " << i << ":\n";
-            
-            // Print position
-            size_t base_idx = i * stride_in_floats;
-            std::cout << "Position: (" 
-                    << float_data[base_idx] << ", "
-                    << float_data[base_idx + 1] << ", "
-                    << float_data[base_idx + 2] << ")\n";
-            
-            // Print joint indices (need to cast to int*)
-            const int* joint_data = reinterpret_cast<const int*>(&float_data[base_idx + floats_before_joints]);
-            std::cout << "Joint Indices:\n";
-            for (int j = 0; j < 5; j++) {  // 5 pairs of joints
-                std::cout << "  Pair " << j << ": ("
-                        << joint_data[j*2] << ", "
-                        << joint_data[j*2 + 1] << ")\n";
-            }
-            
-            // Print weights
-            size_t weights_start = base_idx + floats_before_joints + (ints_per_vertex * sizeof(int)/sizeof(float));
-            std::cout << "Weights:\n";
-            for (int j = 0; j < 5; j++) {  // 5 pairs of weights
-                std::cout << "  Pair " << j << ": ("
-                        << float_data[weights_start + j*2] << ", "
-                        << float_data[weights_start + j*2 + 1] << ")\n";
-            }
-            
-            std::cout << "------------------------\n";
         }
     }
 
@@ -208,15 +163,21 @@ namespace Testing {
         
         Shader animated_shader("AnimatedBlinnPhong");
         Shader static_shader("StaticBlinnPhong");
-        // Model hero("objs/Hero.dae");
-        AnimatedModel hero("objs/Hero.dae", &animated_shader);
-        StaticModel tree("objs/Lowpoly_tree_sample.dae", &static_shader);
-        StaticModel katana("objs/katana.obj", &static_shader);
+        AnimatedModel hero("models/Hero.dae", &animated_shader);
+        hero.set_rotation(PI / 2, 0, 0);
+
+        StaticModel tree("models/Lowpoly_tree_sample.dae", &static_shader);
         tree.set_scale(20, 20, 20);
-        hero.set_rotation_x(PI / 2);
+        tree.set_rotation(PI / 2, 0, 0);
+        tree.set_position(500, 500, 0);
+        StaticModel sword("models/sword.dae", &static_shader);
+        sword.set_scale(10, 10, 10);
+        sword.set_position(750, 0, 0);
+        StaticModel katana("models/katana.obj", &static_shader);
+        // StaticModel katana("models/Halo Energy Sword.dae", &static_shader);
         
-        // Model delete_me("objs/Lowpoly_tree_sample.dae");
-        // Model delete_me("objs/Hero.dae");
+        // Model delete_me("models/Lowpoly_tree_sample.dae");
+        // Model delete_me("models/Hero.dae");
 
         attach = hero.attach_to_joint(
             &katana, 
@@ -234,9 +195,34 @@ namespace Testing {
         Timer timer;
         float time_of_last_frame = 0;
 
+        hero.load_animation_from_file("models/dying.dae");
         if (hero.get_animation_count() > 0) {
-            hero.play_animation(0);
+            hero.play_animation("models/dying.dae");
         }
+
+
+        AnimatedModel guy("models/Sword_and_Shield_Pack/Ch43_nonPBR.dae", &animated_shader);
+        // AnimatedModel guy("models/dying.dae", &animated_shader);
+        // guy.set_scale(50, 50, 50);
+        guy.set_position(-500, 500, 0);
+        guy.set_rotation(PI / 2, 0, 0);
+        guy.load_animation_from_file("models/dying.dae");
+        // guy.load_animation_from_file("models/Sword_and_Shield_Pack/sheath sword 2.dae");
+        // guy.load_animation_from_file("models/Sword_and_Shield_Pack/sword and shield 180 turn.dae");
+        if (guy.get_animation_count() > 0) {
+            guy.play_animation(1);
+        }
+
+        AnimatedModel wolf("models/griffin_animated/griffin_animated.gltf", &animated_shader);
+        wolf.set_scale(50, 50, 50);
+        wolf.set_position(0, 500, 0);
+        if (wolf.get_animation_count() > 0) {
+            wolf.play_animation(0);
+        }
+
+        hero.print_animations();
+        guy.print_animations();
+        wolf.print_animations();
 
         const float FRAME_TIME_60FPS = 1000000.0f / 60.0f;  // microseconds per frame at 60 FPS
         while (!renderer.is_terminated()) {
@@ -250,6 +236,8 @@ namespace Testing {
             _handle_free_camera_inputs(renderer, cam);
             
             hero.update();
+            wolf.update();
+            guy.update();
 
             renderer.begin_draw();
             glm::vec3 light_pos = cam.get_position();
@@ -268,6 +256,9 @@ namespace Testing {
 
             hero.draw();
             tree.draw();
+            sword.draw();
+            wolf.draw();
+            guy.draw();
 
             renderer.end_draw();
         }

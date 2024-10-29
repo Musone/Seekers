@@ -18,6 +18,8 @@ protected:
     glm::vec3 m_rotation;
     glm::vec3 m_scale;
 
+    std::string m_name = "No Name";
+
     Assimp::Importer m_importer;
     const aiScene* m_scene = nullptr;
     Shader* m_shader;
