@@ -41,6 +41,10 @@ public:
 
         Log::log_success("Static Model " + std::string(model_path) + " loaded successfully with " + 
             std::to_string(num_meshes) + " meshes", __FILE__, __LINE__);
+
+        m_name = std::string(model_path);
+        m_importer.FreeScene();
+        m_scene = nullptr;
     }
 
     virtual void draw() override {
@@ -64,13 +68,14 @@ public:
         // Set whether we're using vertex colors or texture
         shader.set_uniform_1i("u_has_vertex_colors", m_has_vertex_colors);
         shader.set_uniform_1i("u_has_texture", m_has_texture);
+        shader.set_uniform_1i("u_use_repeating_pattern", false);
         
         // Draw each mesh
         for (unsigned int i = 0; i < num_meshes; i++) {
             mesh_list[i].bind();
             
-            if (m_has_texture && mesh_list[i].m_texture) {
-                shader.set_uniform_1i("u_texture", mesh_list[i].m_texture->bind(1));
+            if (m_has_texture && mesh_list[i].texture) {
+                shader.set_uniform_1i("u_texture", mesh_list[i].texture->bind(1));
             }
 
             GL_Call(glDrawElements(GL_TRIANGLES, mesh_list[i].get_face_count(), GL_UNSIGNED_INT, 0));

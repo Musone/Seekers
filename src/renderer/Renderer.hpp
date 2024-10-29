@@ -9,7 +9,7 @@
 #include <renderer/Shader.hpp>
 #include <renderer/Texture2D.hpp>
 #include <renderer/Camera.hpp>
-#include <renderer/Model.hpp>
+#include <renderer/Mesh.hpp>
 
 #include <string>
 
@@ -156,13 +156,18 @@ public:
         GL_Call(glDrawElements(GL_TRIANGLES, ibo.get_count(), GL_UNSIGNED_INT, nullptr));
     }
 
-    const void draw(const Model& model) const {
+    const void draw(Mesh& mesh, Shader& shader) const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
-        Log::log_error_and_terminate("This is being depricated. Call model.draw() instead.", __FILE__, __LINE__);
-        // model.bind();
-        GL_Call(glDrawElements(GL_TRIANGLES, model.get_face_count(), GL_UNSIGNED_INT, nullptr));
+        shader.bind();
+        mesh.bind();
+
+        if (mesh.texture) {
+            shader.set_uniform_1i("u_texture", mesh.texture->bind(1));
+        }
+
+        GL_Call(glDrawElements(GL_TRIANGLES, mesh.get_face_count(), GL_UNSIGNED_INT, nullptr));
     }
 
     bool is_terminated() const {

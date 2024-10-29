@@ -33,24 +33,24 @@ private:
 public:
     Skeleton() = default;
     
-    void init_from_mesh(aiMesh* mesh, const aiScene* scene) {
+    void init_from_bones(const std::vector<aiBone*>& bones, const aiScene* scene) {
         if (m_is_initialized) {
             Log::log_warning("Skeleton already initialized, skipping initialization", __FILE__, __LINE__);
             return;
         }
 
-        if (!mesh->HasBones()) {
-            Log::log_warning("Mesh has no bones, skipping skeleton initialization", __FILE__, __LINE__);
+        if (bones.empty()) {
+            Log::log_warning("No bones provided, skipping skeleton initialization", __FILE__, __LINE__);
             return;
         }
 
-        _process_joints(mesh);
+        _process_bones(bones);
         _build_hierarchy(scene->mRootNode, nullptr);
 
         if (!m_root_joint) {
             Log::log_error_and_terminate("Failed to find root joint - critical error", __FILE__, __LINE__);
         }
-        
+
         m_is_initialized = true;
         Log::log_success("Skeleton initialized successfully with " + 
             std::to_string(m_joints.size()) + " joints", __FILE__, __LINE__);
@@ -212,22 +212,21 @@ public:
     }
 
 private:
-    void _process_joints(aiMesh* mesh) {
-        m_joints.resize(mesh->mNumBones);
-        m_joint_name_to_id.reserve(mesh->mNumBones);
-        m_current_pose.resize(mesh->mNumBones, glm::mat4(1.0f));
-        m_joint_transforms.resize(mesh->mNumBones);
-        m_global_transforms.resize(mesh->mNumBones);
 
-        for (unsigned int i = 0; i < mesh->mNumBones; i++) {
-            aiBone* bone = mesh->mBones[i];
+    void _process_bones(const std::vector<aiBone*>& bones) {
+        m_joints.resize(bones.size());
+        m_joint_name_to_id.reserve(bones.size());
+        m_current_pose.resize(bones.size(), glm::mat4(1.0f));
+        m_joint_transforms.resize(bones.size());
+        m_global_transforms.resize(bones.size());
+
+        for (size_t i = 0; i < bones.size(); i++) {
+            aiBone* bone = bones[i];
             m_joint_name_to_id[bone->mName.C_Str()] = i;
             
             m_joints[i].inverse_bind_matrix = _convert_matrix(bone->mOffsetMatrix);
             m_joints[i].name = bone->mName.C_Str();
             m_joints[i].id = i;
-            
-            // Log::log_success("Processed joint: " + std::string(bone->mName.C_Str()), __FILE__, __LINE__);
         }
 
         m_inverse_bind_matrices.reserve(m_joints.size());

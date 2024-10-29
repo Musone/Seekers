@@ -20,6 +20,7 @@ private:
     Animator m_animator;
     std::vector<Animation*> m_animations;
     std::vector<Attachment> m_attachments;
+    std::unordered_map<std::string, unsigned int> m_name_to_animation_id;
 
 public:
     AnimatedModel(const char* model_path, Shader* shader = nullptr) 
@@ -37,13 +38,13 @@ public:
             aiProcess_GenNormals
         );
 
-        // First process the skeleton if any mesh has bones
-        for (unsigned int i = 0; i < num_meshes; ++i) {
-            aiMesh* mesh = m_scene->mMeshes[i];
-            if (mesh->HasBones()) {
-                m_skeleton.init_from_mesh(mesh, m_scene);
-                break;
-            }
+        // Collect all unique bones
+        std::vector<aiBone*> all_bones;
+        _collect_all_bones(all_bones);
+
+        // Initialize skeleton
+        if (!all_bones.empty()) {
+            m_skeleton.init_from_bones(all_bones, m_scene);
         }
 
         // Process meshes and materials
@@ -56,33 +57,103 @@ public:
         // Load animations if they exist
         if (m_scene->HasAnimations()) {
             for (unsigned int i = 0; i < m_scene->mNumAnimations; i++) {
-                Animation* anim = Animation::from_assimp_animation(m_scene->mAnimations[i], m_scene);
+                Animation* anim = Animation::from_assimp_animation(i, m_scene->mAnimations[i], m_scene);
                 if (anim) {
                     m_animations.push_back(anim);
-                    Log::log_success("(" + std::string(model_path) + ") Loaded animation " + std::to_string(i), __FILE__, __LINE__);
+                    m_name_to_animation_id["default" + std::to_string(anim->get_id())] = anim->get_id();
+                    Log::log_success("(" + std::string(model_path) + ") Loaded animation " + std::to_string(anim->get_id()), __FILE__, __LINE__);
                 }
             }
         }
 
         Log::log_success("(" + std::string(model_path) + ") Animated Model loaded successfully with " + std::to_string(num_meshes) + " meshes", 
             __FILE__, __LINE__);
+
+        m_name = std::string(model_path);
+        m_importer.FreeScene();
+        m_scene = nullptr;
     }
 
     ~AnimatedModel() {
-        for (auto anim : m_animations) {
+        for (auto& anim : m_animations) {
             delete anim;
         }
+    }
+
+    int get_animation_id(const std::string name) {
+        if (m_name_to_animation_id.find(name) == m_name_to_animation_id.end()) {
+            return -1;
+        }
+        return m_name_to_animation_id[name];
+    }
+
+    int get_current_animation_id() const {
+        Animation* current_animation = m_animator.get_current_animation();
+        if (current_animation) {
+            return current_animation->get_id();
+        }
+        return -1;
     }
 
     void update() {
         m_animator.update();
     }
 
-    void play_animation(size_t index) {
-        if (index < m_animations.size()) {
-            m_animator.set_animation(m_animations[index]);
+    void load_animation_from_file(const char* path) {
+        auto scene = m_importer.ReadFile(path, 0);
+
+        if (!scene) {
+            Log::log_error_and_terminate("Assimp importer.ReadFile Error: " + 
+                std::string(m_importer.GetErrorString()), __FILE__, __LINE__);
+        }
+
+        if (scene->HasAnimations()) {
+            for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
+                Animation* anim = Animation::from_assimp_animation(m_animations.size(), scene->mAnimations[i], scene);
+                if (anim) {
+                    m_animations.push_back(anim);
+                    m_name_to_animation_id[std::string(path)] = anim->get_id();
+                    Log::log_success("(" + m_name + ") Loaded animation \"" + std::string(path) + "\" " + std::to_string(anim->get_id()), __FILE__, __LINE__);
+                }
+            }
+        }
+
+        m_importer.FreeScene();
+    }
+
+    void print_animations() const {
+        std::cout << "Model " << m_name << " has animations:\n";
+        for (const auto& kv : m_name_to_animation_id) {
+            std::cout << "  Animation " << kv.second << ": \"" << kv.first << "\"\n";
+        }
+        std::cout << "\n\n";
+    }
+
+    void play_animation(const std::string& name, const float& speed = 1.0f, const bool& should_repeat = true) {
+        auto it = m_name_to_animation_id.find(name);
+        if (it != m_name_to_animation_id.end()) {
+            play_animation(it->second, speed, should_repeat);
+        } else {
+            Log::log_warning("Model " + m_name + " does not have animtion: \"" + name, __FILE__, __LINE__);
         }
     }
+
+    float get_portion_complete_of_curr_animation() const {
+        return m_animator.portion_complete();
+    }
+
+    void play_animation(const size_t& index, const float& speed = 1.0f, const bool& should_repeat = true) {
+        if (speed <= 0) {
+            Log::log_error_and_terminate("Speed of an animation should be greater than 0", __FILE__, __LINE__);
+        }
+        if (index < m_animations.size()) {
+            if (index != get_current_animation_id()) {
+                m_animator.set_animation(m_animations[index], speed, should_repeat);
+            }
+        }
+    }
+
+    Animation* get_current_animation() const { return m_animator.get_current_animation(); }
 
     size_t get_animation_count() const {
         return m_animations.size();
@@ -138,16 +209,25 @@ public:
             );
         }
 
+        if (texture_list.size() > 0) {
+            shader.set_uniform_1i("u_texture", texture_list.back().bind(1));
+        }
+
         // Draw each mesh
         for (unsigned int i = 0; i < num_meshes; i++) {
             mesh_list[i].bind();
             
-            if (mesh_list[i].m_texture) {
-                shader.set_uniform_1i("u_texture", mesh_list[i].m_texture->bind(1));
+            if (mesh_list[i].texture) {
+                shader.set_uniform_1i("u_texture", mesh_list[i].texture->bind(1));
             }
 
             GL_Call(glDrawElements(GL_TRIANGLES, mesh_list[i].get_face_count(), GL_UNSIGNED_INT, 0));
             mesh_list[i].unbind();
+
+            // if (mesh_list[i].m_texture) {
+            //     mesh_list[i].m_texture->unbind();
+            //     shader.set_uniform_1i("u_texture", 0);
+            // }
         }
 
         // Draw attached models
@@ -243,6 +323,27 @@ private:
         }
     }
 
+    void _collect_all_bones(std::vector<aiBone*>& all_bones) {
+        std::unordered_map<std::string, aiBone*> unique_bones;
+        
+        // Collect unique bones from all meshes
+        for (unsigned int i = 0; i < num_meshes; ++i) {
+            aiMesh* mesh = m_scene->mMeshes[i];
+            if (mesh->HasBones()) {
+                for (unsigned int j = 0; j < mesh->mNumBones; ++j) {
+                    aiBone* bone = mesh->mBones[j];
+                    unique_bones[bone->mName.C_Str()] = bone;
+                }
+            }
+        }
+
+        // Convert to vector
+        all_bones.reserve(unique_bones.size());
+        for (const auto& pair : unique_bones) {
+            all_bones.push_back(pair.second);
+        }
+    }
+
     void _process_bone_data(aiMesh* mesh, std::vector<float>& vertices) {
         if (!mesh->HasBones()) return;
 
@@ -250,10 +351,12 @@ private:
 
         for (unsigned int bone_index = 0; bone_index < mesh->mNumBones; bone_index++) {
             aiBone* bone = mesh->mBones[bone_index];
+
+            int joint_index = m_skeleton.get_joint_by_name(bone->mName.C_Str())->id;
             
             for (unsigned int weight_index = 0; weight_index < bone->mNumWeights; weight_index++) {
                 aiVertexWeight weight = bone->mWeights[weight_index];
-                vertex_weights[weight.mVertexId].push_back({bone_index, weight.mWeight});
+                vertex_weights[weight.mVertexId].push_back({joint_index, weight.mWeight});
             }
         }
 
