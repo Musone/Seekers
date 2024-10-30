@@ -133,14 +133,14 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_wall(glm::vec2 position, float angle) {
+    inline Entity create_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
         Registry& registry = Registry::get_instance();
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
         motion.angle = angle;
-        motion.scale = glm::vec2(2.0f, 2.0f);
+        motion.scale = scale;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;
@@ -150,6 +150,24 @@ namespace EntityFactory {
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         bounding_box.radius = sqrt(motion.scale.x * motion.scale.x + motion.scale.y * motion.scale.y) * 0.5f;
+
+        return entity;
+    }
+
+    inline Entity create_no_collision_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
+        Registry& registry = Registry::get_instance();
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.angle = angle;
+        motion.scale = scale;
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& texture = registry.textures.emplace(entity);
+        texture.name = "tileset_1.png";
 
         return entity;
     }
