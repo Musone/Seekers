@@ -29,20 +29,15 @@ enum class ENCHANTMENT
     ENCHANTMENT_COUNT = ICE + 1
 };
 
-struct WeaponStats
+struct Weapon
 {
+    WEAPON_TYPE type = WEAPON_TYPE::WEAPON_TYPE_COUNT;
     float damage;
     float range;
     float proj_speed;
     float attack_cooldown;
     ATTACK_STYLE attack_style = ATTACK_STYLE::ATTACK_STYLE_COUNT;
-};
-
-struct Weapon
-{
-    WEAPON_TYPE type;
-    WeaponStats stats;
-    ENCHANTMENT enchantment;
+    ENCHANTMENT enchantment = ENCHANTMENT::ENCHANTMENT_COUNT;
 };
 
 struct Attacker

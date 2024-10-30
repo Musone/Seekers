@@ -256,7 +256,7 @@ public:
                     // If the weapon is being held, I want it to come in front of the player
                     // that is holding it. There is also code for 3d-mode in here to adjust the
                     // position of the sword.
-                    if (reg.weapon_stats.has(textured_entity)) {
+                    if (reg.weapons.has(textured_entity)) {
                         z_index += 0.1;
                         // Gonna put the weapon above entities.
                         for (const auto& attacker_entity : reg.attackers.entities) {
