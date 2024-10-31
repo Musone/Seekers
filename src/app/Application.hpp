@@ -46,6 +46,8 @@ class Application {
     Texture2D* m_map_texture;
     Shader* m_floor_shader;
 
+    Shader* m_health_shader;
+
     glm::vec3 m_light_pos;
     glm::vec3 m_light_colour;
 
@@ -105,6 +107,8 @@ public:
         m_spooky_tree->mesh_list.back()->set_texture(m_spooky_tree->texture_list.back());
 
         m_light_colour = glm::vec3(1.0f);
+
+        m_health_shader = new Shader("MapDemoHealth");
     }
 
     ~Application() {
@@ -291,6 +295,7 @@ public:
             m_renderer->begin_draw();
             _draw_map_and_skybox();
             _draw_walls();
+            _draw_health_bars();
             
             hero.draw();
             
@@ -899,6 +904,97 @@ private:
             auto& motion = reg.motions.get(entity);
             m_spooky_tree->set_position(glm::vec3(motion.position, -0.3f));
             m_spooky_tree->draw();
+        }
+    }
+
+    void _draw_health_bars() {
+        // Render Health Bars
+        auto& reg = Registry::get_instance();
+        
+        for (const auto& loco_entity : reg.locomotion_stats.entities) {
+            // Render health bar
+            if (!reg.motions.has(loco_entity)) { continue; }
+            const auto& loco = reg.locomotion_stats.get(loco_entity);
+            const auto& loco_motion = reg.motions.get(loco_entity);
+#define HEALTH_BAR_HEIGHT 0.5f
+            
+            if (loco.max_health == 0) {
+                Log::log_warning(
+                    "Entity " 
+                    + std::to_string(loco_entity.get_id()) 
+                    + " Max health is 0. division by 0 error.", 
+                    __FILE__, __LINE__
+                );
+                continue;
+            }
+            const float health_percentage = loco.health / loco.max_health;
+
+            // Red health bar layer
+            float z_index = 1.1;
+            // if (Globals::is_3d_mode) {
+                glm::vec3 health_bar_pos;
+                glm::vec3 health_bar_angle;
+                if (loco_entity.get_id() == reg.player.get_id()) {
+                    health_bar_pos = glm::vec3(m_camera.get_position());
+                    const auto cam_dir_3d = glm::normalize(m_camera.rotate_to_camera_direction({ 0, 0, -1 }));
+                    const auto& temp = Transform::create_rotation_matrix({ m_camera.get_rotation().x - PI / 2, m_camera.get_rotation().y, m_camera.get_rotation().z }) * glm::vec4(0, 0, -1, 1);
+                    health_bar_pos += (2.5f * glm::vec3(temp.x, temp.y, temp.z)) + (3.0f * cam_dir_3d);
+                } else {
+                    health_bar_pos = glm::vec3({ loco_motion.position.x, loco_motion.position.y, loco_motion.scale.y + HEALTH_BAR_HEIGHT / 2 + 0.5});
+                }
+                    health_bar_angle = m_camera.get_rotation();
+
+                m_health_shader->set_uniform_mat4f(
+                    "u_mvp",
+                    m_camera.get_view_project_matrix()
+                    * Transform::create_model_matrix(
+                        health_bar_pos,
+                        health_bar_angle,
+                        glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
+                    )
+                );
+                m_health_shader->set_uniform_3f("u_colour", { 1, 0, 0 });
+                m_renderer->draw(m_square_mesh, *m_health_shader);
+
+                // Green health bar layer
+                m_health_shader->set_uniform_mat4f(
+                    "u_mvp",
+                    m_camera.get_view_project_matrix()
+                    * Transform::create_model_matrix(
+                        health_bar_pos - (0.001f * m_camera.rotate_to_camera_direction({ 0, 0, -1 })),
+                        health_bar_angle,
+                        glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
+                    )
+                );
+                m_health_shader->set_uniform_3f("u_colour", { 0, 1, 0 });
+                m_renderer->draw(m_square_mesh, *m_health_shader);
+            // } else {
+            //     m_health_shader->set_uniform_mat4f(
+            //         "u_mvp",
+            //         m_camera.get_view_project_matrix()
+            //         * Transform::create_model_matrix(
+            //             glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
+            //             glm::vec3({ 0, 0, 0 }),
+            //             glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
+            //         )
+            //     );
+            //     m_health_shader->set_uniform_3f("u_colour", { 1, 0, 0 });
+            //     m_renderer->draw(m_square_mesh, *m_health_shader);
+
+            //     z_index += 0.001;
+            //     // Green health bar layer
+            //     m_health_shader->set_uniform_mat4f(
+            //         "u_mvp",
+            //         m_camera.get_view_project_matrix()
+            //         * Transform::create_model_matrix(
+            //             glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
+            //             glm::vec3({ 0, 0, Globals::is_3d_mode ? player_motion.angle : 0 }),
+            //             glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
+            //         )
+            //     );
+            //     m_health_shader->set_uniform_3f("u_colour", { 0, 1, 0});
+            //     m_renderer->draw(m_square_mesh, *m_health_shader);
+            // }
         }
     }
 
