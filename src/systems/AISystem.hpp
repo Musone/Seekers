@@ -26,10 +26,10 @@ namespace AISystem
 //    I didn't know where to put this, so I put it here for now
     inline bool is_gonna_collide(Entity& nearby_entity, Entity& ai_entity, glm::vec2 next_position) {
         Registry& registry = Registry::get_instance();
-        if (not registry.motions.has(nearby_entity)) {
+        if (!registry.motions.has(nearby_entity)) {
             return false;
         }
-        if (not registry.bounding_boxes.has(nearby_entity)) {
+        if (!registry.bounding_boxes.has(nearby_entity)) {
             return false;
         }
         Motion& motion = registry.motions.get(nearby_entity);
@@ -56,13 +56,13 @@ namespace AISystem
                 for (int degree = 0; degree < 180; degree += 30) {
                     glm::vec2 rotated_dir = rotate_vector(dir, float(degree));
                     glm::vec2 rotated_velocity = registry.locomotion_stats.get(e).movement_speed * rotated_dir;
-                    if (not is_gonna_collide(nearby_entity, e, motion.position + rotated_velocity)) {
+                    if (!is_gonna_collide(nearby_entity, e, motion.position + rotated_velocity)) {
                         velocity = rotated_velocity;
                         break;
                     }
                     rotated_dir = rotate_vector(dir, float(-1 * degree));
                     rotated_velocity = registry.locomotion_stats.get(e).movement_speed * rotated_dir;
-                    if (not is_gonna_collide(nearby_entity, e, motion.position + rotated_velocity)) {
+                    if (!is_gonna_collide(nearby_entity, e, motion.position + rotated_velocity)) {
                         velocity = rotated_velocity;
                         break;
                     }
