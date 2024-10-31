@@ -162,8 +162,8 @@ namespace EntityFactory {
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;
 
-        auto& texture = registry.textures.emplace(entity);
-        texture.name = "tileset_1.png";
+        auto& wall = registry.walls.emplace(entity);
+        wall.type = WALL_TYPE::BRICK;
 
         return entity;
     }
