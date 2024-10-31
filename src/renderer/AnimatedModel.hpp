@@ -23,6 +23,28 @@ private:
     std::unordered_map<std::string, unsigned int> m_name_to_animation_id;
 
 public:
+    AnimatedModel(const AnimatedModel& original, const unsigned int& version_number) {
+        m_position = original.m_position;
+        m_rotation = original.m_rotation;
+        m_scale = original.m_scale;
+        m_name = original.m_name + " (copy " + std::to_string(version_number) + ")";
+        m_shader = original.m_shader;
+        m_attachments = original.m_attachments;
+        m_name_to_animation_id = original.m_name_to_animation_id;
+
+        m_skeleton = original.m_skeleton;
+        m_animator.init(&m_skeleton);
+
+        m_animations.reserve(original.m_animations.size());
+        for (const auto& anim : original.m_animations) {
+            m_animations.push_back(new Animation(*anim));
+        }
+
+        num_meshes = original.num_meshes;
+        mesh_list = original.mesh_list;
+        texture_list = original.texture_list;
+    }
+
     AnimatedModel(const char* model_path, Shader* shader = nullptr) 
          : m_animator(&m_skeleton) {
             
@@ -48,6 +70,7 @@ public:
         }
 
         // Process meshes and materials
+        texture_list.reserve(num_meshes);
         for (unsigned int i = 0; i < num_meshes; ++i) {
             aiMesh* mesh = m_scene->mMeshes[i];
             _process_mesh(mesh, i);
@@ -101,6 +124,7 @@ public:
 
     void load_animation_from_file(const char* path) {
         auto scene = m_importer.ReadFile(path, 0);
+        std::string animation_name = Common::split_string(Common::replace_char(std::string(path), '\\', '/'), '/').back();
 
         if (!scene) {
             Log::log_error_and_terminate("Assimp importer.ReadFile Error: " + 
@@ -112,13 +136,17 @@ public:
                 Animation* anim = Animation::from_assimp_animation(m_animations.size(), scene->mAnimations[i], scene);
                 if (anim) {
                     m_animations.push_back(anim);
-                    m_name_to_animation_id[std::string(path)] = anim->get_id();
-                    Log::log_success("(" + m_name + ") Loaded animation \"" + std::string(path) + "\" " + std::to_string(anim->get_id()), __FILE__, __LINE__);
+                    m_name_to_animation_id[std::string(animation_name)] = anim->get_id();
+                    Log::log_success("(" + m_name + ") Loaded animation \"" + std::string(animation_name) + "\" " + std::to_string(anim->get_id()), __FILE__, __LINE__);
                 }
             }
         }
 
         m_importer.FreeScene();
+    }
+
+    void print_bones() const {
+        m_skeleton.print_bones(m_name);
     }
 
     void print_animations() const {
@@ -129,10 +157,10 @@ public:
         std::cout << "\n\n";
     }
 
-    void play_animation(const std::string& name, const float& speed = 1.0f, const bool& should_repeat = true) {
+    void play_animation(const std::string& name, const float& speed = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
         auto it = m_name_to_animation_id.find(name);
         if (it != m_name_to_animation_id.end()) {
-            play_animation(it->second, speed, should_repeat);
+            play_animation(it->second, speed, should_repeat, should_finish);
         } else {
             Log::log_warning("Model " + m_name + " does not have animtion: \"" + name, __FILE__, __LINE__);
         }
@@ -142,13 +170,15 @@ public:
         return m_animator.portion_complete();
     }
 
-    void play_animation(const size_t& index, const float& speed = 1.0f, const bool& should_repeat = true) {
+    void play_animation(const size_t& index, const float& speed = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
         if (speed <= 0) {
             Log::log_error_and_terminate("Speed of an animation should be greater than 0", __FILE__, __LINE__);
         }
         if (index < m_animations.size()) {
             if (index != get_current_animation_id()) {
-                m_animator.set_animation(m_animations[index], speed, should_repeat);
+                if (!m_animator.should_finish() || m_animator.portion_complete() >= 0.9999f) {
+                    m_animator.set_animation(m_animations[index], speed, should_repeat, should_finish);
+                }
             }
         }
     }
@@ -210,19 +240,19 @@ public:
         }
 
         if (texture_list.size() > 0) {
-            shader.set_uniform_1i("u_texture", texture_list.back().bind(1));
+            shader.set_uniform_1i("u_texture", texture_list.back()->bind(1));
         }
 
         // Draw each mesh
         for (unsigned int i = 0; i < num_meshes; i++) {
-            mesh_list[i].bind();
+            mesh_list[i]->bind();
             
-            if (mesh_list[i].texture) {
-                shader.set_uniform_1i("u_texture", mesh_list[i].texture->bind(1));
+            if (mesh_list[i]->texture) {
+                shader.set_uniform_1i("u_texture", mesh_list[i]->texture->bind(1));
             }
 
-            GL_Call(glDrawElements(GL_TRIANGLES, mesh_list[i].get_face_count(), GL_UNSIGNED_INT, 0));
-            mesh_list[i].unbind();
+            GL_Call(glDrawElements(GL_TRIANGLES, mesh_list[i]->get_face_count(), GL_UNSIGNED_INT, 0));
+            mesh_list[i]->unbind();
 
             // if (mesh_list[i].m_texture) {
             //     mesh_list[i].m_texture->unbind();
@@ -275,7 +305,7 @@ private:
 
         VertexBufferLayout layout = _create_vertex_buffer_layout();
 
-        mesh_list[mesh_index].init(
+        mesh_list[mesh_index]->init(
             vertices.data(),
             indices.data(),
             vertices.size() * sizeof(float),

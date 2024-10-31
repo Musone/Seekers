@@ -19,7 +19,7 @@ public:
     std::vector<glm::vec3> positions;
     std::vector<glm::vec3> normals;
     std::vector<glm::vec2> texcoords;
-    Texture2D* texture = nullptr;
+    std::shared_ptr<Texture2D> texture = nullptr;
     
 
     Mesh() = default;
@@ -40,7 +40,7 @@ public:
 
     unsigned int get_face_count() const { return m_ibo.get_count(); }
 
-    const void set_texture(Texture2D* texture) {
+    const void set_texture(std::shared_ptr<Texture2D> texture) {
         if (!m_is_initialized) Log::log_error_and_terminate("Mesh not initialized", __FILE__, __LINE__);
         this->texture = texture;
     }
