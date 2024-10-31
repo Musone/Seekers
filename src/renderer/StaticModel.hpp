@@ -6,10 +6,10 @@
 
 class StaticModel : public ModelBase {
 private:
-    bool m_has_vertex_colors;
-    bool m_has_texture;
 
 public:
+    bool m_has_vertex_colors;
+    bool m_has_texture;
     StaticModel(const char* model_path, Shader* shader = nullptr) {
         if (shader) {
             set_shader(shader);
@@ -70,6 +70,10 @@ public:
         shader.set_uniform_1i("u_has_texture", m_has_texture);
         shader.set_uniform_1i("u_use_repeating_pattern", false);
         
+        if (texture_list.size() > 0) {
+            shader.set_uniform_1i("u_texture", texture_list.back()->bind(1));
+        }
+
         // Draw each mesh
         for (unsigned int i = 0; i < num_meshes; i++) {
             mesh_list[i]->bind();
