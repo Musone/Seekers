@@ -910,13 +910,15 @@ private:
     void _draw_health_bars() {
         // Render Health Bars
         auto& reg = Registry::get_instance();
-        
+        auto& player_motion = reg.motions.get(reg.player);
+
         for (const auto& loco_entity : reg.locomotion_stats.entities) {
             // Render health bar
             if (!reg.motions.has(loco_entity)) { continue; }
             const auto& loco = reg.locomotion_stats.get(loco_entity);
             const auto& loco_motion = reg.motions.get(loco_entity);
-#define HEALTH_BAR_HEIGHT 0.1f
+            if (glm::length(player_motion.position - loco_motion.position) > 30.0f) { continue; }
+#define HEALTH_BAR_HEIGHT 0.125f
             
             if (loco.max_health == 0) {
                 Log::log_warning(
@@ -938,7 +940,10 @@ private:
                     health_bar_pos = glm::vec3(m_camera.get_position());
                     const auto cam_dir_3d = glm::normalize(m_camera.rotate_to_camera_direction({ 0, 0, -1 }));
                     const auto& temp = Transform::create_rotation_matrix({ m_camera.get_rotation().x - PI / 2, m_camera.get_rotation().y, m_camera.get_rotation().z }) * glm::vec4(0, 0, -1, 1);
-                    health_bar_pos += (2.5f * glm::vec3(temp.x, temp.y, temp.z)) + (3.0f * cam_dir_3d);
+                    const auto& down_from_camera = glm::vec3(temp);
+                    const auto& left_from_camera = glm::normalize(glm::cross(cam_dir_3d, down_from_camera));
+                    health_bar_pos += (-2.75f * down_from_camera) + (3.0f * cam_dir_3d) + (2.75f * left_from_camera);
+                    // health_bar_pos += glm::vec3();
                 } else {
                     health_bar_pos = glm::vec3({ loco_motion.position.x, loco_motion.position.y, loco_motion.scale.y + HEALTH_BAR_HEIGHT / 2 + 0.5});
                 }
