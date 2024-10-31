@@ -29,9 +29,6 @@ namespace EntityFactory {
 
         registry.attackers.emplace(entity);
 
-        auto& texture = registry.textures.emplace(entity);
-        texture.name = "player.png";
-
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         // Functions with the name "max" cause the code to blowup. I don't know why the compiler
         // doesn't like that, but I also don't care at this point.
@@ -49,18 +46,17 @@ namespace EntityFactory {
         motion.position = position;
         motion.scale = glm::vec2(1.5f, 1.5f);
 
-        auto& weapon_stats = registry.weapon_stats.emplace(entity);
-        weapon_stats.damage = damage;
-        weapon_stats.range = 30.0f;
-        weapon_stats.proj_speed = 40.0f;
-        weapon_stats.attack_cooldown = 0.15f;
-        weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
+        auto& weapon = registry.weapons.emplace(entity);
+        weapon.type = WEAPON_TYPE::SWORD;
+        weapon.damage = damage;
+        weapon.range = 30.0f;
+        weapon.proj_speed = 40.0f;
+        weapon.attack_cooldown = 0.15f;
+        weapon.attack_style = ATTACK_STYLE::ONE_AIM;
+        weapon.enchantment = ENCHANTMENT::NONE;
 
         registry.move_withs.emplace(entity, following);
         registry.rotate_withs.emplace(entity, following);
-
-        auto& texture = registry.textures.emplace(entity);
-        texture.name = "sword_2.png";
 
         return entity;
     }
@@ -89,10 +85,10 @@ namespace EntityFactory {
         ai.patrol_points.push_back(position + glm::vec2(10.0f, 0.0f));
         ai.target_position = position;
 
-        registry.rotate_withs.emplace(entity, registry.player);
+        auto& enemy = registry.enemies.emplace(entity);
+        enemy.type = ENEMY_TYPE::WARRIOR;
 
-        auto& texture = registry.textures.emplace(entity);
-        texture.name = "skeleton.png";
+        registry.rotate_withs.emplace(entity, registry.player);
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         // Functions with the name "max" cause the code to blowup. I don't know why the compiler
@@ -102,7 +98,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_projectile(Motion& attacker_motion, Attacker& attacker, WeaponStats& weapon, TEAM_ID team_id) {
+    inline Entity create_projectile(Motion& attacker_motion, Attacker& attacker, Weapon& weapon, TEAM_ID team_id) {
         Registry& registry = Registry::get_instance();
         auto entity = Entity();
 
@@ -110,7 +106,8 @@ namespace EntityFactory {
         motion.position = attacker_motion.position;
         // motion.angle = atan2(attacker.aim.y, attacker.aim.x);
         motion.angle = attacker_motion.angle; // Changed this so that I can render projectiles properly in 3d-mode.
-        motion.velocity = attacker.aim * weapon.proj_speed + attacker_motion.velocity;;
+        //motion.velocity = attacker.aim * weapon.proj_speed + attacker_motion.velocity;
+        motion.velocity = attacker.aim * weapon.proj_speed;
         motion.scale = glm::vec2(1.0f, 1.0f);  // Projectile size
 
         auto& projectile = registry.projectile_stats.emplace(entity);
@@ -144,8 +141,8 @@ namespace EntityFactory {
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;
 
-        auto& texture = registry.textures.emplace(entity);
-        texture.name = "tileset_1.png";
+        auto& wall = registry.walls.emplace(entity);
+        wall.type = WALL_TYPE::BRICK;
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         bounding_box.radius = sqrt(motion.scale.x * motion.scale.x + motion.scale.y * motion.scale.y) * 0.5f;
@@ -164,8 +161,8 @@ namespace EntityFactory {
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;
 
-        auto& texture = registry.textures.emplace(entity);
-        texture.name = "tree_jungle.png";
+        auto& tree = registry.static_objects.emplace(entity);
+        tree.type = STATIC_OBJECT_TYPE::TREE;
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         bounding_box.radius = Common::max_of(motion.scale) / 2;
