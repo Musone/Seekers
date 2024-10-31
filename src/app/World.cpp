@@ -64,7 +64,7 @@ void World::demo_init() {
     }
 
     // Place a tree and some enemies
-    std::vector<glm::vec2> trees = GenerateSomeTree::generateNonOverlappingTrees(100, MAP_WIDTH, MAP_HEIGHT, 2.0f);
+    std::vector<glm::vec2> trees = GenerateSomeTree::generateNonOverlappingTrees(50, MAP_WIDTH, MAP_HEIGHT, 2.0f);
     unsigned int i = 0;
     for (auto& tree_pos : trees) {
         if (glm::length(tree_pos) <= 20 || (++i % 4 == 0)) {

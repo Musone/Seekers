@@ -51,6 +51,9 @@ namespace GridMapSystem {
         Motion& player_motion = registry.motions.get(registry.player);
         for (Entity& e : registry.near_players.entities) {
             if (registry.motions.has(e)) {
+                if (registry.player == e) {
+                    continue;
+                }
                 Motion& motion = registry.motions.get(e);
                 glm::vec2 distance = motion.position - player_motion.position;
                 int grid_i = int(std::floor(distance.x))
