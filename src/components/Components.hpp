@@ -5,3 +5,4 @@
 #include "AIComponents.hpp"
 #include "GameplayComponents.hpp"
 #include "RenderComponents.hpp"
+#include "EntityIdentifierComponents.hpp"
