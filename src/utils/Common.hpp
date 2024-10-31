@@ -35,6 +35,10 @@ namespace Common {
         return stream.str();
     }
 
+    inline std::string replace_char(const std::string& str, const char& to_be_replaced, const char& replacement) {
+        return Common::join_string(Common::split_string(str, to_be_replaced), replacement);
+    }
+
     template<typename T, unsigned int N>
     inline unsigned int c_arr_count(const T (&array)[N]) {
         // Suppress compiler warning...
@@ -63,4 +67,29 @@ namespace Common {
     inline float max_of(const glm::vec2 v) {
         return (v.x >= v.y) * v.x + (v.y > v.x) * v.y;
     }
+
+    inline float min_of(const float x, const float y) {
+        return (x <= y) * x + (y < x) * y;
+    }
+
+    inline int min_of(const int x, const int y) {
+        return (x <= y) * x + (y < x) * y;
+    }
+
+    inline unsigned int min_of(const unsigned int x, const unsigned int y) {
+        return (x <= y) * x + (y < x) * y;
+    }
+
+    inline float min_of(const glm::vec2 v) {
+        return (v.x <= v.y) * v.x + (v.y < v.x) * v.y;
+    }
+
+    inline std::string trim(const std::string& str) {
+       const char* whitespace = " \t\n\r\f\v";
+       size_t start = str.find_first_not_of(whitespace);
+       if (start == std::string::npos) return "";
+
+       size_t end = str.find_last_not_of(whitespace);
+       return str.substr(start, end - start + 1);
+   }
 }

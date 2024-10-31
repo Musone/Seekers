@@ -8,6 +8,8 @@
 #include <renderer/GLUtils.hpp>
 #include <renderer/Shader.hpp>
 #include <renderer/Texture2D.hpp>
+#include <renderer/Camera.hpp>
+#include <renderer/Mesh.hpp>
 
 #include <string>
 
@@ -154,14 +156,28 @@ public:
         GL_Call(glDrawElements(GL_TRIANGLES, ibo.get_count(), GL_UNSIGNED_INT, nullptr));
     }
 
-    bool is_terminated() {
+    const void draw(Mesh& mesh, Shader& shader) const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
+        shader.bind();
+        mesh.bind();
+
+        if (mesh.texture) {
+            shader.set_uniform_1i("u_texture", mesh.texture->bind(1));
+        }
+
+        GL_Call(glDrawElements(GL_TRIANGLES, mesh.get_face_count(), GL_UNSIGNED_INT, nullptr));
+    }
+
+    bool is_terminated() const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
         return bool(glfwWindowShouldClose(m_window));
     }
 
-    void terminate() {
+    void terminate() const {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }

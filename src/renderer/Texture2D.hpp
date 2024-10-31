@@ -18,7 +18,9 @@
 
 class Texture2D {
     unsigned int m_id;
+    unsigned int m_texture_slot;
     std::string m_file_path;
+    std::string m_file_name;
     unsigned char* m_local_buffer;
     int m_width;
     int m_height;
@@ -26,6 +28,8 @@ class Texture2D {
 public:
     Texture2D(const std::string& name) : 
         m_id(0),
+        m_texture_slot(0),
+        m_file_name(name),
         m_file_path(TEXTURE_PATH + name), 
         m_local_buffer(nullptr),
         m_width(0), 
@@ -44,8 +48,8 @@ public:
             // We love OpenGL!
             GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
             GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-            GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-            GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+            GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+            GL_Call(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 
             GL_Call(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_local_buffer));
             GL_Call(glBindTexture(GL_TEXTURE_2D, 0));
@@ -58,6 +62,8 @@ public:
 
     inline unsigned int get_width() const { return m_width; }
     inline unsigned int get_height() const { return m_height; }
+    std::string get_file_name() const { return m_file_name; }
+    unsigned int get_id() const { return m_id; }
 
     // GPU texture slots are limited. The graphics card has a fixed number of texture slots,
     // so if you need more than however many the graphics card supports, you will have to 
@@ -66,16 +72,22 @@ public:
     // OPENGL ONLY SUPPORTS 32 SLOTS TOTAL: This function will crash if not 0 < texture_slot < 32.
     // I am using texture slot 0 as a garbage bin to prevent texture creation order from causing
     // bugs (when using multiple textures).
-    const void bind(unsigned int texture_slot) const {
+    const unsigned int bind(unsigned int texture_slot) const {
+        // if (m_texture_slot != 0) {
+        //     return m_texture_slot;
+        // }
         if (texture_slot > 31 || texture_slot < 1) {
             Log::log_error_and_terminate("'texture_slot' cannot exceed 31 or be less than 1", __FILE__, __LINE__);
         }
         GL_Call(glActiveTexture(GL_TEXTURE0 + texture_slot));
         GL_Call(glBindTexture(GL_TEXTURE_2D, m_id));
         GL_Call(glActiveTexture(GL_TEXTURE0));
+        // m_texture_slot = texture_slot;
+        return texture_slot;
     }
 
-    const void unbind() const {
+    const void unbind() {
+        m_texture_slot = 0;
         GL_Call(glBindTexture(GL_TEXTURE_2D, 0));
     }
 

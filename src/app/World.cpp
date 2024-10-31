@@ -14,6 +14,8 @@
 #include <app/GenerateRandomTrees.hpp>
 #include <random>
 
+#include "systems/ProceduralGenerationSystem.hpp"
+
 World::World() : m_registry(Registry::get_instance()), m_audioSystem(AudioSystem::get_instance()) {}
 
 World::~World() = default;
