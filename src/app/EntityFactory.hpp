@@ -183,7 +183,7 @@ namespace EntityFactory {
         tree.type = STATIC_OBJECT_TYPE::TREE;
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        bounding_box.radius = Common::max_of(motion.scale) / 2;
+        bounding_box.radius = Common::max_of(motion.scale) / 4;
 
         registry.rotate_withs.emplace(entity, registry.player);
 
