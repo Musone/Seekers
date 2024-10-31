@@ -37,6 +37,15 @@ if (IS_OS_MAC)
   # 2024-09-24 - added for M-series Mac's
   include_directories(/opt/homebrew/include)
   link_directories(/opt/homebrew/lib)
+
+  # Fetch Assimp
+  include(FetchContent)
+  FetchContent_Declare(
+          assimp
+          GIT_REPOSITORY https://github.com/assimp/assimp.git
+          GIT_TAG v5.2.5 # specify version if necessary
+  )
+  FetchContent_MakeAvailable(assimp)
 endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
@@ -76,6 +85,9 @@ if (IS_OS_LINUX OR IS_OS_MAC)
        find_library(COCOA_LIBRARY Cocoa)
        find_library(CF_LIBRARY CoreFoundation)
        target_link_libraries(${PROJECT_NAME} PUBLIC ${COCOA_LIBRARY} ${CF_LIBRARY})
+       # Link Assimp to the project
+       target_compile_options(assimp PRIVATE -Wno-deprecated-declarations)
+       target_link_libraries(${PROJECT_NAME} PUBLIC assimp)
     endif()
 
     # Increase warning level
