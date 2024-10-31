@@ -916,7 +916,7 @@ private:
             if (!reg.motions.has(loco_entity)) { continue; }
             const auto& loco = reg.locomotion_stats.get(loco_entity);
             const auto& loco_motion = reg.motions.get(loco_entity);
-#define HEALTH_BAR_HEIGHT 0.5f
+#define HEALTH_BAR_HEIGHT 0.25f
             
             if (loco.max_health == 0) {
                 Log::log_warning(
@@ -953,7 +953,7 @@ private:
                         glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
                     )
                 );
-                m_health_shader->set_uniform_3f("u_colour", { 1, 0, 0 });
+                m_health_shader->set_uniform_3f("u_colour", { 0, 0, 0 });
                 m_renderer->draw(m_square_mesh, *m_health_shader);
 
                 // Green health bar layer
@@ -966,7 +966,7 @@ private:
                         glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
                     )
                 );
-                m_health_shader->set_uniform_3f("u_colour", { 0, 1, 0 });
+                m_health_shader->set_uniform_3f("u_colour", { 1, 0, 0 });
                 m_renderer->draw(m_square_mesh, *m_health_shader);
             // } else {
             //     m_health_shader->set_uniform_mat4f(
