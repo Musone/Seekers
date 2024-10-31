@@ -72,14 +72,14 @@ public:
         
         // Draw each mesh
         for (unsigned int i = 0; i < num_meshes; i++) {
-            mesh_list[i].bind();
+            mesh_list[i]->bind();
             
-            if (m_has_texture && mesh_list[i].texture) {
-                shader.set_uniform_1i("u_texture", mesh_list[i].texture->bind(1));
+            if (m_has_texture && mesh_list[i]->texture) {
+                shader.set_uniform_1i("u_texture", mesh_list[i]->texture->bind(1));
             }
 
-            GL_Call(glDrawElements(GL_TRIANGLES, mesh_list[i].get_face_count(), GL_UNSIGNED_INT, 0));
-            mesh_list[i].unbind();
+            GL_Call(glDrawElements(GL_TRIANGLES, mesh_list[i]->get_face_count(), GL_UNSIGNED_INT, 0));
+            mesh_list[i]->unbind();
         }
     }
 
@@ -93,7 +93,7 @@ private:
 
         VertexBufferLayout layout = _create_vertex_buffer_layout();
 
-        mesh_list[mesh_index].init(
+        mesh_list[mesh_index]->init(
             vertices.data(),
             indices.data(),
             vertices.size() * sizeof(float),

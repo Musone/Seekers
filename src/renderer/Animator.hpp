@@ -18,6 +18,7 @@ private:
     Animation* m_current_animation;
     Skeleton* m_skeleton;
     bool m_should_repeat = true;
+    bool m_should_finish = false;
     float m_speed = 1.0f;
 
     void _step_time() {
@@ -44,16 +45,22 @@ private:
     }
 
 public:
-    Animator(Skeleton* skeleton) :
-        m_time_of_prev_frame(0.0f),
-        m_animation_time(0.0f),
-        m_current_animation(nullptr),
-        m_skeleton(skeleton) {
-            m_time_of_prev_frame = float(m_timer.GetTime()) / 1000000.0f;  // Initialize in seconds
-        }
+    Animator() {
+        init(nullptr);
+    }
+    
+    Animator(Skeleton* skeleton) {
+        init(skeleton);
+    }
 
-    ~Animator() {
-        // delete m_current_animation;
+    ~Animator() {}
+
+    void init(Skeleton* skeleton) {
+        m_time_of_prev_frame = 0.0f;
+        m_animation_time = 0.0f;
+        m_current_animation = nullptr;
+        m_skeleton = skeleton;
+        m_time_of_prev_frame = float(m_timer.GetTime()) / 1000000.0f;
     }
 
     void update() {
@@ -71,13 +78,16 @@ public:
         return m_animation_time / m_current_animation->get_duration();
     }
 
-    void set_animation(Animation* animation, const float& speed = 1.0f, const bool& should_repeat = true) {
+    void set_animation(Animation* animation, const float& speed = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
         m_current_animation = animation;
         m_animation_time = 0.0f;
         m_should_repeat = should_repeat;
+        m_should_finish = should_finish;
         m_speed = speed;
         m_time_of_prev_frame = float(m_timer.GetTime()) / 1000000.0f;  // Convert microseconds to seconds
     }
+
+    bool should_finish() const { return m_should_finish; }
 
     Animation* get_current_animation() const { return m_current_animation; }
 

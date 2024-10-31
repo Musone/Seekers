@@ -25,8 +25,8 @@ protected:
     Shader* m_shader;
 
 public:
-    std::vector<Mesh> mesh_list;
-    std::vector<Texture2D> texture_list;
+    std::vector<std::shared_ptr<Mesh>> mesh_list;
+    std::vector<std::shared_ptr<Texture2D>> texture_list;
     unsigned int num_meshes;
 
     ModelBase() : 
@@ -123,7 +123,10 @@ protected:
         }
 
         num_meshes = m_scene->mNumMeshes;
-        mesh_list.resize(num_meshes);
+        mesh_list.reserve(num_meshes);
+        for (size_t i = 0; i < num_meshes; i++) {
+            mesh_list.push_back(std::make_shared<Mesh>());
+        }
     }
 
     virtual void _process_material(aiMaterial* material, unsigned int mesh_index) {
@@ -132,20 +135,20 @@ protected:
             material->GetTexture(aiTextureType_DIFFUSE, tex_count, &texture_path);
             std::string texture_name = Common::split_string(texture_path.C_Str(), '/').back();
             
-            Texture2D* texture = _get_texture(texture_name.c_str());
+            std::shared_ptr<Texture2D> texture = _get_texture(texture_name.c_str());
             if (texture == nullptr) {
-                texture_list.emplace_back(texture_name.c_str());
-                texture = &texture_list.back();
+                texture_list.push_back(std::make_shared<Texture2D>(texture_name.c_str()));
+                texture = texture_list.back();
                 Log::log_success("Loaded texture: " + texture_name, __FILE__, __LINE__);
             }
-            mesh_list[mesh_index].set_texture(texture);
+            mesh_list[mesh_index]->set_texture(texture);
         }
     }
 
-    Texture2D* _get_texture(const std::string& texture_name) {
+    std::shared_ptr<Texture2D> _get_texture(const std::string& texture_name) {
         for (auto& texture : texture_list) {
-            if (texture_name == texture.get_file_name()) {
-                return &texture;
+            if (texture_name == texture->get_file_name()) {
+                return texture;
             }
         }
         return nullptr;

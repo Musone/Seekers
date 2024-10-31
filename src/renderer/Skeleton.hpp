@@ -32,6 +32,32 @@ private:
 
 public:
     Skeleton() = default;
+
+    Skeleton(const Skeleton& original) {
+        m_joint_name_to_id = original.m_joint_name_to_id;
+        m_inverse_bind_matrices = original.m_inverse_bind_matrices;
+        m_joint_transforms = original.m_joint_transforms;
+        m_global_transforms = original.m_global_transforms;
+        m_current_pose = original.m_current_pose;
+        m_is_initialized = original.m_is_initialized;
+        
+        m_joints.reserve(original.m_joints.size());
+        for (const auto& joint : original.m_joints) {
+            m_joints.push_back({
+                joint.name,
+                joint.id,
+                joint.inverse_bind_matrix,
+                joint.local_bind_transform,
+            });
+
+            Joint& current = m_joints.back();
+            for (const auto& child : joint.children) {
+                current.children.push_back(&m_joints[child->id]);
+            }
+        }
+
+        m_root_joint = &m_joints[original.m_root_joint->id];
+    };
     
     void init_from_bones(const std::vector<aiBone*>& bones, const aiScene* scene) {
         if (m_is_initialized) {
@@ -209,6 +235,14 @@ public:
         
         update_joint_transforms();
         Log::log_success("Reset skeleton to bind pose", __FILE__, __LINE__);
+    }
+
+    void print_bones(const std::string& model_name) const {
+        std::cout << "Model " << model_name << " has bones:\n";
+        for (const auto& kv : m_joint_name_to_id) {
+            std::cout << "  Bone " << kv.second << ": \"" << kv.first << "\"\n";
+        }
+        std::cout << "\n\n";
     }
 
 private:
