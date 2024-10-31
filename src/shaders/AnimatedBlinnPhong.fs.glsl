@@ -13,6 +13,12 @@ uniform sampler2D u_texture;
 out vec4 frag_color;
 
 void main() {
+    // Check texture transparency
+    vec4 tex_color = texture(u_texture, v_uv);
+    if (tex_color.w < 0.01) {
+        discard;
+    }
+
     // Normalize vectors
     vec3 norm = normalize(v_normal);
     vec3 light_dir = normalize(u_light_pos - v_frag_pos);
@@ -33,9 +39,10 @@ void main() {
     vec3 specular = specular_strength * spec * u_light_color;
 
     // vec3 result = (ambient + diffuse + specular) * u_object_color;
-    vec3 result = (ambient + diffuse + specular) * texture(u_texture, v_uv).xyz;
+
+    vec3 result = (ambient + diffuse + specular) * tex_color.xyz;
     result = clamp(result, 0.0, 1.0);
-    frag_color = vec4(result, 1.0);
+    frag_color = vec4(result, tex_color.w);
     // frag_color = vec4(1.0, 0.0, 0.0, 1.0);
     // frag_color = texture(u_texture, v_uv);
 }
