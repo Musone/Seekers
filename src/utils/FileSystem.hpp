@@ -32,7 +32,7 @@ namespace FileSystem{
 
     inline std::string read_file(std::string file_path) {
         // Normalize path to use '/' instead of '\\'
-        file_path = Common::join_string(Common::split_string(file_path, '\\'), '/');
+        file_path = Common::replace_char(file_path, '\\', '/');
         // Try absolute path
         std::ifstream file(file_path);
         if (!file.is_open()) {
