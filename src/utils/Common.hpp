@@ -35,6 +35,10 @@ namespace Common {
         return stream.str();
     }
 
+    inline std::string replace_char(const std::string& str, const char& to_be_replaced, const char& replacement) {
+        return Common::join_string(Common::split_string(str, to_be_replaced), replacement);
+    }
+
     template<typename T, unsigned int N>
     inline unsigned int c_arr_count(const T (&array)[N]) {
         // Suppress compiler warning...
