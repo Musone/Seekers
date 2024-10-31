@@ -207,10 +207,6 @@ public:
         }
 
         m_current_pose[joint_id] = new_pose;
-        int ddwqdwq= 0;
-        int ddwqdw11q= 0;
-        int ddwqdwdsaq= 0;
-        int ddwqq= 0;
     }
 
     // Add method to get current pose
