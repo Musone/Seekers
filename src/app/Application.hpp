@@ -18,6 +18,7 @@
 #include <app/TextureMaster.hpp>
 #include <components/RenderComponents.hpp>
 #include <components/CombatComponents.hpp>
+#include <components/EntityIdentifierComponents.hpp>
 
 #include <globals/Globals.h>
 
@@ -37,10 +38,16 @@ class Application {
     SkyboxTexture* m_skybox_texture;
     Shader* m_skybox_shader;
     
+    Texture2D* m_wall_texture;
+    Shader* m_wall_shader;
+
+    StaticModel* m_spooky_tree;
+
     Texture2D* m_map_texture;
     Shader* m_floor_shader;
 
     glm::vec3 m_light_pos;
+    glm::vec3 m_light_colour;
 
     std::unordered_map<unsigned int, AnimatedModel*> m_models;
 public:
@@ -60,17 +67,21 @@ public:
         m_skybox_shader = new Shader("Skybox");
         m_skybox_texture = new SkyboxTexture("random_skybox.png");
         m_map_texture = new Texture2D("jungle_tile_1.jpg");
+        m_wall_texture = new Texture2D("tileset_1.png");
+        m_wall_shader = new Shader("StaticBlinnPhong");
         m_floor_shader = new Shader("StaticBlinnPhong");
 
-        VertexBufferLayout skybox_layout;
-        skybox_layout.push<float>(3); // position
-        skybox_layout.push<float>(2); // uv
+        VertexBufferLayout cube_layout;
+        cube_layout.push<float>(3); // position
+        cube_layout.push<float>(3); // normal
+        cube_layout.push<float>(4); // vertex color (RGBA)
+        cube_layout.push<float>(2); // uv
         m_cube_mesh.init(
             m_cube_vertices.data(), 
             m_cube_indices.data(), 
             sizeof(m_cube_vertices[0]) * m_cube_vertices.size(), 
             m_cube_indices.size(), 
-            skybox_layout
+            cube_layout
         );
 
 
@@ -87,6 +98,13 @@ public:
             square_layout
         );
         m_skybox_shader->set_uniform_1i("u_skybox", m_skybox_texture->bind(31));
+
+        m_spooky_tree = new StaticModel("models/Spooky Tree/Spooky Tree.obj", m_wall_shader);
+        m_spooky_tree->m_has_texture = true;
+        m_spooky_tree->texture_list.push_back(std::make_shared<Texture2D>("Spooky Tree.jpg"));
+        m_spooky_tree->mesh_list.back()->set_texture(m_spooky_tree->texture_list.back());
+
+        m_light_colour = glm::vec3(1.0f);
     }
 
     ~Application() {
@@ -257,13 +275,13 @@ public:
             animated_shader.set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
             animated_shader.set_uniform_3f("u_view_pos", m_camera.get_position());
             animated_shader.set_uniform_3f("u_light_pos", m_light_pos);
-            animated_shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
+            animated_shader.set_uniform_3f("u_light_color", m_light_colour);
             animated_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
 
             static_shader.set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
             static_shader.set_uniform_3f("u_view_pos", m_camera.get_position());
             static_shader.set_uniform_3f("u_light_pos", m_light_pos);
-            static_shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
+            static_shader.set_uniform_3f("u_light_color", m_light_colour);
             static_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });   
             static_shader.set_uniform_1i("u_use_repeating_pattern", false);
             static_shader.set_uniform_1i("u_has_texture", true);
@@ -272,6 +290,7 @@ public:
 
             m_renderer->begin_draw();
             _draw_map_and_skybox();
+            _draw_walls();
             
             hero.draw();
             
@@ -752,40 +771,40 @@ private:
 
     std::vector<float> m_cube_vertices = {
             // Front face (Z = -0.5)
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+           -0.5f,  0.5f, -0.5f,         0, 0, -1,        1, 0, 0, 0,      0.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,         0, 0, -1,        1, 0, 0, 0,      1.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,         0, 0, -1,        1, 0, 0, 0,      1.0f, 0.0f,
+           -0.5f, -0.5f, -0.5f,         0, 0, -1,        1, 0, 0, 0,      0.0f, 0.0f,
 
             // Back face (Z = 0.5)
-            -0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-            0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+           -0.5f,  0.5f,  0.5f,         0, 0, 1,        1, 0, 0, 0,        1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,         0, 0, 1,        1, 0, 0, 0,        0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,         0, 0, 1,        1, 0, 0, 0,        0.0f, 0.0f,
+           -0.5f, -0.5f,  0.5f,         0, 0, 1,        1, 0, 0, 0,        1.0f, 0.0f,
 
             // Left face (X = -0.5)
-            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+           -0.5f,  0.5f,  0.5f,         -1, 0, 0,        1, 0, 0, 0,        0.0f, 1.0f,
+           -0.5f,  0.5f, -0.5f,         -1, 0, 0,        1, 0, 0, 0,        1.0f, 1.0f,
+           -0.5f, -0.5f, -0.5f,         -1, 0, 0,        1, 0, 0, 0,        1.0f, 0.0f,
+           -0.5f, -0.5f,  0.5f,         -1, 0, 0,        1, 0, 0, 0,        0.0f, 0.0f,
 
             // Right face (X = 0.5)
-            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-            0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,         1, 0, 0,        1, 0, 0, 0,        1.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,         1, 0, 0,        1, 0, 0, 0,        0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,         1, 0, 0,        1, 0, 0, 0,        0.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,         1, 0, 0,        1, 0, 0, 0,        1.0f, 0.0f,
 
             // Top face (Y = 0.5)
-            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
+           -0.5f,  0.5f,  0.5f,         0, 1, 0,        1, 0, 0, 0,        0.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,         0, 1, 0,        1, 0, 0, 0,        1.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,         0, 1, 0,        1, 0, 0, 0,        1.0f, 0.0f,
+           -0.5f,  0.5f, -0.5f,         0, 1, 0,        1, 0, 0, 0,        0.0f, 0.0f,
 
             // Bottom face (Y = -0.5)
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f
+           -0.5f, -0.5f,  0.5f,         0, -1, 0,        1, 0, 0, 0,        0.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,         0, -1, 0,        1, 0, 0, 0,        1.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,         0, -1, 0,        1, 0, 0, 0,        1.0f, 1.0f,
+           -0.5f, -0.5f, -0.5f,         0, -1, 0,        1, 0, 0, 0,        0.0f, 1.0f
         };
     std::vector<unsigned int> m_cube_indices = {
         0,  1,  2,  2,  3,  0,  // Front face
@@ -821,7 +840,7 @@ private:
         m_floor_shader->set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
         m_floor_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
         m_floor_shader->set_uniform_3f("u_light_pos", m_light_pos);
-        m_floor_shader->set_uniform_3f("u_light_color", { 1, 1, 1 });
+        m_floor_shader->set_uniform_3f("u_light_color", m_light_colour);
         m_floor_shader->set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
         m_floor_shader->set_uniform_mat4f(
             "u_view_project", 
@@ -838,6 +857,49 @@ private:
         m_floor_shader->set_uniform_1i("u_has_vertex_colors", false);
 
         m_renderer->draw(m_square_mesh, *m_floor_shader);
+    }
+
+    void _draw_walls() {
+        m_wall_shader->set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
+        m_wall_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
+        m_wall_shader->set_uniform_3f("u_light_pos", m_light_pos);
+        m_wall_shader->set_uniform_3f("u_light_color", m_light_colour);
+        m_wall_shader->set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
+        m_wall_shader->set_uniform_1i("u_use_repeating_pattern", true);
+        m_wall_shader->set_uniform_1i("u_has_texture", true);
+        m_wall_shader->set_uniform_1i("u_has_vertex_colors", false);
+        m_wall_shader->set_uniform_1i("u_texture", m_wall_texture->bind(29));
+        m_wall_shader->set_uniform_mat4f(
+            "u_view_project", 
+            m_camera.get_view_project_matrix()
+        );
+
+        auto& reg = Registry::get_instance();
+        for (auto& entity : reg.walls.entities) {
+            if (!reg.motions.has(entity)) { continue; }
+            auto& motion = reg.motions.get(entity);
+            glm::vec3 wall_scale = glm::vec3(motion.scale, 20.0f);
+            m_wall_shader->set_uniform_3f("u_scale", wall_scale);
+            m_wall_shader->set_uniform_mat4f(
+                "u_model",
+                Transform::create_model_matrix(
+                    glm::vec3(motion.position, 0.0f),
+                    { 0, 0, motion.angle },
+                    wall_scale
+                )
+            );
+            m_renderer->draw(m_cube_mesh, *m_wall_shader);
+        }
+
+        m_spooky_tree->set_scale(0.15f, 0.15f, 0.35f);
+        for (auto& entity : reg.static_objects.entities) {
+            if (!reg.motions.has(entity)) { continue; }
+            auto& static_object = reg.static_objects.get(entity);
+            if (static_object.type != STATIC_OBJECT_TYPE::TREE) { continue; }
+            auto& motion = reg.motions.get(entity);
+            m_spooky_tree->set_position(glm::vec3(motion.position, -0.3f));
+            m_spooky_tree->draw();
+        }
     }
 
     void _update_models() {
