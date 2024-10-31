@@ -10,31 +10,120 @@
 #include "utils/Log.hpp"
 
 namespace CollisionSystem {
-    inline void check_collisions()
-    {
+    // Collision detection helpers
+    inline bool check_circle_circle(
+        const CircleCollider& c1, const glm::vec2& pos1,
+        const CircleCollider& c2, const glm::vec2& pos2
+    ) {
+        // Simple distance check between centers - if less than combined radii, circles overlap.
+        float distance = glm::length(pos2 - pos1);
+        return distance < (c1.radius + c2.radius);
+    }
+
+    inline bool check_circle_aabb(
+        const CircleCollider& circle, const glm::vec2& circle_pos,
+        const AABBCollider& aabb, const glm::vec2& aabb_pos
+    ) {
+        // Find closest point on AABB to circle by:
+        // 1. Clamping circle's position to box bounds
+        // 2. If distance from circle center to closest point < radius, they collide
+        glm::vec2 closest = glm::max(
+            aabb.min + aabb_pos,
+            glm::min(circle_pos, aabb.max + aabb_pos)
+        );
+        // Calculate distance between circle center and closest point
+        float distance = glm::length(closest - circle_pos);
+        // If distance is less than circle radius, they collide
+        return distance < circle.radius;
+    }
+
+    inline bool check_circle_mesh(
+        const CircleCollider& circle, const glm::vec2& circle_pos,
+        const MeshCollider& mesh, const glm::vec2& mesh_pos
+    ) {
+        // First check broad phase using bound radius
+        if (glm::length(mesh_pos - circle_pos) > (circle.radius + mesh.bound_radius)) {
+            return false;
+        }
+
+        // Then check each edge of the mesh
+        for (size_t i = 0; i < mesh.vertices.size(); i++) {
+            const glm::vec2& v1 = mesh.vertices[i] + mesh_pos;
+            const glm::vec2& v2 = mesh.vertices[(i + 1) % mesh.vertices.size()] + mesh_pos;
+            
+            // Check distance from circle to line segment
+            glm::vec2 line = v2 - v1;
+            float len = glm::length(line);
+            glm::vec2 dir = line / len;
+            
+            float t = glm::dot(circle_pos - v1, dir);
+            t = glm::clamp(t, 0.0f, len);
+            
+            glm::vec2 closest = v1 + dir * t;
+            if (glm::length(circle_pos - closest) < circle.radius) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    inline void check_collisions() {
         Registry& registry = Registry::get_instance();
 
         for (unsigned int i = 0; i < registry.near_players.entities.size(); i++) {
             Entity& entity_i = registry.near_players.entities[i];
-            if (registry.bounding_boxes.has(entity_i)) {
-                Motion& motion_i = registry.motions.get(entity_i);
-                BoundingBox& box_i = registry.bounding_boxes.get(entity_i);
+            if (!registry.collision_bounds.has(entity_i)) continue;
 
-                for(unsigned int j = i+1; j < registry.near_players.entities.size(); j++) {
-                    Entity& entity_j = registry.near_players.entities[j];
-                    if (registry.bounding_boxes.has(entity_j)) {
-                        Motion& motion_j = registry.motions.get(entity_j);
-                        BoundingBox& box_j = registry.bounding_boxes.get(entity_j);
+            const auto& bounds_i = registry.collision_bounds.get(entity_i);
+            const auto& motion_i = registry.motions.get(entity_i);
 
-                        if (registry.teams.get(entity_i).team_id != registry.teams.get(entity_j).team_id) {
-                            float distance = glm::length(motion_j.position - motion_i.position);
-                            float combined_radius = box_j.radius + box_i.radius;
-                            if (distance < combined_radius)
-                            {
-                                registry.collisions.emplace_with_duplicates(entity_i, entity_j);
-                            }
-                        }
-                    }
+            for(unsigned int j = i+1; j < registry.near_players.entities.size(); j++) {
+                Entity& entity_j = registry.near_players.entities[j];
+                if (!registry.collision_bounds.has(entity_j)) continue;
+
+                const auto& bounds_j = registry.collision_bounds.get(entity_j);
+                const auto& motion_j = registry.motions.get(entity_j);
+
+                if (registry.teams.get(entity_i).team_id == registry.teams.get(entity_j).team_id) {
+                    continue;
+                }
+
+                bool collision = false;
+
+                // Handle all collision type combinations
+                if (bounds_i.type == ColliderType::Circle && bounds_j.type == ColliderType::Circle) {
+                    collision = check_circle_circle(
+                        bounds_i.circle, motion_i.position,
+                        bounds_j.circle, motion_j.position
+                    );
+                }
+                else if (bounds_i.type == ColliderType::Circle && bounds_j.type == ColliderType::AABB) {
+                    collision = check_circle_aabb(
+                        bounds_i.circle, motion_i.position,
+                        bounds_j.aabb, motion_j.position
+                    );
+                }
+                else if (bounds_i.type == ColliderType::AABB && bounds_j.type == ColliderType::Circle) {
+                    collision = check_circle_aabb(
+                        bounds_j.circle, motion_j.position,
+                        bounds_i.aabb, motion_i.position
+                    );
+                }
+                else if (bounds_i.type == ColliderType::Circle && bounds_j.type == ColliderType::Mesh) {
+                    collision = check_circle_mesh(
+                        bounds_i.circle, motion_i.position,
+                        *bounds_j.mesh, motion_j.position
+                    );
+                }
+                else if (bounds_i.type == ColliderType::Mesh && bounds_j.type == ColliderType::Circle) {
+                    collision = check_circle_mesh(
+                        bounds_j.circle, motion_j.position,
+                        *bounds_i.mesh, motion_i.position
+                    );
+                }
+
+                if (collision) {
+                    registry.collisions.emplace_with_duplicates(entity_i, entity_j);
                 }
             }
         }
@@ -61,7 +150,7 @@ namespace CollisionSystem {
         Motion& motion1 = registry.motions.get(loco1);
         Motion& motion2 = registry.motions.get(loco2);
         glm::vec2 delta = motion1.position - motion2.position;
-        float overlap = registry.bounding_boxes.get(loco1).radius + registry.bounding_boxes.get(loco2).radius - glm::length(delta);
+        float overlap = registry.collision_bounds.get(loco1).circle.radius + registry.collision_bounds.get(loco2).circle.radius - glm::length(delta);
         glm::vec2 direction = glm::normalize(delta);
         motion1.position += direction * (overlap + 0.04f);
         motion2.position -= direction * (overlap + 0.04f);
@@ -83,11 +172,11 @@ namespace CollisionSystem {
         Motion& fixed_motion = registry.motions.get(fixed);
         auto pushback_dir = Common::normalize(loco_motion.velocity) * -1.0f;
         glm::vec2 delta = loco_motion.position - fixed_motion.position;
-        float overlap = registry.bounding_boxes.get(loco).radius + registry.bounding_boxes.get(fixed).radius - glm::length(delta);
+        float overlap = registry.collision_bounds.get(loco).circle.radius + registry.collision_bounds.get(fixed).circle.radius - glm::length(delta);
         glm::vec2 direction = glm::normalize(delta);
         loco_motion.position += pushback_dir * (overlap + 0.04f);
         delta = loco_motion.position - fixed_motion.position;
-        overlap = registry.bounding_boxes.get(loco).radius + registry.bounding_boxes.get(fixed).radius - glm::length(delta);
+        overlap = registry.collision_bounds.get(loco).circle.radius + registry.collision_bounds.get(fixed).circle.radius - glm::length(delta);
         if (overlap > 0.0f) {
             loco_motion.position += direction * (overlap + 0.04f);
         }

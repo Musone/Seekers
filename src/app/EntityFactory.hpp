@@ -29,10 +29,9 @@ namespace EntityFactory {
 
         registry.attackers.emplace(entity);
 
-        auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        // Functions with the name "max" cause the code to blowup. I don't know why the compiler
-        // doesn't like that, but I also don't care at this point.
-        bounding_box.radius = Common::max_of(motion.scale) / 2;
+        // Use circle collider for player
+        auto& bounds = registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
     }
@@ -88,10 +87,9 @@ namespace EntityFactory {
         auto enemy_weapon = EntityFactory::create_weapon(position, 5.0f);
         registry.attackers.get(entity).weapon_id = enemy_weapon;
 
-        auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        // Functions with the name "max" cause the code to blowup. I don't know why the compiler
-        // doesn't like that, but I also don't care at this point.
-        bounding_box.radius = Common::max_of(motion.scale) / 2;
+        // Use circle collider for enemy
+        auto& bounds = registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
     }
@@ -119,10 +117,15 @@ namespace EntityFactory {
         auto& texture = registry.textures.emplace(entity);
         texture.name = "projectile.png";
 
-        auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        // Functions with the name "max" cause the code to blowup. I don't know why the compiler
-        // doesn't like that, but I also don't care at this point.
-        bounding_box.radius = Common::max_of(motion.scale) / 2;
+        // TODO: Replace with mesh collider when model loading is implemented - we will use circle for now
+        // Use mesh collider for projectile
+        // std::vector<glm::vec2> vertices = get_mesh_vertices("sword_2.png");
+        // auto& bounds = registry.collision_bounds.emplace(entity,
+        //     CollisionBounds::create_mesh(vertices, Common::max_of(motion.scale) / 2));
+
+        // Use circle collider for now
+        auto& bounds = registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
     }
@@ -142,8 +145,27 @@ namespace EntityFactory {
         auto& wall = registry.walls.emplace(entity);
         wall.type = WALL_TYPE::BRICK;
 
-        auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        bounding_box.radius = sqrt(motion.scale.x * motion.scale.x + motion.scale.y * motion.scale.y) * 0.5f;
+        // Use AABB collider for wall
+        auto& bounds = registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_aabb(motion.scale));
+
+        return entity;
+    }
+
+    inline Entity create_no_collision_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
+        Registry& registry = Registry::get_instance();
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.angle = angle;
+        motion.scale = scale;
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& wall = registry.walls.emplace(entity);
+        wall.type = WALL_TYPE::BRICK;
 
         return entity;
     }
@@ -180,8 +202,11 @@ namespace EntityFactory {
         auto& tree = registry.static_objects.emplace(entity);
         tree.type = STATIC_OBJECT_TYPE::TREE;
 
-        auto& bounding_box = registry.bounding_boxes.emplace(entity);
-        bounding_box.radius = Common::max_of(motion.scale) / 4;
+        // Use circle collider for tree
+        auto& bounds = registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+
+        registry.rotate_withs.emplace(entity, registry.player);
 
         return entity;
     }
