@@ -37,6 +37,7 @@ public:
 	ComponentContainer<InDodge> in_dodges;
 	ComponentContainer<AIComponent> ais;
 	ComponentContainer<NearPlayer> near_players;
+    GridMap grid_map;
 	Entity player;
 	InputState input_state;
 

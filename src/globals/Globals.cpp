@@ -13,5 +13,5 @@ namespace Globals {
     float dodgeDuration = 0.3f;
     Timer timer = Timer();
     float ai_distance_epsilon = 0.2f;
-    float update_distance = 50.0f;
+    float update_distance = 70.0f;
 }

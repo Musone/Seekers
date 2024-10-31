@@ -40,7 +40,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_weapon(glm::vec2 position, float damage, unsigned int following) {
+    inline Entity create_weapon(glm::vec2 position, float damage, unsigned int following, float attack_cooldown = 0.15f) {
         Registry& registry = Registry::get_instance();
 
         auto entity = Entity();
@@ -53,7 +53,7 @@ namespace EntityFactory {
         weapon_stats.damage = damage;
         weapon_stats.range = 30.0f;
         weapon_stats.proj_speed = 40.0f;
-        weapon_stats.attack_cooldown = 0.15f;
+        weapon_stats.attack_cooldown = attack_cooldown;
         weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
 
         registry.move_withs.emplace(entity, following);

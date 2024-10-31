@@ -92,7 +92,7 @@ namespace CollisionSystem {
             loco_motion.position += direction * (overlap + 0.04f);
         }
         if (registry.ais.has(loco)) {
-            AISystem::update_target_position(registry.ais.get(loco));
+            AISystem::update_patrol_target_position(registry.ais.get(loco));
         }
         if (registry.in_dodges.has(loco)) {registry.in_dodges.remove(loco);}
     }
