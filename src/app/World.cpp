@@ -6,12 +6,15 @@
 
 #include "systems/GameplaySystem.hpp"
 #include "systems/PhysicsSystem.hpp"
+#include "systems/GridMapSystem.hpp"
 
 #include "systems/AISystem.hpp"
 
 #include <components/RenderComponents.hpp> // For Motion component
 #include <app/GenerateRandomTrees.hpp>
 #include <random>
+
+#include "systems/ProceduralGenerationSystem.hpp"
 
 World::World() : m_registry(Registry::get_instance()), m_audioSystem(AudioSystem::get_instance()) {}
 
@@ -33,14 +36,16 @@ void World::demo_init() {
     m_registry.attackers.get(player).weapon_id = weapon;
     m_players.push_back(player);
     m_registry.player = player;
+    m_registry.grid_map = GridMap();
+
 
     // Bottom wall (with entrance in the middle)
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 5; ++i) {
         glm::vec2 pos = glm::vec2(-14.0f + i * 2.0f, -14.0f);
         EntityFactory::create_wall(pos, 0.0f);
     }
-    for (int i = 0; i < 6; ++i) {
-        glm::vec2 pos = glm::vec2(4.0f + i * 2.0f, -14.0f);
+    for (int i = 0; i < 5; ++i) {
+        glm::vec2 pos = glm::vec2(6.0f + i * 2.0f, -14.0f);
         EntityFactory::create_wall(pos, 0.0f);
     }
     // Top wall
@@ -61,24 +66,37 @@ void World::demo_init() {
     }
 
     // Place a tree and some enemies
-    std::vector<glm::vec2> trees = GenerateSomeTree::generateNonOverlappingTrees(100, MAP_WIDTH, MAP_HEIGHT, 2.0f);
+    std::vector<glm::vec2> trees = GenerateSomeTree::generateNonOverlappingTrees(50, MAP_WIDTH, MAP_HEIGHT, 2.0f);
     unsigned int i = 0;
     for (auto& tree_pos : trees) {
         if (glm::length(tree_pos) <= 20 || (++i % 4 == 0)) {
             if (glm::length(tree_pos) >= 23) {
                 Entity enemy = EntityFactory::create_enemy(tree_pos);
-                auto enemy_weapon = EntityFactory::create_weapon(tree_pos, 5.0f, enemy);
+                auto enemy_weapon = EntityFactory::create_weapon(tree_pos, 5.0f, enemy, 0.5f);
                 m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
             }
             continue;
         }
         EntityFactory::create_tree(tree_pos);
     }
+
+    // create grid map entities
+    Registry& registry = Registry::get_instance();
+    registry.grid_map = GridMap();
+    for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
+        registry.grid_map.grid_boxes.push_back(std::vector<GridMap::GridBox>());
+        for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
+            registry.grid_map.grid_boxes[i].push_back(GridMap::GridBox());
+        }
+    }
 }
+
 
 void World::step(float elapsed_ms) {
     // TODO: Update the game world
     // 1. Update physics
+    GridMapSystem::update_grid_map();
+
     PhysicsSystem::step(elapsed_ms);
     PhysicsSystem::update_interpolations();
 

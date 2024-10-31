@@ -37,7 +37,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_weapon(glm::vec2 position, float damage, unsigned int following) {
+    inline Entity create_weapon(glm::vec2 position, float damage, unsigned int following, float attack_cooldown = 0.15f) {
         Registry& registry = Registry::get_instance();
 
         auto entity = Entity();
@@ -54,6 +54,12 @@ namespace EntityFactory {
         weapon.attack_cooldown = 0.15f;
         weapon.attack_style = ATTACK_STYLE::ONE_AIM;
         weapon.enchantment = ENCHANTMENT::NONE;
+        auto& weapon_stats = registry.weapon_stats.emplace(entity);
+        weapon_stats.damage = damage;
+        weapon_stats.range = 30.0f;
+        weapon_stats.proj_speed = 40.0f;
+        weapon_stats.attack_cooldown = attack_cooldown;
+        weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
 
         registry.move_withs.emplace(entity, following);
         registry.rotate_withs.emplace(entity, following);
@@ -129,14 +135,14 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_wall(glm::vec2 position, float angle) {
+    inline Entity create_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
         Registry& registry = Registry::get_instance();
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
         motion.angle = angle;
-        motion.scale = glm::vec2(2.0f, 2.0f);
+        motion.scale = scale;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;
@@ -146,6 +152,24 @@ namespace EntityFactory {
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         bounding_box.radius = sqrt(motion.scale.x * motion.scale.x + motion.scale.y * motion.scale.y) * 0.5f;
+
+        return entity;
+    }
+
+    inline Entity create_no_collision_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
+        Registry& registry = Registry::get_instance();
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.angle = angle;
+        motion.scale = scale;
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& texture = registry.textures.emplace(entity);
+        texture.name = "tileset_1.png";
 
         return entity;
     }
