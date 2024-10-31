@@ -51,15 +51,9 @@ namespace EntityFactory {
         weapon.damage = damage;
         weapon.range = 30.0f;
         weapon.proj_speed = 40.0f;
-        weapon.attack_cooldown = 0.15f;
+        weapon.attack_cooldown = attack_cooldown;
         weapon.attack_style = ATTACK_STYLE::ONE_AIM;
         weapon.enchantment = ENCHANTMENT::NONE;
-        auto& weapon_stats = registry.weapon_stats.emplace(entity);
-        weapon_stats.damage = damage;
-        weapon_stats.range = 30.0f;
-        weapon_stats.proj_speed = 40.0f;
-        weapon_stats.attack_cooldown = attack_cooldown;
-        weapon_stats.attack_style = ATTACK_STYLE::ONE_AIM;
 
         registry.move_withs.emplace(entity, following);
         registry.rotate_withs.emplace(entity, following);

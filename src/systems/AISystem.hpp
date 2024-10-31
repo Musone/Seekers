@@ -128,7 +128,7 @@ namespace AISystem
         Registry& registry = Registry::get_instance();
         Motion& motion = registry.motions.get(e);
         Attacker& attacker = registry.attackers.get(e);
-        WeaponStats& weapon_stats = registry.weapon_stats.get(attacker.weapon_id);
+        Weapon& weapon_stats = registry.weapons.get(attacker.weapon_id);
 
 
         glm::vec2 player_position = registry.motions.get(registry.player).position;
