@@ -55,8 +55,8 @@ namespace EntityFactory {
         weapon.attack_style = ATTACK_STYLE::ONE_AIM;
         weapon.enchantment = ENCHANTMENT::NONE;
 
-        registry.move_withs.emplace(entity, following);
-        registry.rotate_withs.emplace(entity, following);
+        // registry.move_withs.emplace(entity, following);
+        // registry.rotate_withs.emplace(entity, following);
 
         return entity;
     }
@@ -88,7 +88,7 @@ namespace EntityFactory {
         auto& enemy = registry.enemies.emplace(entity);
         enemy.type = ENEMY_TYPE::WARRIOR;
 
-        registry.rotate_withs.emplace(entity, registry.player);
+        //registry.rotate_withs.emplace(entity, registry.player);
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         // Functions with the name "max" cause the code to blowup. I don't know why the compiler
@@ -185,7 +185,7 @@ namespace EntityFactory {
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         bounding_box.radius = Common::max_of(motion.scale) / 4;
 
-        registry.rotate_withs.emplace(entity, registry.player);
+        // registry.rotate_withs.emplace(entity, registry.player);
 
         return entity;
     }

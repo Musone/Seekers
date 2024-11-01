@@ -964,6 +964,7 @@ private:
             const auto& motion = reg.motions.get(entity);
             m_arrow->set_position(glm::vec3(motion.position, 2.0f));
             m_arrow->set_rotation_z(motion.angle);
+            m_arrow->set_rotation_z(motion.angle);
             m_arrow->set_rotation_x(m_arrow->get_rotation_x() + PI / 8);
             m_arrow->draw();
         }
