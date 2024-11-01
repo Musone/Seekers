@@ -38,7 +38,7 @@ void World::demo_init() {
     m_registry.player = player;
     m_registry.grid_map = GridMap();
 
-    ProceduralGenerationSystem::GenerateDungeon(MAP_WIDTH, MAP_HEIGHT);
+    ProceduralGenerationSystem::GenerateDungeon(MAP_WIDTH, MAP_HEIGHT, m_registry.motions.get(player));
 
     // // Bottom wall (with entrance in the middle)
     // for (int i = 0; i < 5; ++i) {

@@ -13,6 +13,8 @@ namespace ProceduralGenerationSystem {
     struct Room {
         glm::vec2 position;    // center of the room
         glm::vec2 size;
+
+        bool operator==(const Room& other) const {return position == other.position && size == other.size;}
     };
 
     struct Hallway {
@@ -80,7 +82,7 @@ namespace ProceduralGenerationSystem {
         return false;
     }
 
-    inline std::vector<Room> generate_rooms(int map_width, int map_height) {
+    inline std::vector<Room> generate_rooms(int map_width, int map_height, std::vector<Room>& rooms) {
         int min_room_size = 30;
         int max_room_size = 60;
         int room_count = map_width * map_height / (max_room_size * max_room_size);
@@ -90,8 +92,6 @@ namespace ProceduralGenerationSystem {
         std::uniform_int_distribution<> pos_x_dist((-map_width + max_room_size) / 2, (map_width - max_room_size) / 2);
         std::uniform_int_distribution<> pos_y_dist((-map_height + max_room_size) / 2, (map_height - max_room_size) / 2);
         std::uniform_int_distribution<> size_dist(min_room_size, max_room_size);
-
-        std::vector<Room> rooms;
 
         // Attempt to create rooms
         for (int i = 0; i < room_count; ++i) {
@@ -318,7 +318,7 @@ namespace ProceduralGenerationSystem {
                 }
             }
             // Check if a wall segment ends at the row's end
-            if (startX != -1) {
+            if (startX != -1 && length > 1) {
                 walls.push_back({startX, y, length, true});
             }
         }
@@ -343,7 +343,7 @@ namespace ProceduralGenerationSystem {
                 }
             }
             // Check if a wall segment ends at the column's end
-            if (startY != -1) {
+            if (startY != -1 && length > 1) {
                 walls.push_back({x, startY, length, false});
             }
         }
@@ -369,9 +369,19 @@ namespace ProceduralGenerationSystem {
         }
     }
 
-    inline void create_enemies(const std::vector<Room>& rooms) {
+    inline Room create_spawn_room(std::vector<Room>& rooms, int map_width, int map_height) {
+        Room room;
+        room.size = glm::vec2(20, 20);
+        room.position = glm::vec2((-map_width + room.size.x ) / 2 + 1, (-map_height + room.size.y) / 2 + 2);
+        rooms.push_back(room);
+        return room;
+    }
+
+    inline void create_enemies(const std::vector<Room>& rooms, const Room& spawn_room) {
         int total_num_enemies = 0;
         for (const Room& room : rooms) {
+            if (room == spawn_room) {continue;}
+
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> pos_x_dist(room.position.x - room.size.x / 2 + 2, room.position.x + room.size.x / 2 - 2);
@@ -388,17 +398,19 @@ namespace ProceduralGenerationSystem {
         std::cout << "number of enemies: " << total_num_enemies << std::endl;
     }
 
-    inline void GenerateDungeon(int map_width, int map_height) {
-        Registry& registry = Registry::get_instance();
-
+    inline void GenerateDungeon(int map_width, int map_height, Motion& player_motion) {
         std::vector<std::vector<char>> map(map_height, std::vector<char>(map_width, '.'));
-        std::vector<Room> rooms = generate_rooms(map_width, map_height);
+
+        std::vector<Room> rooms;
+        Room spawn_room = create_spawn_room(rooms, map_width, map_height);
+        player_motion.position = spawn_room.position;
+        generate_rooms(map_width, map_height, rooms);
         std::vector<Hallway> hallways = generate_hallways(rooms);
         connect_rooms(rooms, hallways, map, map_width, map_height);
         place_walls_on_map(map);
         create_walls(map);
 
-        create_enemies(rooms);
+        create_enemies(rooms, spawn_room);
 
         // print map
         for (const auto& row : map) {
