@@ -31,7 +31,7 @@ void World::demo_init() {
 
     // Create Player
     auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
-    auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f, player);
+    auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f);
     m_registry.attackers.get(player).weapon_id = weapon;
     m_players.push_back(player);
     m_registry.player = player;
