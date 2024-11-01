@@ -18,9 +18,9 @@ namespace EntityFactory {
         motion.scale = glm::vec2(3.0f, 3.0f);  // Player size
 
         auto& locomotion = registry.locomotion_stats.emplace(entity);
-        locomotion.health = 100.0f;
-        locomotion.max_health = 100.0f;
-        locomotion.movement_speed = 15.0f;
+        locomotion.health = 200.0f;
+        locomotion.max_health = 200.0f;
+        locomotion.movement_speed = 25.0f;
         locomotion.energy = 100.0f;
         locomotion.max_energy = 100.0f;
 
@@ -50,7 +50,7 @@ namespace EntityFactory {
         weapon.type = WEAPON_TYPE::SWORD;
         weapon.damage = damage;
         weapon.range = 30.0f;
-        weapon.proj_speed = 40.0f;
+        weapon.proj_speed = 100.0f;
         weapon.attack_cooldown = attack_cooldown;
         weapon.attack_style = ATTACK_STYLE::ONE_AIM;
         weapon.enchantment = ENCHANTMENT::NONE;
