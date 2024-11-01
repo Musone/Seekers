@@ -947,7 +947,7 @@ private:
             if (!reg.motions.has(entity)) { continue; }
             const auto& motion = reg.motions.get(entity);
             m_arrow->set_position(glm::vec3(motion.position, 2.0f));
-            m_arrow->set_rotation_z(motion.angle + PI / 2);
+            m_arrow->set_rotation_z(motion.angle);
             m_arrow->set_rotation_x(m_arrow->get_rotation_x() + PI / 8);
             m_arrow->draw();
         }
@@ -1067,7 +1067,8 @@ private:
             auto& motion = reg.motions.get(id);
             auto& player_motion = reg.motions.get(reg.player);
 
-            float pre_rotate = 3 * PI / 2;
+            // float pre_rotate = 3 * PI / 2;
+            float pre_rotate = 0;
             auto angle = std::fabs(std::fmod(motion.angle + pre_rotate, 2 * PI));
             auto velocity_angle = _vector_to_angle(motion.velocity);
             float angle_between_view_and_velo = 

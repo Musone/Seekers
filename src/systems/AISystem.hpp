@@ -136,6 +136,8 @@ namespace AISystem
 
         attacker.aim = Common::normalize(player_position - motion.position);
 
+        motion.angle = atan2(attacker.aim.y, attacker.aim.x);
+
         if (!registry.attack_cooldowns.has(e)) {
             EntityFactory::create_projectile(motion, attacker, weapon_stats, TEAM_ID::FOW);
             registry.attack_cooldowns.emplace(e, weapon_stats.attack_cooldown);
