@@ -333,6 +333,11 @@ namespace CollisionSystem {
      * @param loco Locomotive entity
      * @param fixed Fixed entity
      */
+    /**
+     * Handles collision between a locomotive entity and a fixed entity
+     * @param loco Locomotive entity
+     * @param fixed Fixed entity
+     */
     inline void loco_fixed_collision(Entity& loco, Entity& fixed) {
         Registry& registry = Registry::get_instance();
         
@@ -345,26 +350,160 @@ namespace CollisionSystem {
         
         const auto& loco_bounds = registry.collision_bounds.get(loco);
         const auto& fixed_bounds = registry.collision_bounds.get(fixed);
+
+        const float BUFFER = 0.05f;
         
-        // Calculate collision response
-        glm::vec2 normal = get_collision_normal(loco_bounds, loco_motion.position, 
-                                              fixed_bounds, fixed_motion.position);
-        float penetration = get_penetration_depth(loco_bounds, loco_motion.position, 
-                                                fixed_bounds, fixed_motion.position);
+        if (fixed_bounds.type == ColliderType::AABB) {
+            // Store original position and velocity
+            glm::vec2 original_pos = loco_motion.position;
+            glm::vec2 velocity = loco_motion.velocity;
+            
+            // Expand AABB by circle radius (Minkowski sum)
+            glm::vec2 expanded_min = fixed_bounds.aabb.min + fixed_motion.position - glm::vec2(loco_bounds.circle.radius);
+            glm::vec2 expanded_max = fixed_bounds.aabb.max + fixed_motion.position + glm::vec2(loco_bounds.circle.radius);
+            
+            // Check if already inside expanded AABB
+            bool inside_x = original_pos.x >= expanded_min.x && original_pos.x <= expanded_max.x;
+            bool inside_y = original_pos.y >= expanded_min.y && original_pos.y <= expanded_max.y;
+            
+            if (inside_x && inside_y) {
+                // Find closest edge to push out
+                float dist_left = original_pos.x - expanded_min.x;
+                float dist_right = expanded_max.x - original_pos.x;
+                float dist_top = original_pos.y - expanded_min.y;
+                float dist_bottom = expanded_max.y - original_pos.y;
+                
+                // Find minimum penetration
+                float min_dist = std::min({dist_left, dist_right, dist_top, dist_bottom});
+                
+                // Push out in direction of minimum penetration
+                if (min_dist == dist_left) loco_motion.position.x = expanded_min.x - BUFFER;
+                else if (min_dist == dist_right) loco_motion.position.x = expanded_max.x + BUFFER;
+                else if (min_dist == dist_top) loco_motion.position.y = expanded_min.y - BUFFER;
+                else loco_motion.position.y = expanded_max.y + BUFFER;
+            } else {
+                // Swept collision detection
+                float entry_time = 0.0f;
+                float exit_time = 1.0f;
+                glm::vec2 normal(0.0f);
+                
+                if (velocity.x != 0.0f) {
+                    float inv_entry_x = (expanded_min.x - original_pos.x) / velocity.x;
+                    float inv_exit_x = (expanded_max.x - original_pos.x) / velocity.x;
+                    
+                    entry_time = std::max(entry_time, std::min(inv_entry_x, inv_exit_x));
+                    exit_time = std::min(exit_time, std::max(inv_entry_x, inv_exit_x));
+                    
+                    if (inv_entry_x < inv_exit_x) normal.x = -1.0f;
+                    else normal.x = 1.0f;
+                }
+                
+                if (velocity.y != 0.0f) {
+                    float inv_entry_y = (expanded_min.y - original_pos.y) / velocity.y;
+                    float inv_exit_y = (expanded_max.y - original_pos.y) / velocity.y;
+                    
+                    entry_time = std::max(entry_time, std::min(inv_entry_y, inv_exit_y));
+                    exit_time = std::min(exit_time, std::max(inv_entry_y, inv_exit_y));
+                    
+                    if (inv_entry_y < inv_exit_y) normal.y = -1.0f;
+                    else normal.y = 1.0f;
+                }
+                
+                // Check if collision occurs
+                if (entry_time <= exit_time && exit_time > 0.0f && entry_time < 1.0f) {
+                    // Move to collision point
+                    loco_motion.position = original_pos + velocity * std::max(0.0f, entry_time - BUFFER);
+                    
+                    // Reflect velocity along collision normal
+                    if (abs(normal.x) > 0.0f) {
+                        loco_motion.velocity.x = 0.0f;
+                    }
+                    if (abs(normal.y) > 0.0f) {
+                        loco_motion.velocity.y = 0.0f;
+                    }
+                }
+            }
+            
+            // Additional corner handling
+            const auto& aabb = fixed_bounds.aabb;
+            glm::vec2 corners[4] = {
+                fixed_motion.position + aabb.min,                          // Bottom-left
+                fixed_motion.position + glm::vec2(aabb.max.x, aabb.min.y), // Bottom-right
+                fixed_motion.position + aabb.max,                          // Top-right
+                fixed_motion.position + glm::vec2(aabb.min.x, aabb.max.y)  // Top-left
+            };
+
+            // Check all corners
+            for (const auto& corner : corners) {
+                glm::vec2 to_corner = loco_motion.position - corner;
+                float corner_dist = glm::length(to_corner);
+                
+                if (corner_dist < loco_bounds.circle.radius) {
+                    // We're too close to a corner
+                    if (corner_dist > 0.0001f) {
+                        glm::vec2 corner_normal = to_corner / corner_dist;
+                        loco_motion.position = corner + corner_normal * (loco_bounds.circle.radius + BUFFER);
+                        
+                        // Adjust velocity to prevent corner sticking
+                        float vel_along_normal = glm::dot(loco_motion.velocity, corner_normal);
+                        if (vel_along_normal < 0) {
+                            loco_motion.velocity -= corner_normal * vel_along_normal;
+                        }
+                    } else {
+                        // If exactly on corner, push out diagonally
+                        loco_motion.position += glm::vec2(1.0f, 1.0f) * (loco_bounds.circle.radius + BUFFER);
+                    }
+                }
+            }
+        } else {
+            // Circle-Circle collision handling for fixed entities (trees, etc.)
+            // Calculate centers and combined radius
+            glm::vec2 diff = loco_motion.position - fixed_motion.position;
+            float dist = glm::length(diff);
+            
+            if (dist < 0.0001f) {
+                // Prevent division by zero
+                diff = glm::vec2(1.0f, 0.0f);
+                dist = 1.0f;
+            }
+            
+            float combined_radius = loco_bounds.circle.radius + fixed_bounds.circle.radius;
+            
+            if (dist < combined_radius) {
+                // Calculate penetration and normal
+                float penetration = combined_radius - dist;
+                glm::vec2 normal = diff / dist;
+                
+                // Push locomotive entity out
+                loco_motion.position += normal * (penetration + BUFFER);
+                
+                // Adjust velocity to prevent sticking
+                float vel_along_normal = glm::dot(loco_motion.velocity, normal);
+                if (vel_along_normal < 0) {
+                    loco_motion.velocity -= normal * vel_along_normal;
+                }
+            }
+        }
         
-        // Push locomotive entity away from fixed object
-        const float BUFFER = 0.04f;
-        loco_motion.position += normal * (penetration + BUFFER);
+        // Final position validation
+        if (fixed_bounds.type == ColliderType::AABB) {
+            glm::vec2 closest = glm::max(
+                fixed_bounds.aabb.min + fixed_motion.position,
+                glm::min(loco_motion.position, fixed_bounds.aabb.max + fixed_motion.position)
+            );
+            
+            float dist = glm::length(loco_motion.position - closest);
+            if (dist < loco_bounds.circle.radius) {
+                // If still penetrating, force position to safe distance
+                glm::vec2 normal = (loco_motion.position - closest) / dist;
+                loco_motion.position = closest + normal * (loco_bounds.circle.radius + BUFFER);
+            }
+        }
         
-        // Additional velocity-based pushback for better feel
-        auto pushback_dir = Common::normalize(loco_motion.velocity) * -1.0f;
-        loco_motion.position += pushback_dir * BUFFER;
-        
-        // Update AI behavior if entity is AI-controlled
+        // Update AI and dodge status
         if (registry.ais.has(loco)) {
             AISystem::update_patrol_target_position(registry.ais.get(loco));
         }
-        // Cancel dodge if entity was dodging
         if (registry.in_dodges.has(loco)) {
             registry.in_dodges.remove(loco);
         }
