@@ -1137,13 +1137,14 @@ private:
             }
             model->set_position(glm::vec3(motion.position, 0.0f));
 
-            if (rotate_to_velocity_dir) {
-                model->set_rotation_z(velocity_angle);
-            } else if (rotate_opposite_to_velocity_dir) {
-                model->set_rotation_z(velocity_angle - PI);
-            } else {
-                model->set_rotation_z(motion.angle);
-            }
+            // if (rotate_to_velocity_dir) {
+            //     model->set_rotation_z(velocity_angle);
+            // } else if (rotate_opposite_to_velocity_dir) {
+            //     model->set_rotation_z(velocity_angle - PI);
+            // } else {
+            //     model->set_rotation_z(motion.angle);
+            // }
+            model->set_rotation_z(motion.angle);
             
             model->update();
         }
