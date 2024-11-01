@@ -18,9 +18,9 @@ namespace EntityFactory {
         motion.scale = glm::vec2(3.0f, 3.0f);  // Player size
 
         auto& locomotion = registry.locomotion_stats.emplace(entity);
-        locomotion.health = 100.0f;
-        locomotion.max_health = 100.0f;
-        locomotion.movement_speed = 15.0f;
+        locomotion.health = 200.0f;
+        locomotion.max_health = 200.0f;
+        locomotion.movement_speed = 25.0f;
         locomotion.energy = 100.0f;
         locomotion.max_energy = 100.0f;
 
@@ -37,7 +37,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_weapon(glm::vec2 position, float damage, unsigned int following) {
+    inline Entity create_weapon(glm::vec2 position, float damage, float attack_cooldown = 0.15f) {
         Registry& registry = Registry::get_instance();
 
         auto entity = Entity();
@@ -50,13 +50,10 @@ namespace EntityFactory {
         weapon.type = WEAPON_TYPE::SWORD;
         weapon.damage = damage;
         weapon.range = 30.0f;
-        weapon.proj_speed = 40.0f;
-        weapon.attack_cooldown = 0.15f;
+        weapon.proj_speed = 100.0f;
+        weapon.attack_cooldown = attack_cooldown;
         weapon.attack_style = ATTACK_STYLE::ONE_AIM;
         weapon.enchantment = ENCHANTMENT::NONE;
-
-        registry.move_withs.emplace(entity, following);
-        registry.rotate_withs.emplace(entity, following);
 
         return entity;
     }
@@ -88,7 +85,8 @@ namespace EntityFactory {
         auto& enemy = registry.enemies.emplace(entity);
         enemy.type = ENEMY_TYPE::WARRIOR;
 
-        registry.rotate_withs.emplace(entity, registry.player);
+        auto enemy_weapon = EntityFactory::create_weapon(position, 5.0f);
+        registry.attackers.get(entity).weapon_id = enemy_weapon;
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         // Functions with the name "max" cause the code to blowup. I don't know why the compiler
@@ -129,14 +127,14 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_wall(glm::vec2 position, float angle) {
+    inline Entity create_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
         Registry& registry = Registry::get_instance();
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
         motion.angle = angle;
-        motion.scale = glm::vec2(2.0f, 2.0f);
+        motion.scale = scale;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;
@@ -146,6 +144,24 @@ namespace EntityFactory {
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         bounding_box.radius = sqrt(motion.scale.x * motion.scale.x + motion.scale.y * motion.scale.y) * 0.5f;
+
+        return entity;
+    }
+
+    inline Entity create_no_collision_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
+        Registry& registry = Registry::get_instance();
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.angle = angle;
+        motion.scale = scale;
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& wall = registry.walls.emplace(entity);
+        wall.type = WALL_TYPE::BRICK;
 
         return entity;
     }
@@ -166,8 +182,6 @@ namespace EntityFactory {
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         bounding_box.radius = Common::max_of(motion.scale) / 4;
-
-        registry.rotate_withs.emplace(entity, registry.player);
 
         return entity;
     }

@@ -110,10 +110,10 @@ namespace InputManager {
 
         // movement
         glm::vec2 move_dir = glm::vec2(0.f, 0.f);
-        if (input_state.w_down) {move_dir.y += 1.f;}
-        if (input_state.s_down) {move_dir.y -= 1.f;}
-        if (input_state.a_down) {move_dir.x -= 1.f;}
-        if (input_state.d_down) {move_dir.x += 1.f;}
+        if (input_state.w_down) {move_dir.x += 1.f;}
+        if (input_state.s_down) {move_dir.x -= 1.f;}
+        if (input_state.a_down) {move_dir.y += 1.f;}
+        if (input_state.d_down) {move_dir.y -= 1.f;}
         move_dir = Common::normalize(move_dir);
         move_dir *= player_stats.movement_speed;
         glm::vec4 temp = Transform::create_rotation_matrix({ 0, 0, player_motion.angle }) * glm::vec4(move_dir, 0, 1);
@@ -122,7 +122,7 @@ namespace InputManager {
         // update aim
         if (Globals::is_3d_mode) {
             // Shoot straight when in 3d-mode
-            const auto& temp2 = Transform::create_rotation_matrix({ 0, 0, player_motion.angle }) * glm::vec4(0, 1, 0, 1);
+            const auto& temp2 = Transform::create_rotation_matrix({ 0, 0, player_motion.angle }) * glm::vec4(1, 0, 0, 0);
             player_attacker.aim = { temp2.x, temp2.y };
         } else {
             player_attacker.aim = Common::normalize(input_state.mouse_pos - glm::vec2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2));

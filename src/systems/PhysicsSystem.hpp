@@ -19,20 +19,27 @@ namespace PhysicsSystem
                     motion.position += motion.velocity * (elapsed_ms / 1000.0f);
                 }
                 motion.angle += motion.rotation_velocity * (elapsed_ms / 1000.0f);
+
+                if (registry.attackers.has(entity)) {
+                    if (registry.enemies.has(entity)) {
+                        Attacker& attacker = registry.attackers.get(entity);
+                        motion.angle = atan2(attacker.aim.y, attacker.aim.x);
+                    }
+                }
             }
         }
 
-        // update motion of follower entities
-        for (Entity& e : registry.move_withs.entities) {
-            Motion& follower = registry.motions.get(e);
-            Motion& following = registry.motions.get(registry.move_withs.get(e).following_entity_id);
-            follower.position = following.position + glm::vec2(1.0f, 0.0f);
-        }
-        for (Entity& e : registry.rotate_withs.entities) {
-            Motion& follower = registry.motions.get(e);
-            Motion& following = registry.motions.get(registry.rotate_withs.get(e).following_entity_id);
-            follower.angle = following.angle;
-        }
+        // // update motion of follower entities
+        // for (Entity& e : registry.move_withs.entities) {
+        //     Motion& follower = registry.motions.get(e);
+        //     Motion& following = registry.motions.get(registry.move_withs.get(e).following_entity_id);
+        //     follower.position = following.position + glm::vec2(1.0f, 0.0f);
+        // }
+        // for (Entity& e : registry.rotate_withs.entities) {
+        //     Motion& follower = registry.motions.get(e);
+        //     Motion& following = registry.motions.get(registry.rotate_withs.get(e).following_entity_id);
+        //     follower.angle = following.angle;
+        // }
     }
 
     inline void update_interpolations() {

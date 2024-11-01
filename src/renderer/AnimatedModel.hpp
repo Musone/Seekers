@@ -31,6 +31,7 @@ public:
         m_shader = original.m_shader;
         m_attachments = original.m_attachments;
         m_name_to_animation_id = original.m_name_to_animation_id;
+        m_pre_transform = original.m_pre_transform;
 
         m_skeleton = original.m_skeleton;
         m_animator.init(&m_skeleton);
@@ -157,10 +158,10 @@ public:
         std::cout << "\n\n";
     }
 
-    void play_animation(const std::string& name, const float& speed = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+    void play_animation(const std::string& name, const float& duration_s = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
         auto it = m_name_to_animation_id.find(name);
         if (it != m_name_to_animation_id.end()) {
-            play_animation(it->second, speed, should_repeat, should_finish);
+            play_animation(it->second, duration_s, should_repeat, should_finish);
         } else {
             Log::log_warning("Model " + m_name + " does not have animtion: \"" + name, __FILE__, __LINE__);
         }
@@ -170,14 +171,14 @@ public:
         return m_animator.portion_complete();
     }
 
-    void play_animation(const size_t& index, const float& speed = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
-        if (speed <= 0) {
+    void play_animation(const size_t& index, const float& duration_s = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+        if (duration_s <= 0) {
             Log::log_error_and_terminate("Speed of an animation should be greater than 0", __FILE__, __LINE__);
         }
         if (index < m_animations.size()) {
             if (index != get_current_animation_id()) {
                 if (!m_animator.should_finish() || m_animator.portion_complete() >= 0.9999f) {
-                    m_animator.set_animation(m_animations[index], speed, should_repeat, should_finish);
+                    m_animator.set_animation(m_animations[index], duration_s, should_repeat, should_finish);
                 }
             }
         }
@@ -227,7 +228,7 @@ public:
         shader.bind();
         
         if (use_model_matrix) {
-            shader.set_uniform_mat4f("u_model", get_model_matrix());
+            shader.set_uniform_mat4f("u_model", get_model_matrix() * m_pre_transform);
         }
 
         // Set animation data if available
@@ -268,6 +269,7 @@ public:
                     glm::mat4 global_transform = m_skeleton.get_global_transforms()[joint->id];
                     glm::mat4 attachment_transform = 
                         get_model_matrix() * 
+                        m_pre_transform *
                         global_transform *
                         Transform::create_model_matrix(
                             attachment.offset_position,

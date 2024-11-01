@@ -40,6 +40,7 @@ public:
 	ComponentContainer<Wall> walls;
 	ComponentContainer<Enemy> enemies;
 	ComponentContainer<StaticObject> static_objects;
+	GridMap grid_map;
 	Entity player;
 	InputState input_state;
 

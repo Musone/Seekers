@@ -42,9 +42,14 @@ class Application {
     Shader* m_wall_shader;
 
     StaticModel* m_spooky_tree;
+    StaticModel* m_sword;
+    StaticModel* m_bow;
+    StaticModel* m_arrow;
 
     Texture2D* m_map_texture;
     Shader* m_floor_shader;
+
+    Shader* m_health_shader;
 
     glm::vec3 m_light_pos;
     glm::vec3 m_light_colour;
@@ -104,7 +109,16 @@ public:
         m_spooky_tree->texture_list.push_back(std::make_shared<Texture2D>("Spooky Tree.jpg"));
         m_spooky_tree->mesh_list.back()->set_texture(m_spooky_tree->texture_list.back());
 
+        m_bow = new StaticModel("models/Bow.obj", m_wall_shader);
+        m_arrow = new StaticModel("models/Arrow.dae", m_wall_shader);
+        m_arrow->set_scale(glm::vec3(5));
+        m_arrow->set_pre_transform(
+            Transform::create_rotation_matrix({21.1533680, 22.0539455, 116.577499})
+        );
+
         m_light_colour = glm::vec3(1.0f);
+
+        m_health_shader = new Shader("MapDemoHealth");
     }
 
     ~Application() {
@@ -125,16 +139,34 @@ public:
         Shader animated_shader("AnimatedBlinnPhong");
         Shader static_shader("StaticBlinnPhong");
         
-        AnimatedModel hero("models/Hero/Hero.dae", &animated_shader);
+        // AnimatedModel hero("models/Hero/Hero.dae", &animated_shader);
+        // hero.load_animation_from_file("models/Hero/Left.dae");
+        // hero.load_animation_from_file("models/Hero/Right.dae");
+        // hero.load_animation_from_file("models/Hero/Backward.dae");
+        // hero.load_animation_from_file("models/Hero/Forward.dae");
+        // hero.load_animation_from_file("models/Hero/Roll.dae");
+        // hero.load_animation_from_file("models/Hero/Standing Attack.dae");
+        // hero.load_animation_from_file("models/Hero/Running Attack.dae");
+        // AnimatedModel hero("models/Archer Grunt/Archer Grunt.dae", &animated_shader);
+        AnimatedModel hero("models/Hero/Hero (no sword).dae", &animated_shader);
+        // hero.load_animation_from_file("models/Archer Grunt/Left.dae");
+        // hero.load_animation_from_file("models/Archer Grunt/Right.dae");
+        // hero.load_animation_from_file("models/Archer Grunt/Backward.dae");
+        // hero.load_animation_from_file("models/Archer Grunt/Forward.dae");
         hero.load_animation_from_file("models/Hero/Left.dae");
         hero.load_animation_from_file("models/Hero/Right.dae");
         hero.load_animation_from_file("models/Hero/Backward.dae");
         hero.load_animation_from_file("models/Hero/Forward.dae");
         hero.load_animation_from_file("models/Hero/Roll.dae");
-        hero.load_animation_from_file("models/Hero/Standing Attack.dae");
-        hero.load_animation_from_file("models/Hero/Running Attack.dae");
-        hero.set_rotation_x(PI / 2);
-        hero.set_scale(glm::vec3(0.02));
+        hero.load_animation_from_file("models/Archer Grunt/Standing Attack.dae");
+        hero.load_animation_from_file("models/Archer Grunt/Running Attack.dae");
+        hero.set_pre_transform(
+            Transform::create_model_matrix(
+                glm::vec3(0),
+                glm::vec3(PI / 2, 0, PI / 2),
+                glm::vec3(0.02)
+            )
+        );
         hero.print_bones();
         hero.print_animations();
 
@@ -146,27 +178,67 @@ public:
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Roll.dae");
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Standing Attack.dae");
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Running Attack.dae");
-        warrior_grunt.set_rotation_x(PI / 2);
-        warrior_grunt.set_scale(glm::vec3(0.02));
+        warrior_grunt.set_pre_transform(
+            Transform::create_model_matrix(
+                glm::vec3(0),
+                glm::vec3(PI / 2, 0, PI / 2),
+                glm::vec3(0.02)
+            )
+        );
         warrior_grunt.print_bones();
         warrior_grunt.print_animations();
 
+        AnimatedModel archer_grunt("models/Archer Grunt/Archer Grunt.dae", &animated_shader);
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Left.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Right.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Backward.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Forward.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Roll.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Standing Attack.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Running Attack.dae");
+        archer_grunt.set_pre_transform(
+            Transform::create_model_matrix(
+                glm::vec3(0),
+                glm::vec3(PI / 2, 0, PI / 2),
+                glm::vec3(0.02)
+            )
+        );
+        archer_grunt.print_bones();
+        archer_grunt.print_animations();
+
         // Texture2D old_hero("player.png");
 
-        if (hero.get_animation_count() > 0) {
-            hero.play_animation(0);
-        }
+        // if (hero.get_animation_count() > 0) {
+        //     hero.play_animation(0);
+        // }
 
         World world;
         world.demo_init();
         Registry& reg = Registry::get_instance();
 
+        m_models[reg.player.get_id()] = &hero;
+        hero.attach_to_joint(
+            m_bow, 
+            "mixamorig_RightHand", 
+            {63.0, 35.0, -10.5}, // pos
+            {10.3044329, 14.5560884, 12.8805599}, // rot
+            {25.5, 25.5, 25.5} // scale
+        );
         unsigned int counter = 1;
         for (const auto& entity : reg.motions.entities) {
             if (entity.get_id() == reg.player.get_id()) { continue; }
             if (reg.locomotion_stats.has(entity)) {
                 const auto& motion = reg.motions.get(entity);
-                m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
+                // m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
+                m_models[entity.get_id()] = new AnimatedModel(archer_grunt, counter++);
+                const auto& model = m_models[entity.get_id()];
+                model->attach_to_joint(
+                    m_bow, 
+                    "mixamorig_RightHand", 
+                    {63.0, 35.0, -10.5}, // pos
+                    {10.3044329, 14.5560884, 12.8805599}, // rot
+                    {25.5, 25.5, 25.5} // scale
+                );
             }
         }
 
@@ -196,7 +268,7 @@ public:
             {
                 float the_3d_angle = 0;
                 // m_camera.set_rotation({ 2 * PI / 6, 0, player_motion.angle });
-                m_camera.set_rotation({ PI / 2, 0, player_motion.angle});
+                m_camera.set_rotation({ PI / 2, 0, player_motion.angle - PI / 2});
                 
                 const auto temp = m_camera.rotate_to_camera_direction({ 0, 0, -1 });
                 cam_dir = { temp.x, temp.y };
@@ -207,44 +279,56 @@ public:
             }
 
             bool is_dodging = false;
-            bool rotate_hero_to_velocity_dir = false;
-            bool rotate_opposite_hero_to_velocity_dir = false;
-            if (reg.in_dodges.has(reg.player)) {
-                hero.play_animation("Roll.dae", 2.0f, false, true);
-            } else if (reg.attack_cooldowns.has(reg.player)) {
-                if (glm::length(player_motion.velocity) > 0.0f) {
-                    hero.play_animation("Running Attack.dae", 4.0f, false, true);
-                } else {
-                    hero.play_animation("Standing Attack.dae", 3.0f, false, true);
-                }
-            } else if (reg.input_state.w_down && !reg.input_state.s_down) {
-                hero.play_animation("Forward.dae");
-                rotate_hero_to_velocity_dir = true;
-            } else if (reg.input_state.a_down && !reg.input_state.d_down && !reg.input_state.s_down) {
-                hero.play_animation("Left.dae");
-            } else if (!reg.input_state.a_down && reg.input_state.d_down && !reg.input_state.s_down) {
-                hero.play_animation("Right.dae");
-            } else if (!reg.input_state.w_down && reg.input_state.s_down) {
-                hero.play_animation("Backward.dae");
-                rotate_opposite_hero_to_velocity_dir = true;
-            } else {
-                hero.play_animation("default0");
-            }
+            // bool rotate_hero_to_velocity_dir = false;
+            // bool rotate_opposite_hero_to_velocity_dir = false;
+            // if (reg.in_dodges.has(reg.player)) {
+            //     hero.play_animation("Roll.dae", 2.0f, false, true);
+            // } else if (reg.attack_cooldowns.has(reg.player)) {
+            //     if (glm::length(player_motion.velocity) > 0.0f) {
+            //         hero.play_animation("Running Attack.dae", 4.0f, false, true);
+            //     } else {
+            //         hero.play_animation("Standing Attack.dae", 3.0f, false, true);
+            //     }
+            // } else if (reg.input_state.w_down && !reg.input_state.s_down) {
+            //     hero.play_animation("Forward.dae");
+            //     rotate_hero_to_velocity_dir = true;
+            // } else if (reg.input_state.a_down && !reg.input_state.d_down && !reg.input_state.s_down) {
+            //     hero.play_animation("Left.dae");
+            // } else if (!reg.input_state.a_down && reg.input_state.d_down && !reg.input_state.s_down) {
+            //     hero.play_animation("Right.dae");
+            // } else if (!reg.input_state.w_down && reg.input_state.s_down) {
+            //     hero.play_animation("Backward.dae");
+            //     rotate_opposite_hero_to_velocity_dir = true;
+            // } else {
+            //     hero.play_animation("default0");
+            // }
 
             if (hero.get_current_animation_id() == hero.get_animation_id("Roll.dae")) {
-                rotate_hero_to_velocity_dir = true;
+                // rotate_hero_to_velocity_dir = true;
                 is_dodging = true;
             } else if (hero.get_current_animation_id() == hero.get_animation_id("Running Attack.dae")) {
-                rotate_hero_to_velocity_dir = true;
-                is_dodging = true; // hacky way to get cinematic effect on running attack
+                // rotate_hero_to_velocity_dir = true;
+                // is_dodging = true; // hacky way to get cinematic effect on running attack
             }
-            hero.set_position(glm::vec3(player_motion.position, 0.0f));
+            // hero.set_position(glm::vec3(player_motion.position, 0.0f));
 
             const glm::vec3 desired_camera_pos = glm::vec3(player_motion.position - (cam_dir * 3.0f), 3.5f) + (1.2f * ortho_cam_dir);
             glm::vec3 current_camera_position = m_camera.get_position();
             float dist_from_desired_pos = glm::distance(desired_camera_pos, current_camera_position);
-            glm::vec3 dir_ortho_to_player = glm::normalize(glm::cross(glm::vec3(Transform::create_rotation_matrix({0, 0, player_motion.angle}) * glm::vec4(0, 1, 0, 0)), glm::vec3(0, 0, 1)));
-            glm::vec3 dir_to_look = glm::normalize(glm::vec3(player_motion.position, 3.5f) + 1.5f * glm::vec3(cam_dir, 0.0f) + (1.2f * dir_ortho_to_player) - current_camera_position);
+            glm::vec3 dir_ortho_to_player = glm::normalize(
+                glm::cross(
+                    glm::vec3(
+                        Transform::create_rotation_matrix({0, 0, player_motion.angle}) * glm::vec4(1, 0, 0, 0)
+                    ), 
+                    glm::vec3(0, 0, 1)
+                    )
+            );
+            glm::vec3 dir_to_look = glm::normalize(
+                glm::vec3(player_motion.position, 3.5f) + 
+                1.5f * glm::vec3(cam_dir, 0.0f) + 
+                (1.2f * dir_ortho_to_player) - 
+                current_camera_position
+            );
             m_camera.set_rotation({ PI / 2, 0, _vector_to_angle(glm::vec2(dir_to_look)) - PI / 2});
             float amount_to_move = fmin(dist_from_desired_pos, camera_speed);
             if (is_dodging) {
@@ -253,20 +337,20 @@ public:
             } else {
                 camera_speed = base_camera_speed;
             }
-            if (rotate_hero_to_velocity_dir && glm::length(player_motion.velocity) > 0.001f) {
-                hero.set_rotation_z(_vector_to_angle(player_motion.velocity) + PI / 2);
-            } else if (rotate_opposite_hero_to_velocity_dir && glm::length(player_motion.velocity) > 0.001f) {
-                hero.set_rotation_z(_vector_to_angle(-player_motion.velocity) + PI / 2);
-            } else {
-                hero.set_rotation_z(player_motion.angle + PI);
-            }
+            // if (rotate_hero_to_velocity_dir && glm::length(player_motion.velocity) > 0.001f) {
+            //     hero.set_rotation_z(_vector_to_angle(player_motion.velocity) + PI / 2);
+            // } else if (rotate_opposite_hero_to_velocity_dir && glm::length(player_motion.velocity) > 0.001f) {
+            //     hero.set_rotation_z(_vector_to_angle(-player_motion.velocity) + PI / 2);
+            // } else {
+            //     hero.set_rotation_z(player_motion.angle + PI);
+            // }
             if (amount_to_move < 0.000001f) {
                 m_camera.set_position(desired_camera_pos);
             } else {
                 m_camera.set_position(current_camera_position + amount_to_move * glm::normalize(desired_camera_pos - current_camera_position));
             }
 
-            hero.update();
+            // hero.update();
             _update_models();
 
             // _handle_free_camera_inputs();
@@ -291,12 +375,16 @@ public:
             m_renderer->begin_draw();
             _draw_map_and_skybox();
             _draw_walls();
-            
-            hero.draw();
+            _draw_health_bars();
+            _draw_projectiles();
             
             for (const auto& kv : m_models) {
+                if (kv.second == nullptr) { continue; }
                 kv.second->draw();
             }
+            // hero.draw();
+            
+            _draw_aim();
 
             m_renderer->end_draw();
             time_of_last_frame = float(timer.GetTime());
@@ -902,6 +990,141 @@ private:
         }
     }
 
+    void _draw_projectiles() {
+        auto& reg = Registry::get_instance();
+
+        for (const auto& entity : reg.projectile_stats.entities) {
+            if (!reg.motions.has(entity)) { continue; }
+            const auto& motion = reg.motions.get(entity);
+            m_arrow->set_position(glm::vec3(motion.position, 2.0f));
+            m_arrow->set_rotation_z(motion.angle);
+            m_arrow->set_rotation_z(motion.angle);
+            m_arrow->set_rotation_x(m_arrow->get_rotation_x() + PI / 8);
+            m_arrow->draw();
+        }
+
+    }
+
+    void _draw_health_bars() {
+        // Render Health Bars
+        auto& reg = Registry::get_instance();
+        auto& player_motion = reg.motions.get(reg.player);
+
+        for (const auto& loco_entity : reg.locomotion_stats.entities) {
+            // Render health bar
+            if (!reg.motions.has(loco_entity)) { continue; }
+            const auto& loco = reg.locomotion_stats.get(loco_entity);
+            const auto& loco_motion = reg.motions.get(loco_entity);
+            if (glm::length(player_motion.position - loco_motion.position) > 30.0f) { continue; }
+#define HEALTH_BAR_HEIGHT 0.125f
+            
+            if (loco.max_health == 0) {
+                Log::log_warning(
+                    "Entity " 
+                    + std::to_string(loco_entity.get_id()) 
+                    + " Max health is 0. division by 0 error.", 
+                    __FILE__, __LINE__
+                );
+                continue;
+            }
+            const float health_percentage = loco.health / loco.max_health;
+
+            // Red health bar layer
+            float z_index = 1.1;
+            // if (Globals::is_3d_mode) {
+                glm::vec3 health_bar_pos;
+                glm::vec3 health_bar_angle;
+                if (loco_entity.get_id() == reg.player.get_id()) {
+                    health_bar_pos = glm::vec3(m_camera.get_position());
+                    const auto cam_dir_3d = glm::normalize(m_camera.rotate_to_camera_direction({ 0, 0, -1 }));
+                    const auto& temp = Transform::create_rotation_matrix({ m_camera.get_rotation().x - PI / 2, m_camera.get_rotation().y, m_camera.get_rotation().z }) * glm::vec4(0, 0, -1, 1);
+                    const auto& down_from_camera = glm::vec3(temp);
+                    const auto& left_from_camera = glm::normalize(glm::cross(cam_dir_3d, down_from_camera));
+                    health_bar_pos += (-2.75f * down_from_camera) + (3.0f * cam_dir_3d) + (2.75f * left_from_camera);
+                    // health_bar_pos += glm::vec3();
+                } else {
+                    health_bar_pos = glm::vec3({ loco_motion.position.x, loco_motion.position.y, loco_motion.scale.y + HEALTH_BAR_HEIGHT / 2 + 0.5});
+                }
+                health_bar_angle = m_camera.get_rotation();
+
+                m_health_shader->set_uniform_mat4f(
+                    "u_mvp",
+                    m_camera.get_view_project_matrix()
+                    * Transform::create_model_matrix(
+                        health_bar_pos,
+                        health_bar_angle,
+                        glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
+                    )
+                );
+                m_health_shader->set_uniform_3f("u_colour", { 0.05, 0.05, 0.05 });
+                m_renderer->draw(m_square_mesh, *m_health_shader);
+
+                // Green health bar layer
+                m_health_shader->set_uniform_mat4f(
+                    "u_mvp",
+                    m_camera.get_view_project_matrix()
+                    * Transform::create_model_matrix(
+                        health_bar_pos - (0.001f * m_camera.rotate_to_camera_direction({ 0, 0, -1 })),
+                        health_bar_angle,
+                        glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
+                    )
+                );
+                m_health_shader->set_uniform_3f("u_colour", { 0.5, 0, 0 });
+                m_renderer->draw(m_square_mesh, *m_health_shader);
+            // } else {
+            //     m_health_shader->set_uniform_mat4f(
+            //         "u_mvp",
+            //         m_camera.get_view_project_matrix()
+            //         * Transform::create_model_matrix(
+            //             glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
+            //             glm::vec3({ 0, 0, 0 }),
+            //             glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
+            //         )
+            //     );
+            //     m_health_shader->set_uniform_3f("u_colour", { 1, 0, 0 });
+            //     m_renderer->draw(m_square_mesh, *m_health_shader);
+
+            //     z_index += 0.001;
+            //     // Green health bar layer
+            //     m_health_shader->set_uniform_mat4f(
+            //         "u_mvp",
+            //         m_camera.get_view_project_matrix()
+            //         * Transform::create_model_matrix(
+            //             glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
+            //             glm::vec3({ 0, 0, Globals::is_3d_mode ? player_motion.angle : 0 }),
+            //             glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
+            //         )
+            //     );
+            //     m_health_shader->set_uniform_3f("u_colour", { 0, 1, 0});
+            //     m_renderer->draw(m_square_mesh, *m_health_shader);
+            // }
+        }
+    }
+
+    void _draw_aim() {
+        auto& reg = Registry::get_instance();
+        if (!reg.motions.has(reg.player) || !reg.attackers.has(reg.player)) {return;}
+        auto& attacker = reg.attackers.get(reg.player);
+        if (!reg.weapons.has(reinterpret_cast<Entity&>(attacker.weapon_id))) { return; }
+        const auto& motion = reg.motions.get(reg.player);
+        const auto& weapon = reg.weapons.get(attacker.weapon_id);
+        auto player_dir = glm::vec3(Transform::create_rotation_matrix({ 0, 0, motion.angle }) * glm::vec4(1, 0, 0, 0));
+        m_health_shader->set_uniform_3f("u_colour", { 1, 0, 0 }); // red croshair
+        glm::vec3 crosshair_pos = { motion.position.x, motion.position.y, 2.5f };
+        const float crosshair_length = weapon.range;
+        crosshair_pos += player_dir * (crosshair_length / 2.0f);
+        m_health_shader->set_uniform_mat4f(
+            "u_mvp",
+            m_camera.get_view_project_matrix()
+            * Transform::create_model_matrix(
+                crosshair_pos,
+                glm::vec3({ 0, 0, motion.angle }),
+                glm::vec3({ crosshair_length, 0.05 , 0.05 })
+            )
+        );
+        m_renderer->draw(m_square_mesh, *m_health_shader);
+    }
+
     void _update_models() {
         auto& reg = Registry::get_instance();
         for (auto& kv : m_models) {
@@ -919,64 +1142,72 @@ private:
             auto& motion = reg.motions.get(id);
             auto& player_motion = reg.motions.get(reg.player);
 
-            float pre_rotate = 3 * PI / 2;
-            auto angle = std::fabs(std::fmod(motion.angle + pre_rotate, 2 * PI));
+            auto angle = std::fmod(motion.angle, 2 * PI);
+            if (angle < 0) {
+                angle += 2 * PI;
+            }
             auto velocity_angle = _vector_to_angle(motion.velocity);
-            float angle_between_view_and_velo = 
-                glm::acos(
-                    glm::dot(
-                        glm::normalize(
-                            glm::vec2(Transform::create_rotation_matrix({0, 0, angle}) * glm::vec4(1, 0, 0, 0))
-                        ),
-                        glm::normalize(motion.velocity)
-                    )
-                );
+            auto dot_between_view_velo_directions = glm::dot(
+                glm::normalize(
+                    glm::vec2(Transform::create_rotation_matrix({0, 0, angle}) * glm::vec4(1, 0, 0, 0))
+                ),
+                glm::normalize(motion.velocity)
+            );
+            dot_between_view_velo_directions = glm::clamp(dot_between_view_velo_directions, -0.9999999f, 0.9999999f);
+            float angle_between_view_and_velo = std::acos(dot_between_view_velo_directions);
 
-            bool is_dodging = false;
+            // bool is_dodging = false;
             bool rotate_to_velocity_dir = false;
             bool rotate_opposite_to_velocity_dir = false;
+            const float buffer_time = 0.45f;
             if (reg.in_dodges.has(entity)) {
-                model->play_animation("Roll.dae", 2.0f, false, true);
+                const auto& dodge = reg.in_dodges.get(entity);
+                model->play_animation("Roll.dae", dodge.duration + buffer_time, false, true);
             } else if (reg.attack_cooldowns.has(entity)) {
+                const auto& cooldown = reg.attack_cooldowns.get(entity);
                 if (glm::length(motion.velocity) > 0.0f) {
-                    model->play_animation("Running Attack.dae", 4.0f, false, true);
+                    model->play_animation("Running Attack.dae", cooldown.timer + buffer_time, false, true);
                 } else {
-                    model->play_animation("Standing Attack.dae", 3.0f, false, true);
+                    model->play_animation("Standing Attack.dae", cooldown.timer + buffer_time, false, true);
                 }
             } else if (glm::length(motion.velocity) > 0.0f) {
-                
+                // const auto& speed = glm::length(motion.velocity);
                 if (angle_between_view_and_velo < PI / 3) {
-                    model->play_animation("Forward.dae");
+                    model->play_animation("Forward.dae", 0.7f);
                 } else if (angle_between_view_and_velo > 2 * PI / 3) {
-                    model->play_animation("Backward.dae");
+                    model->play_animation("Backward.dae", 0.7f);
                 } else if (
                     (velocity_angle - angle < PI && velocity_angle - angle >= 0)
                     || velocity_angle - angle < -PI && velocity_angle - angle < 0) {
-                    model->play_animation("Left.dae");
+                    model->play_animation("Left.dae", 0.75f);
                 } else {
-                    model->play_animation("Right.dae");
+                    model->play_animation("Right.dae", 0.75f);
                 }
 
             } else {
-                model->play_animation("default0");
+                model->play_animation("default0", 5.0f);
             }
 
             const auto current_anim_id = model->get_current_animation_id();
-            if (current_anim_id == model->get_animation_id("Roll.dae")) {
-                rotate_to_velocity_dir = true;
-            } else if (current_anim_id == model->get_animation_id("Running Attack.dae")) {
-                rotate_to_velocity_dir = true;
-            } else if (current_anim_id == model->get_animation_id("Forward.dae")) {
-                rotate_to_velocity_dir = true;
-            } else if (current_anim_id == model->get_animation_id("Backward.dae")) {
-                rotate_opposite_to_velocity_dir = true;
+            if (glm::length(motion.velocity) > 0.001f) {
+
+                if (current_anim_id == model->get_animation_id("Roll.dae")) {
+                    rotate_to_velocity_dir = true;
+                } else if (current_anim_id == model->get_animation_id("Running Attack.dae")) {
+                    // rotate_to_velocity_dir = true;
+                } else if (current_anim_id == model->get_animation_id("Forward.dae")) {
+                    rotate_to_velocity_dir = true;
+                } else if (current_anim_id == model->get_animation_id("Backward.dae")) {
+                    rotate_opposite_to_velocity_dir = true;
+                }
+
             }
             model->set_position(glm::vec3(motion.position, 0.0f));
 
             if (rotate_to_velocity_dir) {
-                model->set_rotation_z(velocity_angle - 3 * PI / 2);
+                model->set_rotation_z(velocity_angle);
             } else if (rotate_opposite_to_velocity_dir) {
-                model->set_rotation_z(velocity_angle - PI / 2);
+                model->set_rotation_z(velocity_angle - PI);
             } else {
                 model->set_rotation_z(motion.angle);
             }

@@ -18,6 +18,8 @@ protected:
     glm::vec3 m_rotation;
     glm::vec3 m_scale;
 
+    glm::mat4 m_pre_transform;
+
     std::string m_name = "No Name";
 
     Assimp::Importer m_importer;
@@ -34,7 +36,8 @@ public:
         m_rotation(0.0f),
         m_scale(1.0f),
         num_meshes(0),
-        m_shader(nullptr)
+        m_shader(nullptr),
+        m_pre_transform(1.0f)
     {}
 
     virtual ~ModelBase() = default;
@@ -107,6 +110,10 @@ public:
     void translate(float x, float y, float z) { m_position += glm::vec3(x, y, z); }
     void rotate(float x, float y, float z) { m_rotation += glm::vec3(x, y, z); }
     void scale(float x, float y, float z) { m_scale *= glm::vec3(x, y, z); }
+
+    void set_pre_transform(const glm::mat4& pre_transform) {
+        m_pre_transform = pre_transform;
+    }
 
     glm::mat4 get_model_matrix() const { 
         return Transform::create_model_matrix(m_position, m_rotation, m_scale); 
