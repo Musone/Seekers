@@ -62,7 +62,7 @@ public:
         shader.bind();
         
         if (use_model_matrix) {
-            shader.set_uniform_mat4f("u_model", get_model_matrix());
+            shader.set_uniform_mat4f("u_model", get_model_matrix() * m_pre_transform);
         }
 
         // Set whether we're using vertex colors or texture

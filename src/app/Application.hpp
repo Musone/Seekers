@@ -42,6 +42,9 @@ class Application {
     Shader* m_wall_shader;
 
     StaticModel* m_spooky_tree;
+    StaticModel* m_sword;
+    StaticModel* m_bow;
+    StaticModel* m_arrow;
 
     Texture2D* m_map_texture;
     Shader* m_floor_shader;
@@ -106,6 +109,13 @@ public:
         m_spooky_tree->texture_list.push_back(std::make_shared<Texture2D>("Spooky Tree.jpg"));
         m_spooky_tree->mesh_list.back()->set_texture(m_spooky_tree->texture_list.back());
 
+        m_bow = new StaticModel("models/Bow.obj", m_wall_shader);
+        m_arrow = new StaticModel("models/Arrow.dae", m_wall_shader);
+        m_arrow->set_scale(glm::vec3(5));
+        m_arrow->set_pre_transform(
+            Transform::create_rotation_matrix({21.1533680, 22.0539455, 116.577499})
+        );
+
         m_light_colour = glm::vec3(1.0f);
 
         m_health_shader = new Shader("MapDemoHealth");
@@ -155,6 +165,19 @@ public:
         warrior_grunt.print_bones();
         warrior_grunt.print_animations();
 
+        AnimatedModel archer_grunt("models/Archer Grunt/Archer Grunt.dae", &animated_shader);
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Left.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Right.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Backward.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Forward.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Roll.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Standing Attack.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Running Attack.dae");
+        archer_grunt.set_rotation_x(PI / 2);
+        archer_grunt.set_scale(glm::vec3(0.02));
+        archer_grunt.print_bones();
+        archer_grunt.print_animations();
+
         // Texture2D old_hero("player.png");
 
         if (hero.get_animation_count() > 0) {
@@ -170,7 +193,16 @@ public:
             if (entity.get_id() == reg.player.get_id()) { continue; }
             if (reg.locomotion_stats.has(entity)) {
                 const auto& motion = reg.motions.get(entity);
-                m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
+                // m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
+                m_models[entity.get_id()] = new AnimatedModel(archer_grunt, counter++);
+                const auto& model = m_models[entity.get_id()];
+                model->attach_to_joint(
+                    m_bow, 
+                    "mixamorig_RightHand", 
+                    {63.0, 35.0, -10.5}, // pos
+                    {10.3044329, 14.5560884, 12.8805599}, // rot
+                    {25.5, 25.5, 25.5} // scale
+                );
             }
         }
 
@@ -296,6 +328,7 @@ public:
             _draw_map_and_skybox();
             _draw_walls();
             _draw_health_bars();
+            _draw_projectiles();
             
             hero.draw();
             
@@ -905,6 +938,20 @@ private:
             m_spooky_tree->set_position(glm::vec3(motion.position, -0.3f));
             m_spooky_tree->draw();
         }
+    }
+
+    void _draw_projectiles() {
+        auto& reg = Registry::get_instance();
+
+        for (const auto& entity : reg.projectile_stats.entities) {
+            if (!reg.motions.has(entity)) { continue; }
+            const auto& motion = reg.motions.get(entity);
+            m_arrow->set_position(glm::vec3(motion.position, 2.0f));
+            m_arrow->set_rotation_z(motion.angle + PI / 2);
+            m_arrow->set_rotation_x(m_arrow->get_rotation_x() + PI / 8);
+            m_arrow->draw();
+        }
+
     }
 
     void _draw_health_bars() {

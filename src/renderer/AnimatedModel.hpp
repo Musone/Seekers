@@ -31,6 +31,7 @@ public:
         m_shader = original.m_shader;
         m_attachments = original.m_attachments;
         m_name_to_animation_id = original.m_name_to_animation_id;
+        m_pre_transform = original.m_pre_transform;
 
         m_skeleton = original.m_skeleton;
         m_animator.init(&m_skeleton);
@@ -227,7 +228,7 @@ public:
         shader.bind();
         
         if (use_model_matrix) {
-            shader.set_uniform_mat4f("u_model", get_model_matrix());
+            shader.set_uniform_mat4f("u_model", get_model_matrix() * m_pre_transform);
         }
 
         // Set animation data if available
@@ -268,6 +269,7 @@ public:
                     glm::mat4 global_transform = m_skeleton.get_global_transforms()[joint->id];
                     glm::mat4 attachment_transform = 
                         get_model_matrix() * 
+                        m_pre_transform *
                         global_transform *
                         Transform::create_model_matrix(
                             attachment.offset_position,

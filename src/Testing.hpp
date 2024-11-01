@@ -55,6 +55,24 @@ namespace Testing {
             std::cout << "X: " << std::to_string(child_position.x) << " | Y: " << std::to_string(child_position.y) << " | Z: " << std::to_string(child_position.z) << '\n';
         }
 
+        if (renderer.is_key_pressed(GLFW_KEY_EQUAL)) {
+            attach->offset_scale += moveSpeed;
+        }
+        if (renderer.is_key_pressed(GLFW_KEY_MINUS)) {
+            attach->offset_scale -= moveSpeed;
+        }
+        
+
+        if (renderer.is_key_pressed(GLFW_KEY_B)) {
+            attach->offset_rotation.x += rotateSpeed;
+        }
+        if (renderer.is_key_pressed(GLFW_KEY_N)) {
+            attach->offset_rotation.y += rotateSpeed;
+        }
+        if (renderer.is_key_pressed(GLFW_KEY_M)) {
+            attach->offset_rotation.z += rotateSpeed;
+        }
+
         if (renderer.is_key_pressed(GLFW_KEY_I)) {
             child_position.y += moveSpeed;
             attach->offset_position = child_position;
@@ -163,24 +181,28 @@ namespace Testing {
         
         Shader animated_shader("AnimatedBlinnPhong");
         Shader static_shader("StaticBlinnPhong");
-        AnimatedModel hero("models/Hero.dae", &animated_shader);
+        AnimatedModel hero("models/Hero/Hero.dae", &animated_shader);
         hero.set_rotation(PI / 2, 0, 0);
 
         StaticModel tree("models/Lowpoly_tree_sample.dae", &static_shader);
         tree.set_scale(20, 20, 20);
         tree.set_rotation(PI / 2, 0, 0);
         tree.set_position(500, 500, 0);
-        StaticModel sword("models/sword.dae", &static_shader);
-        sword.set_scale(10, 10, 10);
-        sword.set_position(750, 0, 0);
+        // StaticModel sword("models/sword.dae", &static_shader);
+        StaticModel bow("models/Bow.obj", &static_shader);
+        bow.set_scale(10, 10, 10);
+        // bow.set_position(750, 0, 0);
         StaticModel katana("models/katana.obj", &static_shader);
         // StaticModel katana("models/Halo Energy Sword.dae", &static_shader);
+        // StaticModel bow("models/bow.obj", m_wall_shader);
+        StaticModel arrow("models/Arrow.dae", &static_shader);
+        arrow.set_scale(glm::vec3(300));
         
         // Model delete_me("models/Lowpoly_tree_sample.dae");
         // Model delete_me("models/Hero.dae");
 
         attach = hero.attach_to_joint(
-            &katana, 
+            &bow, 
             "mixamorig_RightHand", 
             child_position, // pos 
             // glm::vec3(- PI / 2, - PI / 2, 0), // rot
@@ -189,8 +211,10 @@ namespace Testing {
         );
 
         Camera cam(renderer.get_window_width(), renderer.get_window_height());
-        cam.set_position({ 0, -200, 100 });
-        cam.set_rotation({ PI / 2, 0, 0 });
+        // cam.set_position({ 0, -200, 100 });
+        cam.set_position({ -100, 0, 0 });
+        cam.set_rotation({ PI / 2, 0, -PI / 2 });
+        // cam.set_rotation({ PI / 2, 0, 0 });
         
         Timer timer;
         float time_of_last_frame = 0;
@@ -254,11 +278,16 @@ namespace Testing {
             static_shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
             static_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
 
-            hero.draw();
+            // hero.draw();
             tree.draw();
-            sword.draw();
+            // bow.draw();
             wolf.draw();
             guy.draw();
+
+            arrow.set_rotation(attach->offset_rotation);
+            // arrow.set_rotation(attach->offset_rotation);
+            arrow.draw();
+
 
             renderer.end_draw();
         }
