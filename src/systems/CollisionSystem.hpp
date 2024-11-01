@@ -313,6 +313,9 @@ namespace CollisionSystem {
                                 *bounds_j.mesh, motion_j.position
                             );
                             break;
+                        case ColliderType::AABB:
+                            // Handle AABB collision or log warning
+                            break;
                     }
                 }
                 // Handle reverse cases (when first entity is not a circle)
@@ -332,6 +335,57 @@ namespace CollisionSystem {
                                 bounds_j.circle, motion_j.position,
                                 *bounds_i.mesh, motion_i.position
                             );
+                            break;
+                        case ColliderType::Circle:
+                        case ColliderType::AABB:
+                            // Handle or log warning
+                            break;
+                    }
+                }
+                else if (bounds_i.type == ColliderType::Mesh) {
+                    switch (bounds_j.type) {
+                        case ColliderType::Wall:
+                            {
+                                CircleCollider temp_circle{bounds_i.mesh->bound_radius};
+                                collision = check_circle_wall(
+                                    temp_circle, motion_i.position,
+                                    *bounds_j.wall, motion_j.position,
+                                    normal, penetration
+                                );
+                            }
+                            break;
+                        case ColliderType::Circle:
+                            // Already handled in Circle section
+                            break;
+                        case ColliderType::Mesh:
+                            // Mesh-mesh collision if needed
+                            break;
+                        case ColliderType::AABB:
+                            // Handle AABB collision or log warning
+                            break;
+                    }
+                }
+                else if (bounds_i.type == ColliderType::Wall) {
+                    switch (bounds_j.type) {
+                        case ColliderType::Mesh:
+                            {
+                                CircleCollider temp_circle{bounds_j.mesh->bound_radius};
+                                collision = check_circle_wall(
+                                    temp_circle, motion_j.position,
+                                    *bounds_i.wall, motion_i.position,
+                                    normal, penetration
+                                );
+                                normal = -normal;  // Reverse normal for correct response
+                            }
+                            break;
+                        case ColliderType::Circle:
+                            // Already handled in Circle section
+                            break;
+                        case ColliderType::Wall:
+                            // Wall-wall collision if needed
+                            break;
+                        case ColliderType::AABB:
+                            // Handle AABB collision or log warning
                             break;
                     }
                 }
@@ -509,71 +563,50 @@ namespace CollisionSystem {
     inline void handle_collisions() {
         Registry& registry = Registry::get_instance();
         
-        // First pass: Handle projectile collisions first
+        // Create a separate vector to store collisions
+        std::vector<std::pair<Entity, Entity>> collision_pairs;
         for (unsigned int i = 0; i < registry.collisions.entities.size(); i++) {
             Entity& entity1 = registry.collisions.entities[i];
             Entity& entity2 = registry.collisions.get(entity1).other;
-
-            if (!registry.teams.has(entity2) || !registry.teams.has(entity1)) {
+            collision_pairs.emplace_back(entity1, entity2);
+        }
+        
+        // Clear the original collisions vector
+        registry.collisions.clear();
+        
+        // Process each collision pair
+        for (auto& pair : collision_pairs) {
+            Entity& entity1 = pair.first;
+            Entity& entity2 = pair.second;
+            
+            // Check if both entities still exist
+            if (!registry.valid(entity1) || !registry.valid(entity2)) {
                 continue;
             }
-
-            // Handle projectile collisions first
+            
+            // Determine collision type and call appropriate handler
             if (registry.projectile_stats.has(entity1)) {
                 if (registry.locomotion_stats.has(entity2)) {
                     proj_loco_collision(entity1, entity2);
                 } else {
                     proj_fixed_collision(entity1, entity2);
                 }
-                continue;  // Skip other collision handling for this pair
-            }
-            else if (registry.projectile_stats.has(entity2)) {
-                if (registry.locomotion_stats.has(entity1)) {
+            } else if (registry.locomotion_stats.has(entity1)) {
+                if (registry.projectile_stats.has(entity2)) {
                     proj_loco_collision(entity2, entity1);
+                } else if (registry.locomotion_stats.has(entity2)) {
+                    loco_loco_collision(entity1, entity2);
                 } else {
-                    proj_fixed_collision(entity2, entity1);
+                    loco_fixed_collision(entity1, entity2);
                 }
-                continue;  // Skip other collision handling for this pair
+            } else {
+                if (registry.projectile_stats.has(entity2)) {
+                    proj_fixed_collision(entity2, entity1);
+                } else if (registry.locomotion_stats.has(entity2)) {
+                    loco_fixed_collision(entity2, entity1);
+                }
             }
         }
-        
-        // Second pass: Handle fixed entity collisions
-        for (unsigned int i = 0; i < registry.collisions.entities.size(); i++) {
-            Entity& entity1 = registry.collisions.entities[i];
-            Entity& entity2 = registry.collisions.get(entity1).other;
-
-            // Skip if either entity was removed or was a projectile
-            if (!registry.teams.has(entity2) || !registry.teams.has(entity1) ||
-                registry.projectile_stats.has(entity1) || registry.projectile_stats.has(entity2)) {
-                continue;
-            }
-
-            // Handle fixed collisions
-            if (!registry.locomotion_stats.has(entity1) && registry.locomotion_stats.has(entity2)) {
-                loco_fixed_collision(entity2, entity1);
-            } 
-            else if (registry.locomotion_stats.has(entity1) && !registry.locomotion_stats.has(entity2)) {
-                loco_fixed_collision(entity1, entity2);
-            }
-        }
-        
-        // Third pass: Handle locomotive-locomotive collisions
-        for (unsigned int i = 0; i < registry.collisions.entities.size(); i++) {
-            Entity& entity1 = registry.collisions.entities[i];
-            Entity& entity2 = registry.collisions.get(entity1).other;
-
-            // Skip if either entity was removed, was a projectile, or wasn't locomotive
-            if (!registry.teams.has(entity2) || !registry.teams.has(entity1) ||
-                registry.projectile_stats.has(entity1) || registry.projectile_stats.has(entity2) ||
-                !registry.locomotion_stats.has(entity1) || !registry.locomotion_stats.has(entity2)) {
-                continue;
-            }
-
-            loco_loco_collision(entity1, entity2);
-        }
-        
-        // Clear all processed collisions
-        registry.collisions.clear();
     }
 
 } // namespace CollisionSystem

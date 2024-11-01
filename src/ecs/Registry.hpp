@@ -101,4 +101,13 @@ public:
 		for (IComponentContainer* reg : m_registry_list)
 			reg->remove(e);
 	}
+
+	bool valid(Entity e) {
+		for (IComponentContainer* reg : m_registry_list) {
+			if (reg->has(e)) {
+				return true;
+			}
+		}
+		return false;
+	}
 };
