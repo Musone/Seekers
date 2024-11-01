@@ -52,15 +52,15 @@ namespace ProceduralGenerationSystem {
     inline bool do_rooms_overlap(const Room& room1, const Room& room2) {
         float left1 = room1.position.x - room1.size.x/2.0f;
         float right1 = room1.position.x + room1.size.x/2.0f;
-        float up1 = room1.position.y - room1.size.y/2.0f;
-        float down1 = room1.position.y + room1.size.y/2.0f;
+        float up1 = room1.position.y + room1.size.y/2.0f;
+        float down1 = room1.position.y - room1.size.y/2.0f;
         float left2 = room2.position.x - room2.size.x/2.0f;
         float right2 = room2.position.x + room2.size.x/2.0f;
-        float up2 = room2.position.y - room2.size.y/2.0f;
-        float down2 = room2.position.y + room2.size.y/2.0f;
+        float up2 = room2.position.y + room2.size.y/2.0f;
+        float down2 = room2.position.y - room2.size.y/2.0f;
 
         bool collides_x = right1 >= left2 && left1 <= right2;
-        bool collides_y = down1 >= up2 && up1 <= down2;
+        bool collides_y = down1 <= up2 && up1 >= down2;
 
         return collides_x && collides_y;
     }
@@ -147,7 +147,7 @@ namespace ProceduralGenerationSystem {
         for (const auto& room : rooms) {
             for (int y = room.position.y - room.size.y/2; y < room.position.y + room.size.y/2; ++y) {
                 for (int x = room.position.x - room.size.x/2; x < room.position.x + room.size.x/2; ++x) {
-                    map[y+map_height/2][x+map_width/2] = 'R';
+                    map[-y+map_height/2][x+map_width/2] = 'R';
                 }
             }
         }
@@ -159,31 +159,32 @@ namespace ProceduralGenerationSystem {
 
             float left1 = room1.position.x - room1.size.x/2.0f;
             float right1 = room1.position.x + room1.size.x/2.0f;
-            float up1 = room1.position.y - room1.size.y/2.0f;
-            float down1 = room1.position.y + room1.size.y/2.0f;
+            float up1 = room1.position.y + room1.size.y/2.0f;
+            float down1 = room1.position.y - room1.size.y/2.0f;
             float left2 = room2.position.x - room2.size.x/2.0f;
             float right2 = room2.position.x + room2.size.x/2.0f;
-            float up2 = room2.position.y - room2.size.y/2.0f;
-            float down2 = room2.position.y + room2.size.y/2.0f;
+            float up2 = room2.position.y + room2.size.y/2.0f;
+            float down2 = room2.position.y - room2.size.y/2.0f;
             bool x_collides = right1 >= left2 && left1 <= right2;
-            bool y_collides = down1 >= up2 && up1 <= down2;
+            bool y_collides = down1 <= up2 && up1 >= down2;
             std::vector<float> left_right = {left1, right1, left2, right2};
             std::vector<float> up_down = {up1, down2, up2, down2};
             std::sort(left_right.begin(), left_right.end());
             std::sort(up_down.begin(), up_down.end());
 
             if (x_collides && left_right[2] - left_right[1] >= min_hallway_width) {
+                // TODO: FIX THIS SHIIIIT
                 // up-down hallway
                 std::uniform_int_distribution<> hallway_w_dist(min_hallway_width, left_right[2] - left_right[1]);
                 // get which room is higher and which is lower
-                float upper_down = up_down[1];
-                float lower_up = up_down[2];
+                float upper_down = up_down[2];
+                float lower_up = up_down[1];
                 // create "room" for hallway
                 Room hallway_room;
                 hallway_room.size.x = hallway_w_dist(gen);
-                hallway_room.size.y = lower_up - upper_down;
+                hallway_room.size.y = upper_down - lower_up;
                 hallway_room.position.x = left_right[1] + hallway_room.size.x/2.0f;
-                hallway_room.position.y = upper_down + hallway_room.size.y/2.0f;
+                hallway_room.position.y = lower_up + hallway_room.size.y/2.0f;
                 hallway_rooms.push_back(hallway_room);
             } else if (y_collides && up_down[2] - up_down[1] >= min_hallway_width) {
                 // TODO: left-right hallway
@@ -200,13 +201,14 @@ namespace ProceduralGenerationSystem {
                 hallway_rooms.push_back(hallway_room);
             } else {
                 // TODO: L-shaped hallway
+                std::cout << "L-shaped hallway" << std::endl;
             }
         }
 
         for (const auto& room : hallway_rooms) {
             for (int y = room.position.y - room.size.y/2; y < room.position.y + room.size.y/2; ++y) {
                 for (int x = room.position.x - room.size.x/2; x < room.position.x + room.size.x/2; ++x) {
-                    map[y+map_height/2][x+map_width/2] = 'H';
+                    map[-y+map_height/2][x+map_width/2] = 'H';
                 }
             }
         }
