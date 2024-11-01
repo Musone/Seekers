@@ -10,6 +10,65 @@
 
 namespace CollisionSystem {
     /**
+     * Spatial grid constants and data structures for collision optimization
+     * Grid divides world into cells of CELL_SIZE x CELL_SIZE
+     * Each cell contains references to entities within that space
+     */
+    static constexpr float CELL_SIZE = 10.0f;
+    
+    struct Cell {
+        std::vector<Entity*> entities;
+    };
+    
+    // Grid storage: Maps cell coordinates to cells containing entities
+    static std::unordered_map<int, std::unordered_map<int, Cell>> spatial_grid;
+
+    /**
+     * Clears all entities from the spatial grid
+     * Called at the start of each collision detection phase
+     */
+    inline void clear_grid() {
+        spatial_grid.clear();
+    }
+
+    /**
+     * Inserts an entity into the spatial grid based on its position
+     * @param entity Pointer to the entity to insert
+     * @param pos World position of the entity
+     */
+    inline void insert_to_grid(Entity* entity, const glm::vec2& pos) {
+        int cell_x = static_cast<int>(std::floor(pos.x / CELL_SIZE));
+        int cell_y = static_cast<int>(std::floor(pos.y / CELL_SIZE));
+        spatial_grid[cell_x][cell_y].entities.push_back(entity);
+    }
+
+    /**
+     * Retrieves all entities near a given position within a radius
+     * Used for broad-phase collision detection
+     * @param pos Center position to check around
+     * @param radius Radius to check within
+     * @return Vector of pointers to nearby entities
+     */
+    inline std::vector<Entity*> get_nearby_entities(const glm::vec2& pos, float radius) {
+        std::vector<Entity*> nearby;
+        // Calculate grid cell coordinates for the given position
+        int center_x = static_cast<int>(std::floor(pos.x / CELL_SIZE));
+        int center_y = static_cast<int>(std::floor(pos.y / CELL_SIZE));
+        
+        // Calculate how many cells we need to check based on radius
+        int cell_radius = static_cast<int>(std::ceil(radius / CELL_SIZE));
+        
+        // Check all cells within the calculated range
+        for (int x = center_x - cell_radius; x <= center_x + cell_radius; x++) {
+            for (int y = center_y - cell_radius; y <= center_y + cell_radius; y++) {
+                auto& cell = spatial_grid[x][y];
+                nearby.insert(nearby.end(), cell.entities.begin(), cell.entities.end());
+            }
+        }
+        return nearby;
+    }
+
+    /**
      * Checks collision between two circles using distance-based detection
      * @param c1 First circle collider
      * @param pos1 Position of first circle
@@ -21,73 +80,150 @@ namespace CollisionSystem {
         const CircleCollider& c1, const glm::vec2& pos1,
         const CircleCollider& c2, const glm::vec2& pos2
     ) {
-        // Simple circle-circle overlap test: distance < sum of radii
         float distance = glm::length(pos2 - pos1);
         return distance < (c1.radius + c2.radius);
     }
 
     /**
-     * Checks collision between a circle and an Axis-Aligned Bounding Box (AABB)
-     * @param circle Circle collider
-     * @param circle_pos Circle position
-     * @param aabb AABB collider
-     * @param aabb_pos AABB position
-     * @return true if circle and AABB overlap
+     * Helper function to check collision between a circle and a line segment
+     * Handles both edge and corner collisions for walls
+     * @param circle Circle collider to check
+     * @param circle_pos Position of circle
+     * @param segment Line segment to check against
+     * @param offset World space offset for the segment
+     * @param out_normal Output parameter for collision normal
+     * @param out_penetration Output parameter for penetration depth
+     * @return true if collision detected
      */
-    inline bool check_circle_aabb(
+    inline bool check_circle_segment(
         const CircleCollider& circle, const glm::vec2& circle_pos,
-        const AABBCollider& aabb, const glm::vec2& aabb_pos
+        const LineSegment& segment, const glm::vec2& offset,
+        glm::vec2& out_normal, float& out_penetration
     ) {
-        // Find closest point on AABB to circle center
-        glm::vec2 closest = glm::max(
-            aabb.min + aabb_pos,  // Minimum point of AABB in world space
-            glm::min(circle_pos, aabb.max + aabb_pos)  // Maximum point of AABB in world space
-        );
+        // Transform segment to world space
+        glm::vec2 start = segment.start + offset;
+        glm::vec2 end = segment.end + offset;
         
-        // Check if closest point is within circle's radius
-        float distance = glm::length(closest - circle_pos);
-        return distance < circle.radius;
+        // Calculate segment vector
+        glm::vec2 segment_vec = end - start;
+        float segment_length = glm::length(segment_vec);
+        
+        if (segment_length < 0.0001f) return false;  // Degenerate segment
+        
+        // Project circle center onto segment line
+        glm::vec2 to_circle = circle_pos - start;
+        float proj = glm::dot(to_circle, segment_vec) / segment_length;
+        
+        // Find closest point on segment to circle
+        glm::vec2 closest;
+        if (proj <= 0.0f) {
+            closest = start;  // Circle is beyond segment start
+        } else if (proj >= segment_length) {
+            closest = end;    // Circle is beyond segment end
+        } else {
+            closest = start + (segment_vec * proj / segment_length);  // Circle projects onto segment
+        }
+        
+        // Check for overlap
+        glm::vec2 to_closest = circle_pos - closest;
+        float dist = glm::length(to_closest);
+        
+        if (dist < circle.radius) {
+            // Use segment normal if circle center is exactly on segment
+            out_normal = dist > 0.0001f ? to_closest / dist : segment.normal;
+            out_penetration = circle.radius - dist;
+            return true;
+        }
+        
+        return false;
     }
 
     /**
-     * Checks collision between a circle and a convex mesh (weapon/projectile)
-     * Uses edge-based detection assuming mesh vertices form a convex hull
+     * Checks collision between a circle and a wall
+     * Uses broad-phase AABB check followed by detailed edge checks
+     * @param circle Circle collider
+     * @param circle_pos Circle position
+     * @param wall Wall collider
+     * @param wall_pos Wall position
+     * @param out_normal Output parameter for collision normal
+     * @param out_penetration Output parameter for penetration depth
+     * @return true if collision detected
+     */
+    inline bool check_circle_wall(
+        const CircleCollider& circle, const glm::vec2& circle_pos,
+        const WallCollider& wall, const glm::vec2& wall_pos,
+        glm::vec2& out_normal, float& out_penetration
+    ) {
+        // Broad phase using AABB
+        glm::vec2 closest = glm::max(
+            wall.aabb.min + wall_pos,
+            glm::min(circle_pos, wall.aabb.max + wall_pos)
+        );
+        if (glm::length(circle_pos - closest) > circle.radius) {
+            return false;  // No collision possible
+        }
+        
+        // Detailed phase: check each edge
+        bool collision = false;
+        out_penetration = 0.0f;
+        out_normal = glm::vec2(0.0f);
+        int contact_count = 0;
+        
+        // Check collision against each edge of the wall
+        for (const auto& edge : wall.edges) {
+            glm::vec2 edge_normal;
+            float edge_penetration;
+            
+            if (check_circle_segment(circle, circle_pos, edge, wall_pos, 
+                                   edge_normal, edge_penetration)) {
+                collision = true;
+                out_normal += edge_normal;
+                out_penetration = std::max(out_penetration, edge_penetration);
+                contact_count++;
+            }
+        }
+        
+        // Average the normals if multiple contacts
+        if (collision) {
+            out_normal = glm::normalize(out_normal / static_cast<float>(contact_count));
+        }
+        
+        return collision;
+    }
+
+    /**
+     * Checks collision between a circle and a convex mesh
+     * Uses broad phase with bounding radius followed by detailed edge checks
      * @param circle Circle collider
      * @param circle_pos Circle position
      * @param mesh Mesh collider containing vertices forming a convex hull
      * @param mesh_pos Mesh position
-     * @return true if circle and mesh overlap
+     * @return true if collision detected
      */
     inline bool check_circle_mesh(
         const CircleCollider& circle, const glm::vec2& circle_pos,
         const MeshCollider& mesh, const glm::vec2& mesh_pos
     ) {
-        // Broad phase: Quick check using bounding radius
-        // If objects are too far apart, no need for detailed check
+        // Broad phase using bounding radius
         if (glm::length(mesh_pos - circle_pos) > (circle.radius + mesh.bound_radius)) {
             return false;
         }
 
-        // Narrow phase: Check each edge of the convex hull
+        // Narrow phase: Check each edge of the mesh
         for (size_t i = 0; i < mesh.vertices.size(); i++) {
-            // Get edge vertices in world space
             const glm::vec2& v1 = mesh.vertices[i] + mesh_pos;
             const glm::vec2& v2 = mesh.vertices[(i + 1) % mesh.vertices.size()] + mesh_pos;
             
-            // Calculate edge vector and normalize it
-            glm::vec2 line = v2 - v1;
-            float len = glm::length(line);
-            glm::vec2 dir = line / len;
+            // Create temporary segment for collision check
+            LineSegment segment{
+                v1 - mesh_pos,
+                v2 - mesh_pos,
+                glm::normalize(glm::vec2(-(v2.y - v1.y), v2.x - v1.x))  // Perpendicular normal
+            };
             
-            // Project circle center onto edge line
-            float t = glm::dot(circle_pos - v1, dir);
-            // Clamp projection to edge endpoints
-            t = glm::clamp(t, 0.0f, len);
-            
-            // Find closest point on edge to circle center
-            glm::vec2 closest = v1 + dir * t;
-            // Check if closest point is within circle's radius
-            if (glm::length(circle_pos - closest) < circle.radius) {
+            glm::vec2 normal;
+            float penetration;
+            if (check_circle_segment(circle, circle_pos, segment, mesh_pos, normal, penetration)) {
                 return true;
             }
         }
@@ -95,173 +231,112 @@ namespace CollisionSystem {
     }
 
     /**
-     * Calculates collision normal between two colliders
-     * Normal points from second collider to first collider
-     * @param bounds1 First collider bounds
-     * @param pos1 First collider position
-     * @param bounds2 Second collider bounds
-     * @param pos2 Second collider position
-     * @return Normalized collision normal vector
-     */
-    inline glm::vec2 get_collision_normal(
-        const CollisionBounds& bounds1, const glm::vec2& pos1,
-        const CollisionBounds& bounds2, const glm::vec2& pos2
-    ) {
-        if (bounds1.type == ColliderType::Circle && bounds2.type == ColliderType::Circle) {
-            // For circle-circle, normal is along centers
-            return glm::normalize(pos1 - pos2);
-        }
-        else if (bounds2.type == ColliderType::AABB) {
-            // For circle-AABB, normal is from closest point on AABB to circle center
-            glm::vec2 closest = glm::max(
-                bounds2.aabb.min + pos2,
-                glm::min(pos1, bounds2.aabb.max + pos2)
-            );
-            return glm::normalize(pos1 - closest);
-        }
-        else if (bounds2.type == ColliderType::Mesh) {
-            // For circle-mesh, find closest edge and use its normal
-            float min_dist = std::numeric_limits<float>::max();
-            glm::vec2 closest_normal(0.0f);
-            
-            // Check each edge of the mesh
-            for (size_t i = 0; i < bounds2.mesh->vertices.size(); i++) {
-                const glm::vec2& v1 = bounds2.mesh->vertices[i] + pos2;
-                const glm::vec2& v2 = bounds2.mesh->vertices[(i + 1) % bounds2.mesh->vertices.size()] + pos2;
-                
-                glm::vec2 line = v2 - v1;
-                float len = glm::length(line);
-                glm::vec2 dir = line / len;
-                
-                // Project point onto edge
-                float t = glm::dot(pos1 - v1, dir);
-                t = glm::clamp(t, 0.0f, len);
-                
-                glm::vec2 closest = v1 + dir * t;
-                float dist = glm::length(pos1 - closest);
-                
-                // Keep track of closest edge
-                if (dist < min_dist) {
-                    min_dist = dist;
-                    closest_normal = glm::normalize(pos1 - closest);
-                }
-            }
-            return closest_normal;
-        }
-        return glm::vec2(0.0f);
-    }
-
-    /**
-     * Calculates penetration depth between two colliders
-     * @param bounds1 First collider bounds
-     * @param pos1 First collider position
-     * @param bounds2 Second collider bounds
-     * @param pos2 Second collider position
-     * @return Depth of penetration (positive indicates overlap)
-     */
-    inline float get_penetration_depth(
-        const CollisionBounds& bounds1, const glm::vec2& pos1,
-        const CollisionBounds& bounds2, const glm::vec2& pos2
-    ) {
-        if (bounds1.type == ColliderType::Circle && bounds2.type == ColliderType::Circle) {
-            // For circle-circle, penetration is difference between sum of radii and actual distance
-            float distance = glm::length(pos2 - pos1);
-            return bounds1.circle.radius + bounds2.circle.radius - distance;
-        }
-        else if (bounds2.type == ColliderType::AABB) {
-            // For circle-AABB, penetration is difference between circle radius and distance to closest point
-            glm::vec2 closest = glm::max(
-                bounds2.aabb.min + pos2,
-                glm::min(pos1, bounds2.aabb.max + pos2)
-            );
-            return bounds1.circle.radius - glm::length(closest - pos1);
-        }
-        else if (bounds2.type == ColliderType::Mesh) {
-            // For circle-mesh, find minimum penetration against all edges
-            float min_dist = std::numeric_limits<float>::max();
-            
-            for (size_t i = 0; i < bounds2.mesh->vertices.size(); i++) {
-                const glm::vec2& v1 = bounds2.mesh->vertices[i] + pos2;
-                const glm::vec2& v2 = bounds2.mesh->vertices[(i + 1) % bounds2.mesh->vertices.size()] + pos2;
-                
-                glm::vec2 line = v2 - v1;
-                float len = glm::length(line);
-                glm::vec2 dir = line / len;
-                
-                float t = glm::dot(pos1 - v1, dir);
-                t = glm::clamp(t, 0.0f, len);
-                
-                glm::vec2 closest = v1 + dir * t;
-                min_dist = std::min(min_dist, glm::length(pos1 - closest));
-            }
-            return bounds1.circle.radius - min_dist;
-        }
-        return 0.0f;
-    }
-
-    /**
      * Main collision detection loop
-     * Checks for collisions between all relevant entity pairs
+     * Uses spatial partitioning to optimize collision checks
      */
     inline void check_collisions() {
         Registry& registry = Registry::get_instance();
-
-        // Iterate through all entities that are near players
-        for (unsigned int i = 0; i < registry.near_players.entities.size(); i++) {
-            Entity& entity_i = registry.near_players.entities[i];
+        
+        // Clear and rebuild spatial grid
+        clear_grid();
+        
+        // Insert entities into spatial grid
+        for (auto& entity : registry.near_players.entities) {
+            if (!registry.collision_bounds.has(entity)) continue;
+            const auto& motion = registry.motions.get(entity);
+            insert_to_grid(&entity, motion.position);
+        }
+        
+        // Check collisions using spatial grid
+        for (auto& entity_i : registry.near_players.entities) {
             if (!registry.collision_bounds.has(entity_i)) continue;
-
+            
             const auto& bounds_i = registry.collision_bounds.get(entity_i);
             const auto& motion_i = registry.motions.get(entity_i);
-
-            // Compare against all other entities
-            for(unsigned int j = i+1; j < registry.near_players.entities.size(); j++) {
-                Entity& entity_j = registry.near_players.entities[j];
+            
+            // Determine radius for broad phase
+            float check_radius = 0.0f;
+            if (bounds_i.type == ColliderType::Circle) {
+                check_radius = bounds_i.circle.radius;
+            } else if (bounds_i.type == ColliderType::Wall) {
+                // Use half diagonal of AABB for walls
+                glm::vec2 half_size = (bounds_i.wall->aabb.max - bounds_i.wall->aabb.min) * 0.5f;
+                check_radius = glm::length(half_size);
+            } else if (bounds_i.type == ColliderType::Mesh) {
+                check_radius = bounds_i.mesh->bound_radius;
+            }
+            
+            // Get potentially colliding entities from spatial grid
+            auto nearby = get_nearby_entities(motion_i.position, check_radius + CELL_SIZE);
+            
+            // Check collision with each nearby entity
+            for (auto* entity_j_ptr : nearby) {
+                Entity& entity_j = *entity_j_ptr;
+                if (&entity_i == &entity_j) continue;
+                
                 if (!registry.collision_bounds.has(entity_j)) continue;
-
+                
                 const auto& bounds_j = registry.collision_bounds.get(entity_j);
                 const auto& motion_j = registry.motions.get(entity_j);
-
+                
                 // Skip collision check if entities are on the same team
-                if (registry.teams.get(entity_i).team_id == registry.teams.get(entity_j).team_id) {
+                if (registry.teams.get(entity_i).team_id == 
+                    registry.teams.get(entity_j).team_id) {
                     continue;
                 }
-
+                
                 bool collision = false;
+                glm::vec2 normal;
+                float penetration;
 
                 // Handle all possible collider type combinations
-                if (bounds_i.type == ColliderType::Circle && bounds_j.type == ColliderType::Circle) {
-                    collision = check_circle_circle(
-                        bounds_i.circle, motion_i.position,
-                        bounds_j.circle, motion_j.position
-                    );
+                if (bounds_i.type == ColliderType::Circle) {
+                    switch (bounds_j.type) {
+                        case ColliderType::Circle:
+                            collision = check_circle_circle(
+                                bounds_i.circle, motion_i.position,
+                                bounds_j.circle, motion_j.position
+                            );
+                            break;
+                            
+                        case ColliderType::Wall:
+                            collision = check_circle_wall(
+                                bounds_i.circle, motion_i.position,
+                                *bounds_j.wall, motion_j.position,
+                                normal, penetration
+                            );
+                            break;
+                            
+                        case ColliderType::Mesh:
+                            collision = check_circle_mesh(
+                                bounds_i.circle, motion_i.position,
+                                *bounds_j.mesh, motion_j.position
+                            );
+                            break;
+                    }
                 }
-                else if (bounds_i.type == ColliderType::Circle && bounds_j.type == ColliderType::AABB) {
-                    collision = check_circle_aabb(
-                        bounds_i.circle, motion_i.position,
-                        bounds_j.aabb, motion_j.position
-                    );
+                // Handle reverse cases (when first entity is not a circle)
+                else if (bounds_j.type == ColliderType::Circle) {
+                    switch (bounds_i.type) {
+                        case ColliderType::Wall:
+                            collision = check_circle_wall(
+                                bounds_j.circle, motion_j.position,
+                                *bounds_i.wall, motion_i.position,
+                                normal, penetration
+                            );
+                            normal = -normal;  // Reverse normal for correct response
+                            break;
+                            
+                        case ColliderType::Mesh:
+                            collision = check_circle_mesh(
+                                bounds_j.circle, motion_j.position,
+                                *bounds_i.mesh, motion_i.position
+                            );
+                            break;
+                    }
                 }
-                else if (bounds_i.type == ColliderType::AABB && bounds_j.type == ColliderType::Circle) {
-                    collision = check_circle_aabb(
-                        bounds_j.circle, motion_j.position,
-                        bounds_i.aabb, motion_i.position
-                    );
-                }
-                else if (bounds_i.type == ColliderType::Circle && bounds_j.type == ColliderType::Mesh) {
-                    collision = check_circle_mesh(
-                        bounds_i.circle, motion_i.position,
-                        *bounds_j.mesh, motion_j.position
-                    );
-                }
-                else if (bounds_i.type == ColliderType::Mesh && bounds_j.type == ColliderType::Circle) {
-                    collision = check_circle_mesh(
-                        bounds_j.circle, motion_j.position,
-                        *bounds_i.mesh, motion_i.position
-                    );
-                }
-
-                // If collision detected, register it for handling
+                
+                // Register collision if detected
                 if (collision) {
                     registry.collisions.emplace_with_duplicates(entity_i, entity_j);
                 }
@@ -270,19 +345,21 @@ namespace CollisionSystem {
     }
 
     /**
-     * Handles collision between a projectile and a locomotive entity (player/enemy)
+     * Handles collision between a projectile and a locomotive entity
+     * Applies damage and removes projectile
      * @param proj Projectile entity
-     * @param loco Locomotive entity
+     * @param loco Locomotive entity (player/enemy)
      */
     inline void proj_loco_collision(Entity& proj, Entity& loco) {
         Registry& registry = Registry::get_instance();
 
         // Apply damage to locomotive entity
         registry.locomotion_stats.get(loco).health -= registry.projectile_stats.get(proj).damage;
+        
         // Remove projectile after hit
         registry.remove_all_components_of(proj);
 
-        // Handle locomotive entity death
+        // Handle locomotive entity death if health depleted
         if (registry.locomotion_stats.get(loco).health <= 0) {
             // Clean up associated weapon
             unsigned int weapon_id = registry.attackers.get(loco).weapon_id;
@@ -294,7 +371,8 @@ namespace CollisionSystem {
     }
 
     /**
-     * Handles collision between two locomotive entities (player/enemy)
+     * Handles collision between two locomotive entities
+     * Pushes entities apart based on collision normal
      * @param loco1 First locomotive entity
      * @param loco2 Second locomotive entity
      */
@@ -307,34 +385,49 @@ namespace CollisionSystem {
         const auto& bounds1 = registry.collision_bounds.get(loco1);
         const auto& bounds2 = registry.collision_bounds.get(loco2);
 
-        // Calculate collision response
-        glm::vec2 normal = get_collision_normal(bounds1, motion1.position, bounds2, motion2.position);
-        float penetration = get_penetration_depth(bounds1, motion1.position, bounds2, motion2.position);
-
-        // Push entities apart with a small buffer to prevent sticking
-        const float BUFFER = 0.04f;
-        motion1.position += normal * (penetration/2.0f + BUFFER);
-        motion2.position -= normal * (penetration/2.0f + BUFFER);
+        // Calculate separation vector
+        glm::vec2 delta = motion1.position - motion2.position;
+        float distance = glm::length(delta);
+        
+        if (distance > 0.0001f) {
+            glm::vec2 normal = delta / distance;
+            float combined_radius = bounds1.circle.radius + bounds2.circle.radius;
+            float overlap = combined_radius - distance;
+            
+            if (overlap > 0) {
+                const float BUFFER = 0.04f;
+                // Push both entities apart equally
+                motion1.position += normal * (overlap/2.0f + BUFFER);
+                motion2.position -= normal * (overlap/2.0f + BUFFER);
+                
+                // Optionally: adjust velocities to prevent sticking
+                float vel1_along_normal = glm::dot(motion1.velocity, normal);
+                float vel2_along_normal = glm::dot(motion2.velocity, normal);
+                
+                if (vel1_along_normal - vel2_along_normal < 0) {
+                    // They're moving towards each other, zero out relative velocity
+                    glm::vec2 impulse = normal * (vel1_along_normal - vel2_along_normal) * 0.5f;
+                    motion1.velocity -= impulse;
+                    motion2.velocity += impulse;
+                }
+            }
+        }
     }
 
     /**
-     * Handles collision between a projectile and a fixed entity (wall/obstacle)
+     * Handles collision between a projectile and a fixed entity
+     * Simply removes the projectile
      * @param proj Projectile entity
-     * @param fixed Fixed entity
+     * @param fixed Fixed entity (wall/obstacle)
      */
     inline void proj_fixed_collision(Entity& proj, Entity& fixed) {
         Registry& registry = Registry::get_instance();
-        // Simply remove projectile on impact with fixed object
         registry.remove_all_components_of(proj);
     }
 
     /**
      * Handles collision between a locomotive entity and a fixed entity
-     * @param loco Locomotive entity
-     * @param fixed Fixed entity
-     */
-    /**
-     * Handles collision between a locomotive entity and a fixed entity
+     * Implements detailed collision response for walls and other fixed objects
      * @param loco Locomotive entity
      * @param fixed Fixed entity
      */
@@ -346,157 +439,56 @@ namespace CollisionSystem {
         }
         
         Motion& loco_motion = registry.motions.get(loco);
-        Motion& fixed_motion = registry.motions.get(fixed);
-        
+        const Motion& fixed_motion = registry.motions.get(fixed);
         const auto& loco_bounds = registry.collision_bounds.get(loco);
         const auto& fixed_bounds = registry.collision_bounds.get(fixed);
 
         const float BUFFER = 0.05f;
         
-        if (fixed_bounds.type == ColliderType::AABB) {
-            // Store original position and velocity
-            glm::vec2 original_pos = loco_motion.position;
-            glm::vec2 velocity = loco_motion.velocity;
+        if (fixed_bounds.type == ColliderType::Wall) {
+            // Handle wall collision
+            glm::vec2 normal;
+            float penetration;
             
-            // Expand AABB by circle radius (Minkowski sum)
-            glm::vec2 expanded_min = fixed_bounds.aabb.min + fixed_motion.position - glm::vec2(loco_bounds.circle.radius);
-            glm::vec2 expanded_max = fixed_bounds.aabb.max + fixed_motion.position + glm::vec2(loco_bounds.circle.radius);
-            
-            // Check if already inside expanded AABB
-            bool inside_x = original_pos.x >= expanded_min.x && original_pos.x <= expanded_max.x;
-            bool inside_y = original_pos.y >= expanded_min.y && original_pos.y <= expanded_max.y;
-            
-            if (inside_x && inside_y) {
-                // Find closest edge to push out
-                float dist_left = original_pos.x - expanded_min.x;
-                float dist_right = expanded_max.x - original_pos.x;
-                float dist_top = original_pos.y - expanded_min.y;
-                float dist_bottom = expanded_max.y - original_pos.y;
+            if (check_circle_wall(loco_bounds.circle, loco_motion.position,
+                                *fixed_bounds.wall, fixed_motion.position,
+                                normal, penetration)) {
+                // Apply position correction
+                loco_motion.position += normal * (penetration + BUFFER);
                 
-                // Find minimum penetration
-                float min_dist = std::min({dist_left, dist_right, dist_top, dist_bottom});
-                
-                // Push out in direction of minimum penetration
-                if (min_dist == dist_left) loco_motion.position.x = expanded_min.x - BUFFER;
-                else if (min_dist == dist_right) loco_motion.position.x = expanded_max.x + BUFFER;
-                else if (min_dist == dist_top) loco_motion.position.y = expanded_min.y - BUFFER;
-                else loco_motion.position.y = expanded_max.y + BUFFER;
-            } else {
-                // Swept collision detection
-                float entry_time = 0.0f;
-                float exit_time = 1.0f;
-                glm::vec2 normal(0.0f);
-                
-                if (velocity.x != 0.0f) {
-                    float inv_entry_x = (expanded_min.x - original_pos.x) / velocity.x;
-                    float inv_exit_x = (expanded_max.x - original_pos.x) / velocity.x;
+                // Adjust velocity for wall sliding
+                float vel_along_normal = glm::dot(loco_motion.velocity, normal);
+                if (vel_along_normal < 0) {
+                    // Remove velocity component in wall normal direction
+                    loco_motion.velocity -= normal * vel_along_normal;
                     
-                    entry_time = std::max(entry_time, std::min(inv_entry_x, inv_exit_x));
-                    exit_time = std::min(exit_time, std::max(inv_entry_x, inv_exit_x));
-                    
-                    if (inv_entry_x < inv_exit_x) normal.x = -1.0f;
-                    else normal.x = 1.0f;
-                }
-                
-                if (velocity.y != 0.0f) {
-                    float inv_entry_y = (expanded_min.y - original_pos.y) / velocity.y;
-                    float inv_exit_y = (expanded_max.y - original_pos.y) / velocity.y;
-                    
-                    entry_time = std::max(entry_time, std::min(inv_entry_y, inv_exit_y));
-                    exit_time = std::min(exit_time, std::max(inv_entry_y, inv_exit_y));
-                    
-                    if (inv_entry_y < inv_exit_y) normal.y = -1.0f;
-                    else normal.y = 1.0f;
-                }
-                
-                // Check if collision occurs
-                if (entry_time <= exit_time && exit_time > 0.0f && entry_time < 1.0f) {
-                    // Move to collision point
-                    loco_motion.position = original_pos + velocity * std::max(0.0f, entry_time - BUFFER);
-                    
-                    // Reflect velocity along collision normal
-                    if (abs(normal.x) > 0.0f) {
-                        loco_motion.velocity.x = 0.0f;
-                    }
-                    if (abs(normal.y) > 0.0f) {
-                        loco_motion.velocity.y = 0.0f;
-                    }
-                }
-            }
-            
-            // Additional corner handling
-            const auto& aabb = fixed_bounds.aabb;
-            glm::vec2 corners[4] = {
-                fixed_motion.position + aabb.min,                          // Bottom-left
-                fixed_motion.position + glm::vec2(aabb.max.x, aabb.min.y), // Bottom-right
-                fixed_motion.position + aabb.max,                          // Top-right
-                fixed_motion.position + glm::vec2(aabb.min.x, aabb.max.y)  // Top-left
-            };
-
-            // Check all corners
-            for (const auto& corner : corners) {
-                glm::vec2 to_corner = loco_motion.position - corner;
-                float corner_dist = glm::length(to_corner);
-                
-                if (corner_dist < loco_bounds.circle.radius) {
-                    // We're too close to a corner
-                    if (corner_dist > 0.0001f) {
-                        glm::vec2 corner_normal = to_corner / corner_dist;
-                        loco_motion.position = corner + corner_normal * (loco_bounds.circle.radius + BUFFER);
-                        
-                        // Adjust velocity to prevent corner sticking
-                        float vel_along_normal = glm::dot(loco_motion.velocity, corner_normal);
-                        if (vel_along_normal < 0) {
-                            loco_motion.velocity -= corner_normal * vel_along_normal;
-                        }
-                    } else {
-                        // If exactly on corner, push out diagonally
-                        loco_motion.position += glm::vec2(1.0f, 1.0f) * (loco_bounds.circle.radius + BUFFER);
-                    }
+                    // Apply wall friction to parallel component
+                    glm::vec2 tangent(-normal.y, normal.x);
+                    float vel_along_tangent = glm::dot(loco_motion.velocity, tangent);
+                    const float WALL_FRICTION = 0.9f;
+                    loco_motion.velocity = tangent * vel_along_tangent * WALL_FRICTION;
                 }
             }
         } else {
-            // Circle-Circle collision handling for fixed entities (trees, etc.)
-            // Calculate centers and combined radius
-            glm::vec2 diff = loco_motion.position - fixed_motion.position;
-            float dist = glm::length(diff);
+            // Handle other fixed objects (like trees) using circle-circle collision
+            glm::vec2 delta = loco_motion.position - fixed_motion.position;
+            float dist = glm::length(delta);
             
-            if (dist < 0.0001f) {
-                // Prevent division by zero
-                diff = glm::vec2(1.0f, 0.0f);
-                dist = 1.0f;
-            }
-            
-            float combined_radius = loco_bounds.circle.radius + fixed_bounds.circle.radius;
-            
-            if (dist < combined_radius) {
-                // Calculate penetration and normal
-                float penetration = combined_radius - dist;
-                glm::vec2 normal = diff / dist;
+            if (dist > 0.0001f) {
+                glm::vec2 normal = delta / dist;
+                float combined_radius = loco_bounds.circle.radius + fixed_bounds.circle.radius;
+                float overlap = combined_radius - dist;
                 
-                // Push locomotive entity out
-                loco_motion.position += normal * (penetration + BUFFER);
-                
-                // Adjust velocity to prevent sticking
-                float vel_along_normal = glm::dot(loco_motion.velocity, normal);
-                if (vel_along_normal < 0) {
-                    loco_motion.velocity -= normal * vel_along_normal;
+                if (overlap > 0) {
+                    // Push locomotive entity away from fixed object
+                    loco_motion.position += normal * (overlap + BUFFER);
+                    
+                    // Adjust velocity to prevent sticking
+                    float vel_along_normal = glm::dot(loco_motion.velocity, normal);
+                    if (vel_along_normal < 0) {
+                        loco_motion.velocity -= normal * vel_along_normal;
+                    }
                 }
-            }
-        }
-        
-        // Final position validation
-        if (fixed_bounds.type == ColliderType::AABB) {
-            glm::vec2 closest = glm::max(
-                fixed_bounds.aabb.min + fixed_motion.position,
-                glm::min(loco_motion.position, fixed_bounds.aabb.max + fixed_motion.position)
-            );
-            
-            float dist = glm::length(loco_motion.position - closest);
-            if (dist < loco_bounds.circle.radius) {
-                // If still penetrating, force position to safe distance
-                glm::vec2 normal = (loco_motion.position - closest) / dist;
-                loco_motion.position = closest + normal * (loco_bounds.circle.radius + BUFFER);
             }
         }
         
@@ -512,43 +504,76 @@ namespace CollisionSystem {
     /**
      * Main collision handling function
      * Processes all detected collisions and applies appropriate responses
+     * Priority order: fixed collisions first, then other collisions
      */
     inline void handle_collisions() {
         Registry& registry = Registry::get_instance();
         
+        // First pass: Handle projectile collisions first
         for (unsigned int i = 0; i < registry.collisions.entities.size(); i++) {
             Entity& entity1 = registry.collisions.entities[i];
             Entity& entity2 = registry.collisions.get(entity1).other;
 
-            // Skip if either entity was removed in previous collision handling
             if (!registry.teams.has(entity2) || !registry.teams.has(entity1)) {
                 continue;
             }
 
-            // Determine collision type and call appropriate handler
+            // Handle projectile collisions first
             if (registry.projectile_stats.has(entity1)) {
                 if (registry.locomotion_stats.has(entity2)) {
                     proj_loco_collision(entity1, entity2);
                 } else {
                     proj_fixed_collision(entity1, entity2);
                 }
-            } else if (registry.locomotion_stats.has(entity1)) {
-                if (registry.projectile_stats.has(entity2)) {
+                continue;  // Skip other collision handling for this pair
+            }
+            else if (registry.projectile_stats.has(entity2)) {
+                if (registry.locomotion_stats.has(entity1)) {
                     proj_loco_collision(entity2, entity1);
-                } else if (registry.locomotion_stats.has(entity2)) {
-                    loco_loco_collision(entity1, entity2);
                 } else {
-                    loco_fixed_collision(entity1, entity2);
-                }
-            } else {
-                if (registry.projectile_stats.has(entity2)) {
                     proj_fixed_collision(entity2, entity1);
-                } else if (registry.locomotion_stats.has(entity2)) {
-                    loco_fixed_collision(entity2, entity1);
                 }
+                continue;  // Skip other collision handling for this pair
             }
         }
-        // Clear processed collisions
+        
+        // Second pass: Handle fixed entity collisions
+        for (unsigned int i = 0; i < registry.collisions.entities.size(); i++) {
+            Entity& entity1 = registry.collisions.entities[i];
+            Entity& entity2 = registry.collisions.get(entity1).other;
+
+            // Skip if either entity was removed or was a projectile
+            if (!registry.teams.has(entity2) || !registry.teams.has(entity1) ||
+                registry.projectile_stats.has(entity1) || registry.projectile_stats.has(entity2)) {
+                continue;
+            }
+
+            // Handle fixed collisions
+            if (!registry.locomotion_stats.has(entity1) && registry.locomotion_stats.has(entity2)) {
+                loco_fixed_collision(entity2, entity1);
+            } 
+            else if (registry.locomotion_stats.has(entity1) && !registry.locomotion_stats.has(entity2)) {
+                loco_fixed_collision(entity1, entity2);
+            }
+        }
+        
+        // Third pass: Handle locomotive-locomotive collisions
+        for (unsigned int i = 0; i < registry.collisions.entities.size(); i++) {
+            Entity& entity1 = registry.collisions.entities[i];
+            Entity& entity2 = registry.collisions.get(entity1).other;
+
+            // Skip if either entity was removed, was a projectile, or wasn't locomotive
+            if (!registry.teams.has(entity2) || !registry.teams.has(entity1) ||
+                registry.projectile_stats.has(entity1) || registry.projectile_stats.has(entity2) ||
+                !registry.locomotion_stats.has(entity1) || !registry.locomotion_stats.has(entity2)) {
+                continue;
+            }
+
+            loco_loco_collision(entity1, entity2);
+        }
+        
+        // Clear all processed collisions
         registry.collisions.clear();
     }
-};
+
+} // namespace CollisionSystem
