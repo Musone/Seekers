@@ -20,6 +20,12 @@ namespace ProceduralGenerationSystem {
         float distance;             // the distance of the two rooms
     };
 
+    struct WallPosLen {
+        int startX, startY; // Starting position of the wall
+        int length;         // Length of the wall
+        bool horizontal;    // Orientation: true if horizontal, false if vertical
+    };
+
     // Disjoint set (Union-Find) functions for Kruskal's algorithm
     struct DisjointSet {
         std::vector<int> parent, rank;
@@ -75,8 +81,8 @@ namespace ProceduralGenerationSystem {
     }
 
     inline std::vector<Room> generate_rooms(int map_width, int map_height) {
-        int min_room_size = 20;
-        int max_room_size = 40;
+        int min_room_size = 30;
+        int max_room_size = 60;
         int room_count = map_width * map_height / (max_room_size * max_room_size);
 
         std::random_device rd;
@@ -168,12 +174,11 @@ namespace ProceduralGenerationSystem {
             bool x_collides = right1 >= left2 && left1 <= right2;
             bool y_collides = down1 <= up2 && up1 >= down2;
             std::vector<float> left_right = {left1, right1, left2, right2};
-            std::vector<float> up_down = {up1, down2, up2, down2};
+            std::vector<float> up_down = {up1, down1, up2, down2};
             std::sort(left_right.begin(), left_right.end());
             std::sort(up_down.begin(), up_down.end());
 
             if (x_collides && left_right[2] - left_right[1] >= min_hallway_width) {
-                // TODO: FIX THIS SHIIIIT
                 // up-down hallway
                 std::uniform_int_distribution<> hallway_w_dist(min_hallway_width, left_right[2] - left_right[1]);
                 // get which room is higher and which is lower
@@ -187,7 +192,6 @@ namespace ProceduralGenerationSystem {
                 hallway_room.position.y = lower_up + hallway_room.size.y/2.0f;
                 hallway_rooms.push_back(hallway_room);
             } else if (y_collides && up_down[2] - up_down[1] >= min_hallway_width) {
-                // TODO: left-right hallway
                 std::uniform_int_distribution<> hallway_w_dist(min_hallway_width, up_down[2] - up_down[1]);
                 // get which room is higher and which is lower
                 float lefter_right = left_right[1];
@@ -200,8 +204,57 @@ namespace ProceduralGenerationSystem {
                 hallway_room.position.y = up_down[1] + hallway_room.size.y/2.0f;
                 hallway_rooms.push_back(hallway_room);
             } else {
-                // TODO: L-shaped hallway
-                std::cout << "L-shaped hallway" << std::endl;
+                std::uniform_int_distribution<> hallway_w_dist(min_hallway_width, fmin(fmin(room1.size.x, room1.size.y), fmin(room2.size.x, room2.size.y)));
+                int hallway_w = hallway_w_dist(gen);
+
+                // there must be a better way to do this but I don't care
+                // horizontal one
+                Room hallway_room1;
+                // vertical one
+                Room hallway_room2;
+                if (room1.position.y < room2.position.y) {
+                    if (room1.position.x < room2.position.x) {
+                        hallway_room1.size.x = left2 - right1 + hallway_w;
+                        hallway_room1.size.y = hallway_w;
+                        hallway_room2.size.x = hallway_w;
+                        hallway_room2.size.y = down2 - up1 + hallway_w;
+                        hallway_room1.position.x = right1 + hallway_room1.size.x/2;
+                        hallway_room1.position.y =  up1 - hallway_w/2;
+                        hallway_room2.position.x = left2 + hallway_w/2;
+                        hallway_room2.position.y = down2 - hallway_room2.size.y/2;
+                    } else {
+                        hallway_room1.size.x = left1 - right2 + hallway_w;
+                        hallway_room1.size.y = hallway_w;
+                        hallway_room2.size.x = hallway_w;
+                        hallway_room2.size.y = down2 - up1 + hallway_w;
+                        hallway_room1.position.x = left1 - hallway_room1.size.x/2;
+                        hallway_room1.position.y = up1 - hallway_w/2;
+                        hallway_room2.position.x = right2 - hallway_w/2;
+                        hallway_room2.position.y = down2 - hallway_room2.size.y/2;
+                    }
+                } else {
+                    if (room1.position.x < room2.position.x) {
+                        hallway_room1.size.x = left2 - right1 + hallway_w;
+                        hallway_room1.size.y = hallway_w;
+                        hallway_room2.size.x = hallway_w;
+                        hallway_room2.size.y = down1 - up2 + hallway_w;
+                        hallway_room1.position.x = left2 - hallway_room1.size.x/2;
+                        hallway_room1.position.y = up2 - hallway_w/2;
+                        hallway_room2.position.x = right1 - hallway_w/2;
+                        hallway_room2.position.y = down1 - hallway_room2.size.y/2;
+                    } else {
+                        hallway_room1.size.x = left1 - right2 + hallway_w;
+                        hallway_room1.size.y = hallway_w;
+                        hallway_room2.size.x = hallway_w;
+                        hallway_room2.size.y = down1 - up2 + hallway_w;
+                        hallway_room1.position.x = right2 + hallway_room1.size.x/2;
+                        hallway_room1.position.y = up2 - hallway_w/2;
+                        hallway_room2.position.x = left1 + hallway_w/2;
+                        hallway_room2.position.y = down1 - hallway_room2.size.y/2;
+                    }
+                }
+                hallway_rooms.push_back(hallway_room1);
+                hallway_rooms.push_back(hallway_room2);
             }
         }
 
@@ -214,6 +267,127 @@ namespace ProceduralGenerationSystem {
         }
     }
 
+    inline bool is_in_bounds(int x, int y, int width, int height) {
+        return x >= 0 && y >= 0 && x < width && y < height;
+    }
+
+    inline void place_walls_on_map(std::vector<std::vector<char>>& map) {
+        int height = map.size();
+        int width = map[0].size();
+        std::vector<std::pair<int, int>> directions = {
+            {-1, 0}, {1, 0}, {0, -1}, {0, 1},
+            {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
+        };
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                if (map[y][x] == 'R' || map[y][x] == 'H') {
+                    for (const auto& [dx, dy] : directions) {
+                        int nx = x + dx;
+                        int ny = y + dy;
+                        if (is_in_bounds(nx, ny, width, height) && map[ny][nx] == '.') {
+                            map[ny][nx] = 'W';
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    inline void create_walls(const std::vector<std::vector<char>>& map) {
+        std::vector<WallPosLen> walls;
+        int height = map.size();
+        int width = map[0].size();
+
+        // horizontal
+        for (int y = 0; y < height; ++y) {
+            int startX = -1;
+            int length = 0;
+
+            for (int x = 0; x < width; ++x) {
+                if (map[y][x] == 'W') {
+                    if (startX == -1) { // Start a new wall segment
+                        startX = x;
+                        length = 1;
+                    } else {
+                        length++; // Extend the current wall segment
+                    }
+                } else if (startX != -1) { // End of a wall segment
+                    if (length > 1) {walls.push_back({startX, y, length, true});}
+                    startX = -1;
+                    length = 0;
+                }
+            }
+            // Check if a wall segment ends at the row's end
+            if (startX != -1) {
+                walls.push_back({startX, y, length, true});
+            }
+        }
+
+        // vertical
+        for (int x = 0; x < width; ++x) {
+            int startY = -1;
+            int length = 0;
+
+            for (int y = 0; y < height; ++y) {
+                if (map[y][x] == 'W') {
+                    if (startY == -1) { // Start a new wall segment
+                        startY = y;
+                        length = 1;
+                    } else {
+                        length++; // Extend the current wall segment
+                    }
+                } else if (startY != -1) { // End of a wall segment
+                    if (length > 1) {walls.push_back({x, startY, length, false});}
+                    startY = -1;
+                    length = 0;
+                }
+            }
+            // Check if a wall segment ends at the column's end
+            if (startY != -1) {
+                walls.push_back({x, startY, length, false});
+            }
+        }
+
+        // translate map indices to coordinates
+        for (auto& wall : walls) {
+            wall.startX = wall.startX - width/2;
+            wall.startY = height/2 - wall.startY;
+        }
+
+        // create the walls
+        for (auto& wall : walls) {
+            float x = wall.startX;
+            float y = wall.startY;
+
+            if (wall.horizontal) {
+                x += wall.length/2;
+                EntityFactory::create_no_collision_wall({x, y}, 0, glm::vec2(wall.length, 1.0f));
+            } else {
+                y -= wall.length/2;
+                EntityFactory::create_no_collision_wall({x, y}, PI / 2.0f, glm::vec2(wall.length, 1.0f));
+            }
+        }
+    }
+
+    inline void create_enemies(const std::vector<Room>& rooms) {
+        int total_num_enemies = 0;
+        for (const Room& room : rooms) {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> pos_x_dist(room.position.x - room.size.x / 2 + 2, room.position.x + room.size.x / 2 - 2);
+            std::uniform_int_distribution<> pos_y_dist(room.position.y - room.size.y / 2 + 2, room.position.y + room.size.y / 2 - 2);
+            std::uniform_int_distribution<> enemy_num_dist(1, room.size.x * room.size.y / 400);
+
+            int enemy_num = enemy_num_dist(gen);
+            for (int i = 0; i < enemy_num; i++) {
+                EntityFactory::create_enemy({pos_x_dist(gen), pos_y_dist(gen)});
+            }
+            total_num_enemies += enemy_num;
+        }
+
+        std::cout << "number of enemies: " << total_num_enemies << std::endl;
+    }
+
     inline void GenerateDungeon(int map_width, int map_height) {
         Registry& registry = Registry::get_instance();
 
@@ -221,17 +395,10 @@ namespace ProceduralGenerationSystem {
         std::vector<Room> rooms = generate_rooms(map_width, map_height);
         std::vector<Hallway> hallways = generate_hallways(rooms);
         connect_rooms(rooms, hallways, map, map_width, map_height);
+        place_walls_on_map(map);
+        create_walls(map);
 
-        for (const auto& room : rooms) {
-            glm::vec2 left_wall_position = {room.position.x - room.size.x / 2.0f + 1, room.position.y};
-            glm::vec2 right_wall_position = {room.position.x + room.size.x / 2.0f - 1, room.position.y};
-            glm::vec2 top_wall_position = {room.position.x, room.position.y - room.size.y / 2.0f + 1};
-            glm::vec2 bottom_wall_position = {room.position.x, room.position.y + room.size.y / 2.0f - 1};
-            EntityFactory::create_no_collision_wall(left_wall_position, PI / 2.0f, glm::vec2(room.size.y, 2.0f));
-            EntityFactory::create_no_collision_wall(right_wall_position, PI / 2.0f, glm::vec2(room.size.y, 2.0f));
-            EntityFactory::create_no_collision_wall(top_wall_position, 0.f, glm::vec2(room.size.x, 2.0f));
-            EntityFactory::create_no_collision_wall(bottom_wall_position, 0.f, glm::vec2(room.size.x, 2.0f));
-        }
+        create_enemies(rooms);
 
         // print map
         for (const auto& row : map) {
