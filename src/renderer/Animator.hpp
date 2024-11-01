@@ -19,24 +19,27 @@ private:
     Skeleton* m_skeleton;
     bool m_should_repeat = true;
     bool m_should_finish = false;
-    float m_speed = 1.0f;
+    float m_duration_s = 1.0f;
 
     void _step_time() {
         float current_time = float(m_timer.GetTime()) / 1000000.0f;  // Convert microseconds to seconds
         float delta_time = current_time - m_time_of_prev_frame;
-        m_animation_time += m_speed * delta_time;
+        m_animation_time += delta_time;
         
         if (m_current_animation) {
-            if (m_animation_time > m_current_animation->get_duration()) {
+            // if (m_animation_time > m_current_animation->get_duration()) {
+            if (m_animation_time > m_duration_s) {
                 
                 if (!m_should_repeat) {
                     set_animation(nullptr);
                     return;
                 }
 
-                m_animation_time = fmod(m_animation_time, m_current_animation->get_duration());
+                // m_animation_time = fmod(m_animation_time, m_current_animation->get_duration());
+                m_animation_time = fmod(m_animation_time, m_duration_s);
                 if (m_animation_time < 0) {  // fmod can return negative values
-                    m_animation_time += m_current_animation->get_duration();
+                    // m_animation_time += m_current_animation->get_duration();
+                    m_animation_time += m_duration_s;
                 }
             }
         }
@@ -75,15 +78,16 @@ public:
         if (m_current_animation == nullptr) {
             return 1.0f;
         }
-        return m_animation_time / m_current_animation->get_duration();
+        // return m_animation_time / m_current_animation->get_duration();
+        return m_animation_time / m_duration_s;
     }
 
-    void set_animation(Animation* animation, const float& speed = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+    void set_animation(Animation* animation, const float& duration_s = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
         m_current_animation = animation;
         m_animation_time = 0.0f;
         m_should_repeat = should_repeat;
         m_should_finish = should_finish;
-        m_speed = speed;
+        m_duration_s = duration_s;
         m_time_of_prev_frame = float(m_timer.GetTime()) / 1000000.0f;  // Convert microseconds to seconds
     }
 
@@ -102,7 +106,8 @@ public:
         
         for (size_t i = 0; i < frames.size(); ++i) {
             const auto& frame = frames[i];
-            float delta_time = std::abs(m_animation_time - frame.get_time_stamp());
+            // float delta_time = std::abs(m_animation_time - frame.get_time_stamp());
+            float delta_time = std::abs(m_animation_time - (m_duration_s * (frame.get_time_stamp() / m_current_animation->get_duration())));
             if (delta_time < smallest_delta) {
                 smallest_delta = delta_time;
                 current_frame = const_cast<KeyFrame*>(&frame);
