@@ -17,11 +17,21 @@ namespace GameplaySystem {
             }
         }
 
+        for (Entity& e : registry.energy_no_regen_cooldowns.entities) {
+            auto& energy_no_regen_cooldown = registry.energy_no_regen_cooldowns.get(e);
+            energy_no_regen_cooldown.timer -= elapsed_ms / 1000.0f;
+            if (energy_no_regen_cooldown.timer <= 0) {
+                registry.energy_no_regen_cooldowns.remove(e);
+            }
+        }
+
         for (Entity& e : registry.stagger_cooldowns.entities) {
-            auto& stagger_cooldown = registry.stagger_cooldowns.get(e);
-            stagger_cooldown.timer -= elapsed_ms / 1000.0f;
-            if (stagger_cooldown.timer <= 0) {
-                registry.stagger_cooldowns.remove(e);
+            if (!registry.energy_no_regen_cooldowns.has(e)) {
+                auto& stagger_cooldown = registry.stagger_cooldowns.get(e);
+                stagger_cooldown.timer -= elapsed_ms / 1000.0f;
+                if (stagger_cooldown.timer <= 0) {
+                    registry.stagger_cooldowns.remove(e);
+                }
             }
         }
 
@@ -84,6 +94,21 @@ namespace GameplaySystem {
         }
     }
 
+    inline void deplete_energy(const Entity& e, const float amount) {
+        Registry& registry = Registry::get_instance();
+
+        LocomotionStats& locomotion = registry.locomotion_stats.get(e);
+        locomotion.energy -= amount;
+        if (locomotion.energy <= 0) {
+            locomotion.energy = 0;
+            if (registry.energy_no_regen_cooldowns.has(e)) {
+                registry.energy_no_regen_cooldowns.get(e).timer = Globals::energy_no_regen_duration;
+            } else {
+                registry.energy_no_regen_cooldowns.emplace(e, Globals::energy_no_regen_duration);
+            }
+        }
+    }
+
     inline void attack(Entity& e) {
         Registry& registry = Registry::get_instance();
 
@@ -97,7 +122,7 @@ namespace GameplaySystem {
 
         EntityFactory::create_projectile(motion, attacker, weapon, registry.teams.get(e).team_id);
         registry.attack_cooldowns.emplace(e, weapon.attack_cooldown);
-        locomotion.energy -= weapon.attack_energy_cost;
+        deplete_energy(e, weapon.attack_energy_cost);
     }
 
     inline void dodge(Entity& e) {
@@ -111,6 +136,6 @@ namespace GameplaySystem {
 
         // TODO: maybe jump back when 0 velocity
         registry.in_dodges.emplace(e, motion.position, motion.position + Common::normalize(motion.velocity) * Globals::dodgeMoveMag, Globals::timer.GetTime(), Globals::dodgeDuration);
-        locomotion.energy -= Globals::dodge_energy_cost;
+        deplete_energy(e, Globals::dodge_energy_cost);
     }
 };

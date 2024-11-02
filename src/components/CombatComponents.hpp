@@ -66,6 +66,11 @@ struct DeathCooldown {
     DeathCooldown(float t) : timer(t) {}
 };
 
+struct EnergyNoRegenCooldown {
+    float timer;
+    EnergyNoRegenCooldown(float t) : timer(t) {}
+};
+
 struct Projectile
 {
     float damage;
