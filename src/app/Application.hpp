@@ -266,40 +266,7 @@ public:
         world.demo_init();
         Registry& reg = Registry::get_instance();
 
-        m_models[reg.player.get_id()] = &hero;
-        // hero.attach_to_joint(
-        //     m_bow, 
-        //     "mixamorig_RightHand", 
-        //     {63.0, 35.0, -10.5}, // pos
-        //     {10.3044329, 14.5560884, 12.8805599}, // rot
-        //     {25.5, 25.5, 25.5} // scale
-        // );
-        unsigned int counter = 1;
-        for (const auto& entity : reg.enemies.entities) {
-            const auto& enemy = reg.enemies.get(entity);
-            if (enemy.type == ENEMY_TYPE::WARRIOR) {
-                m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
-                const auto& model = m_models[entity.get_id()];
-            } else if (enemy.type == ENEMY_TYPE::ARCHER) {
-                m_models[entity.get_id()] = new AnimatedModel(archer_grunt, counter++);
-                const auto& model = m_models[entity.get_id()];
-                model->attach_to_joint(
-                    m_bow, 
-                    "mixamorig_RightHand", 
-                    {63.0, 35.0, -10.5}, // pos
-                    {10.3044329, 14.5560884, 12.8805599}, // rot
-                    {25.5, 25.5, 25.5} // scale
-                );
-            } else {
-                m_models[entity.get_id()] = new AnimatedModel(zombie_grunt, counter++);
-                const auto& model = m_models[entity.get_id()];
-            }
-            // if (!reg.motions.has(entity) || !) { continue; }
-            // const auto& motion = reg.motions.get(entity);
-            // if (reg.locomotion_stats.has(entity)) {
-                // m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
-            // }
-        }
+        AnimatedModel* player_model;
 
         Timer timer;
         float time_of_last_frame = 0;
@@ -312,6 +279,40 @@ public:
             float delta_time = float(timer.GetTime()) - time_of_last_frame;
             while (delta_time < FRAME_TIME_60FPS) {
                 delta_time = float(timer.GetTime()) - time_of_last_frame;
+            }
+
+            // Game restart
+            if (Globals::restart_renderer) {
+                Globals::restart_renderer = false;
+                for (auto& kv : m_models) {
+                    if (kv.second == nullptr) { continue; }
+                    delete kv.second;
+                    kv.second = nullptr;
+                }
+
+                unsigned int counter = 1;
+                m_models[reg.player.get_id()] = new AnimatedModel(hero, counter++);
+                for (const auto& entity : reg.enemies.entities) {
+                    const auto& enemy = reg.enemies.get(entity);
+                    if (enemy.type == ENEMY_TYPE::WARRIOR) {
+                        m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
+                        const auto& model = m_models[entity.get_id()];
+                    } else if (enemy.type == ENEMY_TYPE::ARCHER) {
+                        m_models[entity.get_id()] = new AnimatedModel(archer_grunt, counter++);
+                        const auto& model = m_models[entity.get_id()];
+                        model->attach_to_joint(
+                            m_bow, 
+                            "mixamorig_RightHand", 
+                            {63.0, 35.0, -10.5}, // pos
+                            {10.3044329, 14.5560884, 12.8805599}, // rot
+                            {25.5, 25.5, 25.5} // scale
+                        );
+                    } else {
+                        m_models[entity.get_id()] = new AnimatedModel(zombie_grunt, counter++);
+                        const auto& model = m_models[entity.get_id()];
+                    }
+                }
+                player_model = m_models[reg.player.get_id()];
             }
 
             // Camera stuff
@@ -330,7 +331,7 @@ public:
                     m_renderer->lock_cursor();
 
                 bool is_dodging = false;
-                if (hero.get_current_animation_id() == hero.get_animation_id("Roll.dae")) {
+                if (player_model->get_current_animation_id() == player_model->get_animation_id("Roll.dae")) {
                     is_dodging = true;
                 }
 
@@ -354,7 +355,7 @@ public:
                 m_camera.set_rotation({ PI / 2, 0, _vector_to_angle(glm::vec2(dir_to_look)) - PI / 2});
                 float amount_to_move = fmin(dist_from_desired_pos, camera_speed);
                 if (is_dodging) {
-                    float portion_complete = hero.get_portion_complete_of_curr_animation();
+                    float portion_complete = player_model->get_portion_complete_of_curr_animation();
                     camera_speed = portion_complete * base_camera_speed;
                 } else {
                     camera_speed = base_camera_speed;
