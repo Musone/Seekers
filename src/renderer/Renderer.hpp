@@ -62,7 +62,7 @@ public:
 	}
 
     // Make sure to catch, log, and terminate errors when using the renderer.
-    void init(std::string window_name, int window_width, int window_height, bool enable_vsync, bool enable_resize) {
+    void init(std::string window_name, int window_width, int window_height, bool enable_vsync, bool enable_resize, const bool& fullscreen = false) {
         m_window_width = window_width;
         m_window_height = window_height;
         
@@ -88,6 +88,17 @@ public:
 
         // vsync
         glfwSwapInterval((unsigned int)enable_vsync);
+
+        if (fullscreen) {
+            const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+#if __APPLE__
+            window_width = mode->width / 2.0f;
+            window_height = mode->height / 2.0f;
+#else
+            window_width = mode->width;
+            window_height = mode->height;
+#endif
+        }
 
         m_window = glfwCreateWindow(window_width, window_height, window_name.c_str(), NULL, NULL);
         if (!m_window) {
@@ -191,6 +202,20 @@ public:
         }
         GL_Call(int status = glfwGetKey(m_window, key_code));
         return status == GLFW_PRESS;
+    }
+    
+    void enable_depth_test() const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
+        GL_Call(glEnable(GL_DEPTH_TEST));
+    }
+
+    void disable_depth_test() const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
+        GL_Call(glDisable(GL_DEPTH_TEST));
     }
 
     // https://www.glfw.org/docs/latest/input_guide.html
