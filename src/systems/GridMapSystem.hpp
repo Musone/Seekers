@@ -60,17 +60,33 @@ namespace GridMapSystem {
                         + int(Globals::update_distance);
                 int grid_j = int(std::floor(distance.y))
                         + int(Globals::update_distance);
-                if (0 > grid_i || grid_i > int(Globals::update_distance) * 2 - 1) { // TODO: can be removed after we're sure its reliable
+                if (0 > grid_i || grid_i > int(Globals::update_distance) * 2 - 1) {
                     break;
                 }
                 else if (0 > grid_j || grid_j > int(Globals::update_distance) * 2 - 1) {
                     break;
                 }
                 registry.grid_map.grid_boxes[grid_i][grid_j].is_occupied = true;
-                if (registry.bounding_boxes.has(e)) {
-                    BoundingBox box = registry.bounding_boxes.get(e);
-                    for (int i = grid_i - int(std::floor(box.radius)) - 2; i <= grid_i + int(std::floor(box.radius)) + 2; i++) {
-                        for (int j = grid_j - int(std::floor(box.radius))  - 2; j <= grid_j + int(std::floor(box.radius)) + 2; j++) {
+                if (registry.collision_bounds.has(e)) {
+                    const CollisionBounds& box = registry.collision_bounds.get(e);
+                    float radius = 0.0f;
+                    
+                    // Get radius based on collider type
+                    if (box.type == ColliderType::Circle) {
+                        radius = box.circle.radius;
+                    } else if (box.type == ColliderType::Wall) {
+                        // For walls, use half the largest dimension of AABB
+                        glm::vec2 size = box.wall->aabb.max - box.wall->aabb.min;
+                        radius = std::max(size.x, size.y) * 0.5f;
+                    } else if (box.type == ColliderType::Mesh) {
+                        radius = box.mesh->bound_radius;
+                    }
+
+                    // Update grid boxes within radius
+                    for (int i = grid_i - int(std::floor(radius)) - 2; 
+                         i <= grid_i + int(std::floor(radius)) + 2; i++) {
+                        for (int j = grid_j - int(std::floor(radius)) - 2; 
+                             j <= grid_j + int(std::floor(radius)) + 2; j++) {
                             if (0 > i || i > int(Globals::update_distance) * 2 - 1) {
                                 break;
                             }

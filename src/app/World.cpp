@@ -20,6 +20,30 @@ World::World() : m_registry(Registry::get_instance()), m_audioSystem(AudioSystem
 
 World::~World() = default;
 
+void World::restart_game() {
+    std::cout << "Restarting game..." << std::endl;
+    Registry& registry = Registry::get_instance();
+    registry.clear_all_components();
+
+    // Create Player
+    auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
+    auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f);
+    registry.attackers.get(player).weapon_id = weapon;
+    registry.player = player;
+
+    ProceduralGenerationSystem::GenerateDungeon(MAP_WIDTH, MAP_HEIGHT, registry.motions.get(player));
+
+    // create grid map entities
+    registry.grid_map = GridMap();
+    for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
+        registry.grid_map.grid_boxes.push_back(std::vector<GridMap::GridBox>());
+        for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
+            registry.grid_map.grid_boxes[i].push_back(GridMap::GridBox());
+        }
+    }
+}
+
+
 void World::demo_init() {
     // Initialize, load sounds and play background music
     m_audioSystem.initialize();
@@ -30,15 +54,7 @@ void World::demo_init() {
     m_audioSystem.set_music_volume(16);
     m_audioSystem.play_music(-1);
 
-    // Create Player
-    auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
-    auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f);
-    m_registry.attackers.get(player).weapon_id = weapon;
-    m_players.push_back(player);
-    m_registry.player = player;
-    m_registry.grid_map = GridMap();
-
-    ProceduralGenerationSystem::GenerateDungeon(MAP_WIDTH, MAP_HEIGHT, m_registry.motions.get(player));
+    restart_game();
 
     // // Bottom wall (with entrance in the middle)
     // for (int i = 0; i < 5; ++i) {
@@ -80,16 +96,6 @@ void World::demo_init() {
     //     }
     //     EntityFactory::create_tree(tree_pos);
     // }
-
-    // create grid map entities
-    Registry& registry = Registry::get_instance();
-    registry.grid_map = GridMap();
-    for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
-        registry.grid_map.grid_boxes.push_back(std::vector<GridMap::GridBox>());
-        for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
-            registry.grid_map.grid_boxes[i].push_back(GridMap::GridBox());
-        }
-    }
 }
 
 
@@ -109,13 +115,12 @@ void World::step(float elapsed_ms) {
     InputManager::handle_inputs_per_frame();
 
     GameplaySystem::update_cooldowns(elapsed_ms);
+    GameplaySystem::update_regen_stats(elapsed_ms);
     GameplaySystem::update_projectile_range(elapsed_ms);
-    GameplaySystem::update_near_player();
+    GameplaySystem::update_near_player_camera();
 
-    // Enforce boundaries for players
-    for (const auto& player : m_players) {
-        enforce_boundaries(player);
-    }
+
+    enforce_boundaries(m_registry.player);
 }
 
 void World::enforce_boundaries(Entity entity) {

@@ -14,4 +14,6 @@ namespace Globals {
     Timer timer = Timer();
     float ai_distance_epsilon = 0.2f;
     float update_distance = 70.0f;
+    float energy_regen_rate = 20.0f;
+    float poise_regen_multiplier = 0.1f;
 }

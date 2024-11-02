@@ -25,4 +25,6 @@ namespace Globals {
     extern Timer timer;
     extern float ai_distance_epsilon;
     extern float update_distance;
+    extern float energy_regen_rate;
+    extern float poise_regen_multiplier;
 }

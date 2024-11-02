@@ -197,6 +197,9 @@ namespace Testing {
         // StaticModel bow("models/bow.obj", m_wall_shader);
         StaticModel arrow("models/Arrow.dae", &static_shader);
         arrow.set_scale(glm::vec3(300));
+
+        StaticModel melee("models/Melee.obj", &static_shader);
+        melee.set_scale(glm::vec3(1));
         
         // Model delete_me("models/Lowpoly_tree_sample.dae");
         // Model delete_me("models/Hero.dae");
@@ -279,14 +282,15 @@ namespace Testing {
             static_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
 
             // hero.draw();
-            tree.draw();
+            // tree.draw();
             // bow.draw();
-            wolf.draw();
-            guy.draw();
-
-            arrow.set_rotation(attach->offset_rotation);
+            // wolf.draw();
+            // guy.draw();
+            melee.set_rotation(attach->offset_rotation);
+            melee.draw();
             // arrow.set_rotation(attach->offset_rotation);
-            arrow.draw();
+            // arrow.set_rotation(attach->offset_rotation);
+            // arrow.draw();
 
 
             renderer.end_draw();
