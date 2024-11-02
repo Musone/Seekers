@@ -40,7 +40,6 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_SPACE) {
                 GameplaySystem::dodge(registry.player);
-                registry.input_state.space_down = true;
             }
         }
         if (action == GLFW_RELEASE) {
@@ -77,7 +76,6 @@ namespace InputManager {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 if (!registry.attack_cooldowns.has(registry.player)) {
                     GameplaySystem::attack(registry.player);
-                    registry.input_state.mouse_button_left_down = true;
                 }
             }
         }

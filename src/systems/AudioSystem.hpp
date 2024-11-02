@@ -76,8 +76,6 @@ public:
         InputState& input_state = registry.input_state;
 
         handle_footstep(input_state);
-        handle_attack(input_state);
-        handle_dodge(input_state);
     }
 
     // play background music
@@ -102,16 +100,6 @@ public:
         }
     }
 
-    // Handle dodge sound
-    void handle_dodge(const InputState& input_state) {
-        Registry& registry = Registry::get_instance();
-
-        if (registry.input_state.space_down) {
-            play_dodge();
-            registry.input_state.space_down = false;
-        }
-    }
-
     // Handle footstep sound
     void handle_footstep(const InputState& input_state) {
         if (input_state.w_down || input_state.s_down || input_state.a_down || input_state.d_down) {
@@ -131,16 +119,6 @@ public:
             // Stop sound on the channel
             Mix_HaltChannel(channel);
             footstep_playing = false;
-        }
-    }
-
-    // Handle attack sound
-    void handle_attack(const InputState& input_state) {
-        Registry& registry = Registry::get_instance();
-
-        if (input_state.mouse_button_left_down) {
-            play_attack_bow();
-            registry.input_state.mouse_button_left_down = false;
         }
     }
 

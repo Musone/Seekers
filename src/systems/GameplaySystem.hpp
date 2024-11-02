@@ -111,6 +111,7 @@ namespace GameplaySystem {
 
     inline void attack(Entity& e) {
         Registry& registry = Registry::get_instance();
+        AudioSystem& audio = AudioSystem::get_instance();
 
         LocomotionStats& locomotion = registry.locomotion_stats.get(e);
 
@@ -123,10 +124,17 @@ namespace GameplaySystem {
         EntityFactory::create_projectile(motion, attacker, weapon, registry.teams.get(e).team_id);
         registry.attack_cooldowns.emplace(e, weapon.attack_cooldown);
         deplete_energy(e, weapon.attack_energy_cost);
+
+        if (weapon.type == WEAPON_TYPE::BOW) {
+            audio.play_attack_bow();
+        } else {
+            audio.play_attack_sword();
+        }
     }
 
     inline void dodge(Entity& e) {
         Registry& registry = Registry::get_instance();
+        AudioSystem& audio = AudioSystem::get_instance();
 
         LocomotionStats& locomotion = registry.locomotion_stats.get(e);
 
@@ -137,5 +145,7 @@ namespace GameplaySystem {
         // TODO: maybe jump back when 0 velocity
         registry.in_dodges.emplace(e, motion.position, motion.position + Common::normalize(motion.velocity) * Globals::dodgeMoveMag, Globals::timer.GetTime(), Globals::dodgeDuration);
         deplete_energy(e, Globals::dodge_energy_cost);
+
+        audio.play_dodge();
     }
 };
