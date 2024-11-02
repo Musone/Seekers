@@ -90,6 +90,7 @@ public:
         glfwSwapInterval((unsigned int)enable_vsync);
 
         if (fullscreen) {
+            glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
             const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 #if __APPLE__
             window_width = mode->width / 2.0f;

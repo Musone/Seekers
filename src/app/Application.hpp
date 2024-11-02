@@ -419,7 +419,8 @@ public:
             if (Globals::is_3d_mode) {
                 // m_renderer->lock_cursor();
             } else { // Hacky way to quit game.
-                m_renderer->terminate();
+                // m_renderer->terminate();
+                return;
             }
 
         };
