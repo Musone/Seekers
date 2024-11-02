@@ -75,7 +75,8 @@ public:
         m_skybox_shader = new Shader("Skybox");
         m_skybox_texture = new SkyboxTexture("random_skybox.png");
         m_map_texture = new Texture2D("jungle_tile_1.jpg");
-        m_wall_texture = new Texture2D("tileset_1.png");
+        // m_wall_texture = new Texture2D("tileset_1.png");
+        m_wall_texture = new Texture2D("jungle_tile_1.jpg");
         m_wall_shader = new Shader("StaticBlinnPhong");
         m_floor_shader = new Shader("StaticBlinnPhong");
 

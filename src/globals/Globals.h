@@ -27,4 +27,5 @@ namespace Globals {
     extern float update_distance;
     extern float energy_regen_rate;
     extern float poise_regen_multiplier;
+    extern float dodge_energy_cost;
 }

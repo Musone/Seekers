@@ -38,6 +38,7 @@ struct Weapon
     float attack_cooldown;
     float stagger_duration;
     float poise_points;
+    float attack_energy_cost;
     PROJECTILE_TYPE projectile_type = PROJECTILE_TYPE::ATTACK_STYLE_COUNT;
     ENCHANTMENT enchantment = ENCHANTMENT::ENCHANTMENT_COUNT;
 };
@@ -69,6 +70,8 @@ struct Projectile
 {
     float damage;
     float range_remaining;
+    float stagger_duration;
+    float poise_points;
     PROJECTILE_TYPE projectile_type;
     ENCHANTMENT enchantment; // Added for future milestones
 };

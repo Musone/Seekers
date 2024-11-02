@@ -22,6 +22,7 @@ World::~World() = default;
 
 void World::restart_game() {
     std::cout << "Restarting game..." << std::endl;
+
     Registry& registry = Registry::get_instance();
     registry.clear_all_components();
 

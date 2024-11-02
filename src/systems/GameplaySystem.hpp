@@ -3,6 +3,7 @@
 #include <globals/Globals.h>
 #include <app/World.h>
 #include "../ecs/Registry.hpp"
+#include <app/EntityFactory.hpp>
 
 namespace GameplaySystem {
     inline void update_cooldowns(float elapsed_ms) {
@@ -20,7 +21,7 @@ namespace GameplaySystem {
             auto& stagger_cooldown = registry.stagger_cooldowns.get(e);
             stagger_cooldown.timer -= elapsed_ms / 1000.0f;
             if (stagger_cooldown.timer <= 0) {
-                registry.attack_cooldowns.remove(e);
+                registry.stagger_cooldowns.remove(e);
             }
         }
 
@@ -81,5 +82,35 @@ namespace GameplaySystem {
                 registry.near_cameras.emplace(e);
             }
         }
+    }
+
+    inline void attack(Entity& e) {
+        Registry& registry = Registry::get_instance();
+
+        LocomotionStats& locomotion = registry.locomotion_stats.get(e);
+
+        if (registry.attack_cooldowns.has(e) || registry.stagger_cooldowns.has(e) || registry.death_cooldowns.has(e) || locomotion.energy <= 0) return;
+
+        Motion& motion = registry.motions.get(e);
+        Attacker& attacker = registry.attackers.get(e);
+        Weapon& weapon = registry.weapons.get(attacker.weapon_id);
+
+        EntityFactory::create_projectile(motion, attacker, weapon, registry.teams.get(e).team_id);
+        registry.attack_cooldowns.emplace(e, weapon.attack_cooldown);
+        locomotion.energy -= weapon.attack_energy_cost;
+    }
+
+    inline void dodge(Entity& e) {
+        Registry& registry = Registry::get_instance();
+
+        LocomotionStats& locomotion = registry.locomotion_stats.get(e);
+
+        if (registry.in_dodges.has(e) || locomotion.energy <= 0) return;
+
+        Motion& motion = registry.motions.get(e);
+
+        // TODO: maybe jump back when 0 velocity
+        registry.in_dodges.emplace(e, motion.position, motion.position + Common::normalize(motion.velocity) * Globals::dodgeMoveMag, Globals::timer.GetTime(), Globals::dodgeDuration);
+        locomotion.energy -= Globals::dodge_energy_cost;
     }
 };
