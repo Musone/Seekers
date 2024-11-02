@@ -26,12 +26,10 @@ namespace GameplaySystem {
         }
 
         for (Entity& e : registry.stagger_cooldowns.entities) {
-            if (!registry.energy_no_regen_cooldowns.has(e)) {
-                auto& stagger_cooldown = registry.stagger_cooldowns.get(e);
-                stagger_cooldown.timer -= elapsed_ms / 1000.0f;
-                if (stagger_cooldown.timer <= 0) {
-                    registry.stagger_cooldowns.remove(e);
-                }
+            auto& stagger_cooldown = registry.stagger_cooldowns.get(e);
+            stagger_cooldown.timer -= elapsed_ms / 1000.0f;
+            if (stagger_cooldown.timer <= 0) {
+                registry.stagger_cooldowns.remove(e);
             }
         }
 
@@ -52,8 +50,10 @@ namespace GameplaySystem {
             if (registry.locomotion_stats.has(e)) {
                 auto& loco = registry.locomotion_stats.get(e);
 
-                loco.energy += Globals::energy_regen_rate * elapsed_ms / 1000.0f;
-                loco.energy = fmin(loco.energy, loco.max_energy);
+                if (!registry.energy_no_regen_cooldowns.has(e)) {
+                    loco.energy += Globals::energy_regen_rate * elapsed_ms / 1000.0f;
+                    loco.energy = fmin(loco.energy, loco.max_energy);
+                }
                 loco.poise += Globals::poise_regen_multiplier * loco.max_poise * elapsed_ms / 1000.0f;
                 loco.poise = fmin(loco.poise, loco.max_poise);
             }
