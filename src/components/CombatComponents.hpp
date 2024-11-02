@@ -2,20 +2,20 @@
 
 #include <glm/vec2.hpp>
 
-enum class ATTACK_STYLE
+enum class PROJECTILE_TYPE
 {
-    ONE_AIM = 0,
-    TWO_AIM = ONE_AIM + 1,
-    THREE_WIDE = TWO_AIM + 1,
-    EIGHT_ALL_DIR = THREE_WIDE + 1,
-    ATTACK_STYLE_COUNT = EIGHT_ALL_DIR + 1
+    ARROW = 0,
+    MELEE = ARROW + 1,
+    MAGIC = MELEE + 1,
+    ATTACK_STYLE_COUNT = MAGIC + 1
 };
 
-const int attack_style_count = (int)ATTACK_STYLE::ATTACK_STYLE_COUNT;
+const int projectile_type_count = (int)PROJECTILE_TYPE::ATTACK_STYLE_COUNT;
 
 enum class WEAPON_TYPE
 {
-    SWORD = 0,
+    PUNCH = 0,
+    SWORD = 1,
     BOW = SWORD + 1,
     WAND = BOW + 1,
     WEAPON_TYPE_COUNT = WAND + 1
@@ -38,7 +38,7 @@ struct Weapon
     float attack_cooldown;
     float stagger_duration;
     float poise_points;
-    ATTACK_STYLE attack_style = ATTACK_STYLE::ATTACK_STYLE_COUNT;
+    PROJECTILE_TYPE projectile_type = PROJECTILE_TYPE::ATTACK_STYLE_COUNT;
     ENCHANTMENT enchantment = ENCHANTMENT::ENCHANTMENT_COUNT;
 };
 
@@ -65,10 +65,11 @@ struct DeathCooldown {
     DeathCooldown(float t) : timer(t) {}
 };
 
-struct ProjectileStats
+struct Projectile
 {
     float damage;
     float range_remaining;
+    PROJECTILE_TYPE projectile_type;
     ENCHANTMENT enchantment; // Added for future milestones
 };
 

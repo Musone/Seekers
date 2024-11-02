@@ -969,7 +969,7 @@ private:
     void _draw_projectiles() {
         auto& reg = Registry::get_instance();
 
-        for (const auto& entity : reg.projectile_stats.entities) {
+        for (const auto& entity : reg.projectiles.entities) {
             if (!reg.motions.has(entity)) { continue; }
             const auto& motion = reg.motions.get(entity);
             m_arrow->set_position(glm::vec3(motion.position, 2.0f));

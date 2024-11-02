@@ -43,7 +43,7 @@ namespace CollisionSystem {
     inline void proj_loco_collision(Entity& proj, Entity& loco) {
         Registry& registry = Registry::get_instance();
 
-        registry.locomotion_stats.get(loco).health -= registry.projectile_stats.get(proj).damage;
+        registry.locomotion_stats.get(loco).health -= registry.projectiles.get(proj).damage;
         registry.remove_all_components_of(proj);
         //Log::log_info("Projectile hit target.", __FILE__, __LINE__);
         if (registry.locomotion_stats.get(loco).health <= 0) {
@@ -107,14 +107,14 @@ namespace CollisionSystem {
             // check if one of the entities were removed in previous collision resolve
             if (!registry.teams.has(entity2) || !registry.teams.has(entity1)) {continue;}
 
-            if (registry.projectile_stats.has(entity1)) {
+            if (registry.projectiles.has(entity1)) {
                 if (registry.locomotion_stats.has(entity2)) {
                     proj_loco_collision(entity1, entity2);
                 } else {
                     proj_fixed_collision(entity1, entity2);
                 }
             } else if (registry.locomotion_stats.has(entity1)) {
-                if (registry.projectile_stats.has(entity2)) {
+                if (registry.projectiles.has(entity2)) {
                     proj_loco_collision(entity2, entity1);
                 } else if (registry.locomotion_stats.has(entity2)) {
                     loco_loco_collision(entity1, entity2);
@@ -122,7 +122,7 @@ namespace CollisionSystem {
                     loco_fixed_collision(entity1, entity2);
                 }
             } else {
-                if (registry.projectile_stats.has(entity2)) {
+                if (registry.projectiles.has(entity2)) {
                     proj_fixed_collision(entity2, entity1);
                 } else if (registry.locomotion_stats.has(entity2)) {
                     loco_fixed_collision(entity2, entity1);

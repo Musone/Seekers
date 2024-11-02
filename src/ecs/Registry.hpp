@@ -27,7 +27,7 @@ public:
 	ComponentContainer<LocomotionStats> locomotion_stats;
 	ComponentContainer<Buff> buffs;
 	ComponentContainer<Weapon> weapons;
-	ComponentContainer<ProjectileStats> projectile_stats;
+	ComponentContainer<Projectile> projectiles;
 	ComponentContainer<AttackCooldown> attack_cooldowns;
 	ComponentContainer<Team> teams;
 	ComponentContainer<MoveWith> move_withs;
@@ -55,7 +55,7 @@ public:
 		m_registry_list.push_back(&locomotion_stats);
 		m_registry_list.push_back(&buffs);
 		m_registry_list.push_back(&weapons);
-		m_registry_list.push_back(&projectile_stats);
+		m_registry_list.push_back(&projectiles);
 		m_registry_list.push_back(&attack_cooldowns);
 		m_registry_list.push_back(&teams);
 		m_registry_list.push_back(&move_withs);

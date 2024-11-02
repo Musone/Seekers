@@ -52,10 +52,10 @@ namespace GameplaySystem {
     inline void update_projectile_range(float elapsed_ms) {
         Registry& registry = Registry::get_instance();
 
-        for (Entity& e : registry.projectile_stats.entities) {
-            ProjectileStats& projectile_stats = registry.projectile_stats.get(e);
-            projectile_stats.range_remaining -= (elapsed_ms / 1000) * glm::length(registry.motions.get(e).velocity);
-            if (projectile_stats.range_remaining <= 0) {
+        for (Entity& e : registry.projectiles.entities) {
+            Projectile& projectile = registry.projectiles.get(e);
+            projectile.range_remaining -= (elapsed_ms / 1000) * glm::length(registry.motions.get(e).velocity);
+            if (projectile.range_remaining <= 0) {
                 registry.remove_all_components_of(e);
             }
         }
