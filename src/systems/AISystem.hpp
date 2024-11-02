@@ -29,16 +29,40 @@ namespace AISystem
         if (!registry.motions.has(nearby_entity)) {
             return false;
         }
-        if (!registry.bounding_boxes.has(nearby_entity)) {
+        if (!registry.collision_bounds.has(nearby_entity)) {
             return false;
         }
         Motion& motion = registry.motions.get(nearby_entity);
-        BoundingBox& nearby_box = registry.bounding_boxes.get(nearby_entity);
-        BoundingBox& ai_box = registry.bounding_boxes.get(ai_entity);
+        const CollisionBounds& nearby_bounds = registry.collision_bounds.get(nearby_entity);
+        const CollisionBounds& ai_bounds = registry.collision_bounds.get(ai_entity);
         float distance = glm::length(next_position - motion.position);
-        float combined_radius = nearby_box.radius + ai_box.radius + 5.0f;
-        if (distance < combined_radius)
-        {
+        
+        // Get combined radius for broad phase check
+        float combined_radius = 0.0f;
+        if (nearby_bounds.type == ColliderType::Circle && ai_bounds.type == ColliderType::Circle) {
+            combined_radius = nearby_bounds.circle.radius + ai_bounds.circle.radius + 5.0f;
+        } else {
+            // For non-circle colliders, use conservative estimate
+            if (nearby_bounds.type == ColliderType::Circle) {
+                combined_radius += nearby_bounds.circle.radius;
+            } else if (nearby_bounds.type == ColliderType::Wall) {
+                combined_radius += glm::length(nearby_bounds.wall->aabb.max - nearby_bounds.wall->aabb.min) * 0.5f;
+            } else if (nearby_bounds.type == ColliderType::Mesh) {
+                combined_radius += nearby_bounds.mesh->bound_radius;
+            }
+            
+            if (ai_bounds.type == ColliderType::Circle) {
+                combined_radius += ai_bounds.circle.radius;
+            } else if (ai_bounds.type == ColliderType::Wall) {
+                combined_radius += glm::length(ai_bounds.wall->aabb.max - ai_bounds.wall->aabb.min) * 0.5f;
+            } else if (ai_bounds.type == ColliderType::Mesh) {
+                combined_radius += ai_bounds.mesh->bound_radius;
+            }
+            
+            combined_radius += 5.0f;
+        }
+        
+        if (distance < combined_radius) {
             return true;
         }
         return false;
@@ -109,10 +133,19 @@ namespace AISystem
 
         glm::vec2 ai_position = get_grid_map_coordinates(motion);
         glm::vec2 target_position = get_grid_map_coordinates(registry.motions.get(registry.player));
-        BoundingBox ai_box = registry.bounding_boxes.get(e);
+        CollisionBounds& ai_box = registry.collision_bounds.get(e);
+        
+        // Get radius for pathfinding - assume circle collider
+        float radius = 0.0f;
+        if (ai_box.type == ColliderType::Circle) {
+            radius = ai_box.circle.radius;
+        }
 
         glm::vec2 next_position = get_next_point_of_path_to_player(
-        registry.grid_map.grid_boxes, ai_position.x, ai_position.y, ai_box.radius
+            registry.grid_map.grid_boxes, 
+            ai_position.x, 
+            ai_position.y, 
+            radius
         );
 
         glm::vec2 new_position = get_position_from_grid_map_coordinates(next_position.x, next_position.y);
