@@ -92,13 +92,8 @@ public:
         if (fullscreen) {
             glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
             const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-#if __APPLE__
-            window_width = mode->width / 2.0f;
-            window_height = mode->height / 2.0f;
-#else
             window_width = mode->width;
             window_height = mode->height;
-#endif
         }
 
         m_window = glfwCreateWindow(window_width, window_height, window_name.c_str(), NULL, NULL);
