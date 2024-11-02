@@ -8,6 +8,7 @@
 #include "systems/PhysicsSystem.hpp"
 #include "systems/GridMapSystem.hpp"
 #include "systems/AudioSystem.hpp"
+#include "systems/TutorialSystem.hpp"
 
 #include "systems/AISystem.hpp"
 
@@ -17,8 +18,10 @@
 
 #include "systems/ProceduralGenerationSystem.hpp"
 
-World::World() : m_registry(Registry::get_instance()), m_audioSystem(AudioSystem::get_instance()) {}
-
+World::World()
+    : m_registry(Registry::get_instance()),
+    m_audioSystem(AudioSystem::get_instance()),
+    m_tutorialSystem(TutorialSystem::get_instance()) {}
 World::~World() = default;
 
 void World::restart_game() {
@@ -118,6 +121,7 @@ void World::step(float elapsed_ms) {
     GameplaySystem::update_projectile_range(elapsed_ms);
     GameplaySystem::update_near_player_camera();
 
+    m_tutorialSystem.handle_tutorial_per_frame();
 
     enforce_boundaries(m_registry.player);
 }
