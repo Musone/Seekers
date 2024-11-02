@@ -389,10 +389,11 @@ namespace ProceduralGenerationSystem {
             std::uniform_int_distribution<> pos_x_dist(room.position.x - room.size.x / 2 + 2, room.position.x + room.size.x / 2 - 2);
             std::uniform_int_distribution<> pos_y_dist(room.position.y - room.size.y / 2 + 2, room.position.y + room.size.y / 2 - 2);
             std::uniform_int_distribution<> enemy_num_dist(1, room.size.x * room.size.y / 400);
+            std::uniform_int_distribution<> enemy_type_dist(0, (int)ENEMY_TYPE::ENEMY_TYPE_COUNT - 1);
 
             int enemy_num = enemy_num_dist(gen);
             for (int i = 0; i < enemy_num; i++) {
-                EntityFactory::create_enemy({pos_x_dist(gen), pos_y_dist(gen)});
+                EntityFactory::create_enemy({pos_x_dist(gen), pos_y_dist(gen)}, (ENEMY_TYPE)enemy_type_dist(gen));
             }
             total_num_enemies += enemy_num;
         }

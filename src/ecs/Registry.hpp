@@ -27,7 +27,7 @@ public:
 	ComponentContainer<LocomotionStats> locomotion_stats;
 	ComponentContainer<Buff> buffs;
 	ComponentContainer<Weapon> weapons;
-	ComponentContainer<ProjectileStats> projectile_stats;
+	ComponentContainer<Projectile> projectiles;
 	ComponentContainer<AttackCooldown> attack_cooldowns;
 	ComponentContainer<Team> teams;
 	ComponentContainer<MoveWith> move_withs;
@@ -37,12 +37,16 @@ public:
 	ComponentContainer<InDodge> in_dodges;
 	ComponentContainer<AIComponent> ais;
 	ComponentContainer<NearPlayer> near_players;
+	ComponentContainer<NearCamera> near_cameras;
 	ComponentContainer<Wall> walls;
 	ComponentContainer<Enemy> enemies;
 	ComponentContainer<StaticObject> static_objects;
+	ComponentContainer<StaggerCooldown> stagger_cooldowns;
+	ComponentContainer<DeathCooldown> death_cooldowns;
 	GridMap grid_map;
 	Entity player;
 	InputState input_state;
+	glm::vec2 camera_pos;
 
 	Registry() {
 		m_registry_list.push_back(&motions);
@@ -51,7 +55,7 @@ public:
 		m_registry_list.push_back(&locomotion_stats);
 		m_registry_list.push_back(&buffs);
 		m_registry_list.push_back(&weapons);
-		m_registry_list.push_back(&projectile_stats);
+		m_registry_list.push_back(&projectiles);
 		m_registry_list.push_back(&attack_cooldowns);
 		m_registry_list.push_back(&teams);
 		m_registry_list.push_back(&move_withs);
@@ -64,6 +68,9 @@ public:
 		m_registry_list.push_back(&static_objects);
 		m_registry_list.push_back(&walls);
 		m_registry_list.push_back(&enemies);
+		m_registry_list.push_back(&near_cameras);
+		m_registry_list.push_back(&stagger_cooldowns);
+		m_registry_list.push_back(&death_cooldowns);
 	}
 
 	Registry(Registry const&) = delete;

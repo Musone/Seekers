@@ -37,7 +37,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_weapon(glm::vec2 position, float damage, float attack_cooldown = 0.15f) {
+    inline Entity create_weapon(glm::vec2 position, float damage, float attack_cooldown = 0.15f, WEAPON_TYPE weapon_type = WEAPON_TYPE::SWORD) {
         Registry& registry = Registry::get_instance();
 
         auto entity = Entity();
@@ -47,18 +47,22 @@ namespace EntityFactory {
         motion.scale = glm::vec2(1.5f, 1.5f);
 
         auto& weapon = registry.weapons.emplace(entity);
-        weapon.type = WEAPON_TYPE::SWORD;
+        weapon.type = weapon_type;
         weapon.damage = damage;
         weapon.range = 30.0f;
         weapon.proj_speed = 100.0f;
         weapon.attack_cooldown = attack_cooldown;
-        weapon.attack_style = ATTACK_STYLE::ONE_AIM;
+        if (weapon_type == WEAPON_TYPE::BOW) {
+            weapon.projectile_type = PROJECTILE_TYPE::ARROW;
+        } else {
+            weapon.projectile_type = PROJECTILE_TYPE::MELEE;
+        }
         weapon.enchantment = ENCHANTMENT::NONE;
 
         return entity;
     }
 
-    inline Entity create_enemy(glm::vec2 position) {
+    inline Entity create_enemy(glm::vec2 position, ENEMY_TYPE enemy_type = ENEMY_TYPE::WARRIOR) {
         Registry& registry = Registry::get_instance();
         auto entity = Entity();
 
@@ -74,7 +78,7 @@ namespace EntityFactory {
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::FOW;
 
-        registry.attackers.emplace(entity);
+        auto& attacker = registry.attackers.emplace(entity);
 
         AIComponent& ai = registry.ais.emplace(entity);
         ai.current_state = AI_STATE::PATROL;
@@ -83,10 +87,17 @@ namespace EntityFactory {
         ai.target_position = position;
 
         auto& enemy = registry.enemies.emplace(entity);
-        enemy.type = ENEMY_TYPE::WARRIOR;
+        enemy.type = enemy_type;
 
-        auto enemy_weapon = EntityFactory::create_weapon(position, 5.0f);
-        registry.attackers.get(entity).weapon_id = enemy_weapon;
+        Entity enemy_weapon;
+        if (enemy_type == ENEMY_TYPE::ZOMBIE) {
+            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.15f, WEAPON_TYPE::PUNCH);
+        } else if (enemy_type == ENEMY_TYPE::ARCHER) {
+            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.15f, WEAPON_TYPE::BOW);
+        } else {
+            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.15f, WEAPON_TYPE::SWORD);
+        }
+        attacker.weapon_id = enemy_weapon;
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         // Functions with the name "max" cause the code to blowup. I don't know why the compiler
@@ -108,16 +119,14 @@ namespace EntityFactory {
         motion.velocity = attacker.aim * weapon.proj_speed;
         motion.scale = glm::vec2(1.0f, 1.0f);  // Projectile size
 
-        auto& projectile = registry.projectile_stats.emplace(entity);
+        auto& projectile = registry.projectiles.emplace(entity);
         projectile.damage = weapon.damage;
         projectile.range_remaining = weapon.range;
         projectile.enchantment = ENCHANTMENT::NONE;
+        projectile.projectile_type = weapon.projectile_type;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = team_id;
-
-        auto& texture = registry.textures.emplace(entity);
-        texture.name = "projectile.png";
 
         auto& bounding_box = registry.bounding_boxes.emplace(entity);
         // Functions with the name "max" cause the code to blowup. I don't know why the compiler
