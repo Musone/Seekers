@@ -172,10 +172,16 @@ public:
         return m_animator.portion_complete();
     }
 
+    void replay_animation() {
+        if (!m_animator.should_finish() || m_animator.portion_complete() >= 0.99999f) {
+            m_animator.replay();
+        }
+    }
+
     void play_animation(const size_t& index, float duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
         if (index < m_animations.size()) {
             if (index != get_current_animation_id()) {
-                if (!m_animator.should_finish() || m_animator.portion_complete() >= 0.9f) {
+                if (!m_animator.should_finish() || m_animator.portion_complete() >= 0.9999f) {
                     if (duration_s <= 0) {
                         duration_s = m_animations[index]->get_duration();
                     }

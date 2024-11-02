@@ -89,6 +89,12 @@ public:
         m_time_of_prev_frame = float(m_timer.GetTime()) / 1000000.0f;  // Convert microseconds to seconds
     }
 
+    
+    void replay() {
+        m_animation_time = 0;
+    }
+
+
     bool should_finish() const { return m_should_finish; }
 
     Animation* get_current_animation() const { return m_current_animation; }
