@@ -942,12 +942,12 @@ private:
         for (auto& entity : reg.walls.entities) {
             if (!reg.motions.has(entity)) { continue; }
             auto& motion = reg.motions.get(entity);
-            glm::vec3 wall_scale = glm::vec3(motion.scale, 20.0f);
+            glm::vec3 wall_scale = glm::vec3(motion.scale, 10.0f);
             m_wall_shader->set_uniform_3f("u_scale", wall_scale);
             m_wall_shader->set_uniform_mat4f(
                 "u_model",
                 Transform::create_model_matrix(
-                    glm::vec3(motion.position, 0.0f),
+                    glm::vec3(motion.position, wall_scale.z / 2),
                     { 0, 0, motion.angle },
                     wall_scale
                 )
