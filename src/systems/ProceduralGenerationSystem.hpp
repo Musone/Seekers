@@ -281,7 +281,9 @@ namespace ProceduralGenerationSystem {
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 if (map[y][x] == 'R' || map[y][x] == 'H') {
-                    for (const auto& [dx, dy] : directions) {
+                    for (const auto& kv : directions) {
+                        auto dx = kv.first;
+                        auto dy = kv.second;
                         int nx = x + dx;
                         int ny = y + dy;
                         if (is_in_bounds(nx, ny, width, height) && map[ny][nx] == '.') {
