@@ -1,7 +1,7 @@
 #pragma once
 
 #include <globals/Globals.h>
-
+#include <app/World.h>
 #include "../ecs/Registry.hpp"
 
 namespace GameplaySystem {
@@ -13,6 +13,38 @@ namespace GameplaySystem {
             attack_cooldown.timer -= elapsed_ms / 1000.0f;
             if (attack_cooldown.timer <= 0) {
                 registry.attack_cooldowns.remove(e);
+            }
+        }
+
+        for (Entity& e : registry.stagger_cooldowns.entities) {
+            auto& stagger_cooldown = registry.stagger_cooldowns.get(e);
+            stagger_cooldown.timer -= elapsed_ms / 1000.0f;
+            if (stagger_cooldown.timer <= 0) {
+                registry.attack_cooldowns.remove(e);
+            }
+        }
+
+        for (Entity& e : registry.death_cooldowns.entities) {
+            auto& death_cooldown = registry.death_cooldowns.get(e);
+            death_cooldown.timer -= elapsed_ms / 1000.0f;
+            if (death_cooldown.timer <= 0) {
+                registry.remove_all_components_of(e);
+                if (registry.player == e) {World::restart_game();}
+            }
+        }
+    }
+
+    inline void update_regen_stats(float elapsed_ms) {
+        Registry& registry = Registry::get_instance();
+
+        for (Entity& e : registry.near_players.entities) {
+            if (registry.locomotion_stats.has(e)) {
+                auto& loco = registry.locomotion_stats.get(e);
+
+                loco.energy += Globals::energy_regen_rate * elapsed_ms / 1000.0f;
+                loco.energy = fmin(loco.energy, loco.max_energy);
+                loco.poise += Globals::poise_regen_multiplier * loco.max_poise * elapsed_ms / 1000.0f;
+                loco.poise = fmin(loco.poise, loco.max_poise);
             }
         }
     }

@@ -41,6 +41,8 @@ public:
 	ComponentContainer<Wall> walls;
 	ComponentContainer<Enemy> enemies;
 	ComponentContainer<StaticObject> static_objects;
+	ComponentContainer<StaggerCooldown> stagger_cooldowns;
+	ComponentContainer<DeathCooldown> death_cooldowns;
 	GridMap grid_map;
 	Entity player;
 	InputState input_state;
@@ -67,6 +69,8 @@ public:
 		m_registry_list.push_back(&walls);
 		m_registry_list.push_back(&enemies);
 		m_registry_list.push_back(&near_cameras);
+		m_registry_list.push_back(&stagger_cooldowns);
+		m_registry_list.push_back(&death_cooldowns);
 	}
 
 	Registry(Registry const&) = delete;

@@ -36,6 +36,8 @@ struct Weapon
     float range;
     float proj_speed;
     float attack_cooldown;
+    float stagger_duration;
+    float poise_points;
     ATTACK_STYLE attack_style = ATTACK_STYLE::ATTACK_STYLE_COUNT;
     ENCHANTMENT enchantment = ENCHANTMENT::ENCHANTMENT_COUNT;
 };
@@ -50,6 +52,17 @@ struct AttackCooldown
 {
     float timer;
     AttackCooldown(float t) : timer(t) {}
+};
+
+struct StaggerCooldown
+{
+    float timer;
+    StaggerCooldown(float t) : timer(t) {}
+};
+
+struct DeathCooldown {
+    float timer;
+    DeathCooldown(float t) : timer(t) {}
 };
 
 struct ProjectileStats

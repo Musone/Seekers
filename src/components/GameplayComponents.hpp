@@ -9,6 +9,8 @@ struct LocomotionStats
     float max_health;
     float energy;
     float max_energy;
+    float poise;
+    float max_poise;
     float defense;
     float power;
     float agility;
