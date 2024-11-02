@@ -12,8 +12,8 @@
     #define WINDOW_HEIGHT 1280
 #endif
 
-#define MAP_WIDTH 500
-#define MAP_HEIGHT 500
+#define MAP_WIDTH 100
+#define MAP_HEIGHT 100
 #define CAMERA_DISTANCE_FROM_WORLD 20.0f
 #include <utils/Timer.h>
 

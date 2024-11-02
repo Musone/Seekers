@@ -45,6 +45,7 @@ class Application {
     StaticModel* m_sword;
     StaticModel* m_bow;
     StaticModel* m_arrow;
+    StaticModel* m_banana;
 
     Texture2D* m_map_texture;
     Shader* m_floor_shader;
@@ -110,12 +111,20 @@ public:
         m_spooky_tree->m_has_texture = true;
         m_spooky_tree->texture_list.push_back(std::make_shared<Texture2D>("Spooky Tree.jpg"));
         m_spooky_tree->mesh_list.back()->set_texture(m_spooky_tree->texture_list.back());
+        m_spooky_tree->set_pre_transform(
+            Transform::create_scaling_matrix(glm::vec3(0.15f, 0.15f, 0.35f))
+        );
 
         m_bow = new StaticModel("models/Bow.obj", m_wall_shader);
         m_arrow = new StaticModel("models/Arrow.dae", m_wall_shader);
         m_arrow->set_scale(glm::vec3(5));
         m_arrow->set_pre_transform(
             Transform::create_rotation_matrix({21.1533680, 22.0539455, 116.577499})
+        );
+        m_banana = new StaticModel("models/Melee.obj", m_wall_shader);
+        m_banana->set_pre_transform(
+            Transform::create_rotation_matrix({0, 0, - PI / 2}) *
+            Transform::create_scaling_matrix(glm::vec3(0.05, 0.05, 0.1))
         );
 
         m_light_colour = glm::vec3(1.0f);
@@ -162,6 +171,8 @@ public:
         hero.load_animation_from_file("models/Hero/Roll.dae");
         hero.load_animation_from_file("models/Archer Grunt/Standing Attack.dae");
         hero.load_animation_from_file("models/Archer Grunt/Running Attack.dae");
+        hero.load_animation_from_file("models/Archer Grunt/Dying.dae");
+        hero.load_animation_from_file("models/Archer Grunt/Stagger.dae");
         hero.set_pre_transform(
             Transform::create_model_matrix(
                 glm::vec3(0),
@@ -180,6 +191,8 @@ public:
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Roll.dae");
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Standing Attack.dae");
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Running Attack.dae");
+        warrior_grunt.load_animation_from_file("models/Warrior Grunt/Dying.dae");
+        warrior_grunt.load_animation_from_file("models/Warrior Grunt/Stagger.dae");
         warrior_grunt.set_pre_transform(
             Transform::create_model_matrix(
                 glm::vec3(0),
@@ -198,6 +211,8 @@ public:
         archer_grunt.load_animation_from_file("models/Archer Grunt/Roll.dae");
         archer_grunt.load_animation_from_file("models/Archer Grunt/Standing Attack.dae");
         archer_grunt.load_animation_from_file("models/Archer Grunt/Running Attack.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Dying.dae");
+        archer_grunt.load_animation_from_file("models/Archer Grunt/Stagger.dae");
         archer_grunt.set_pre_transform(
             Transform::create_model_matrix(
                 glm::vec3(0),
@@ -207,6 +222,23 @@ public:
         );
         archer_grunt.print_bones();
         archer_grunt.print_animations();
+
+        AnimatedModel zombie_grunt("models/Zombie Grunt/Zombie Grunt.dae", &animated_shader);
+        zombie_grunt.load_animation_from_file("models/Zombie Grunt/Forward.dae");
+        zombie_grunt.load_animation_from_file("models/Zombie Grunt/Roll.dae");
+        zombie_grunt.load_animation_from_file("models/Zombie Grunt/Standing Attack.dae");
+        zombie_grunt.load_animation_from_file("models/Zombie Grunt/Running Attack.dae");
+        zombie_grunt.load_animation_from_file("models/Zombie Grunt/Dying.dae");
+        zombie_grunt.load_animation_from_file("models/Zombie Grunt/Stagger.dae");
+        zombie_grunt.set_pre_transform(
+            Transform::create_model_matrix(
+                glm::vec3(0),
+                glm::vec3(PI / 2, 0, PI / 2),
+                glm::vec3(0.02)
+            )
+        );
+        zombie_grunt.print_bones();
+        zombie_grunt.print_animations();
 
         // Texture2D old_hero("player.png");
 
@@ -218,7 +250,8 @@ public:
         world.demo_init();
         Registry& reg = Registry::get_instance();
 
-        m_models[reg.player.get_id()] = &hero;
+        // m_models[reg.player.get_id()] = &hero;
+        m_models[reg.player.get_id()] = &zombie_grunt;
         hero.attach_to_joint(
             m_bow, 
             "mixamorig_RightHand", 
@@ -955,7 +988,6 @@ private:
             m_renderer->draw(m_cube_mesh, *m_wall_shader);
         }
 
-        m_spooky_tree->set_scale(0.15f, 0.15f, 0.35f);
         for (auto& entity : reg.static_objects.entities) {
             if (!reg.motions.has(entity)) { continue; }
             auto& static_object = reg.static_objects.get(entity);
@@ -972,11 +1004,20 @@ private:
         for (const auto& entity : reg.projectile_stats.entities) {
             if (!reg.motions.has(entity)) { continue; }
             const auto& motion = reg.motions.get(entity);
-            m_arrow->set_position(glm::vec3(motion.position, 2.0f));
-            m_arrow->set_rotation_z(motion.angle);
-            m_arrow->set_rotation_z(motion.angle);
-            m_arrow->set_rotation_x(m_arrow->get_rotation_x() + PI / 8);
-            m_arrow->draw();
+            // if ()
+            
+            // if (is_archer) {
+                m_arrow->set_position(glm::vec3(motion.position, 2.0f));
+                m_arrow->set_rotation_z(motion.angle);
+                m_arrow->set_rotation_z(motion.angle);
+                m_arrow->set_rotation_x(m_arrow->get_rotation_x() + PI / 8);
+                m_arrow->draw();
+            // } else {
+            //     m_banana->set_position(glm::vec3(motion.position, 2.0f));
+            //     m_banana->set_rotation_z(motion.angle);
+            //     m_banana->set_rotation_z(motion.angle);
+            //     m_banana->draw();
+            // }
         }
 
     }
