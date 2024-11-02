@@ -54,6 +54,8 @@ class Application {
     glm::vec3 m_light_pos;
     glm::vec3 m_light_colour;
 
+    std::vector<int> m_to_be_updated_and_drawn;
+
     std::unordered_map<unsigned int, AnimatedModel*> m_models;
 public:
 
@@ -267,7 +269,6 @@ public:
             glm::vec3 ortho_cam_dir;
             {
                 float the_3d_angle = 0;
-                // m_camera.set_rotation({ 2 * PI / 6, 0, player_motion.angle });
                 m_camera.set_rotation({ PI / 2, 0, player_motion.angle - PI / 2});
                 
                 const auto temp = m_camera.rotate_to_camera_direction({ 0, 0, -1 });
@@ -279,38 +280,9 @@ public:
             }
 
             bool is_dodging = false;
-            // bool rotate_hero_to_velocity_dir = false;
-            // bool rotate_opposite_hero_to_velocity_dir = false;
-            // if (reg.in_dodges.has(reg.player)) {
-            //     hero.play_animation("Roll.dae", 2.0f, false, true);
-            // } else if (reg.attack_cooldowns.has(reg.player)) {
-            //     if (glm::length(player_motion.velocity) > 0.0f) {
-            //         hero.play_animation("Running Attack.dae", 4.0f, false, true);
-            //     } else {
-            //         hero.play_animation("Standing Attack.dae", 3.0f, false, true);
-            //     }
-            // } else if (reg.input_state.w_down && !reg.input_state.s_down) {
-            //     hero.play_animation("Forward.dae");
-            //     rotate_hero_to_velocity_dir = true;
-            // } else if (reg.input_state.a_down && !reg.input_state.d_down && !reg.input_state.s_down) {
-            //     hero.play_animation("Left.dae");
-            // } else if (!reg.input_state.a_down && reg.input_state.d_down && !reg.input_state.s_down) {
-            //     hero.play_animation("Right.dae");
-            // } else if (!reg.input_state.w_down && reg.input_state.s_down) {
-            //     hero.play_animation("Backward.dae");
-            //     rotate_opposite_hero_to_velocity_dir = true;
-            // } else {
-            //     hero.play_animation("default0");
-            // }
-
             if (hero.get_current_animation_id() == hero.get_animation_id("Roll.dae")) {
-                // rotate_hero_to_velocity_dir = true;
                 is_dodging = true;
-            } else if (hero.get_current_animation_id() == hero.get_animation_id("Running Attack.dae")) {
-                // rotate_hero_to_velocity_dir = true;
-                // is_dodging = true; // hacky way to get cinematic effect on running attack
             }
-            // hero.set_position(glm::vec3(player_motion.position, 0.0f));
 
             const glm::vec3 desired_camera_pos = glm::vec3(player_motion.position - (cam_dir * 3.0f), 3.5f) + (1.2f * ortho_cam_dir);
             glm::vec3 current_camera_position = m_camera.get_position();
@@ -337,21 +309,11 @@ public:
             } else {
                 camera_speed = base_camera_speed;
             }
-            // if (rotate_hero_to_velocity_dir && glm::length(player_motion.velocity) > 0.001f) {
-            //     hero.set_rotation_z(_vector_to_angle(player_motion.velocity) + PI / 2);
-            // } else if (rotate_opposite_hero_to_velocity_dir && glm::length(player_motion.velocity) > 0.001f) {
-            //     hero.set_rotation_z(_vector_to_angle(-player_motion.velocity) + PI / 2);
-            // } else {
-            //     hero.set_rotation_z(player_motion.angle + PI);
-            // }
             if (amount_to_move < 0.000001f) {
                 m_camera.set_position(desired_camera_pos);
             } else {
                 m_camera.set_position(current_camera_position + amount_to_move * glm::normalize(desired_camera_pos - current_camera_position));
             }
-
-            // hero.update();
-            _update_models();
 
             // _handle_free_camera_inputs();
             m_light_pos = m_camera.get_position();
@@ -372,17 +334,29 @@ public:
             static_shader.set_uniform_1i("u_has_vertex_colors", false);
 
 
+            m_to_be_updated_and_drawn.assign(reg.near_players.size(), -1);
+            int i = 0;
+            for (const auto& entity : reg.near_players.entities) {   
+                if (
+                    entity.get_id() == reg.player.get_id() || 
+                    (reg.locomotion_stats.has(entity) && reg.motions.has(entity))
+                ) {
+                    m_to_be_updated_and_drawn[i++] = entity.get_id();
+                }
+            }
+            _update_models();
+
             m_renderer->begin_draw();
             _draw_map_and_skybox();
             _draw_walls();
             _draw_health_bars();
             _draw_projectiles();
             
-            for (const auto& kv : m_models) {
-                if (kv.second == nullptr) { continue; }
-                kv.second->draw();
+            for (auto& id : m_to_be_updated_and_drawn) {
+                auto kv = m_models.find(id);
+                if (kv == m_models.end() || kv->second == nullptr) { continue; }
+                kv->second->draw();
             }
-            // hero.draw();
             
             _draw_aim();
 
@@ -915,11 +889,13 @@ private:
 
     void _draw_map_and_skybox() {
         // Render skybox.
+        float size = Common::max_of(MAP_WIDTH, MAP_HEIGHT);
+        size += 500;
         GL_Call(glDepthFunc(GL_LEQUAL));
         m_skybox_shader->set_uniform_mat4f(
             "u_view_project", 
             m_camera.get_view_project_matrix() 
-            * Transform::create_scaling_matrix({ 500, 500, 500 })
+            * Transform::create_scaling_matrix(glm::vec3(size))
         );
         m_renderer->draw(m_cube_mesh, *m_skybox_shader);
         GL_Call(glDepthFunc(GL_LESS));
@@ -1127,20 +1103,19 @@ private:
 
     void _update_models() {
         auto& reg = Registry::get_instance();
-        for (auto& kv : m_models) {
-            auto& model = kv.second;
+        for (auto& id : m_to_be_updated_and_drawn) {
+            if (id < 0) { continue; }
+            auto& model = m_models[id];
             if (model == nullptr) {
                 continue;
             }
-            auto id = kv.first;
             Entity entity = reinterpret_cast<Entity&>(id);
             if (!reg.motions.has(entity)) {
                 delete model;
-                kv.second = nullptr;
+                m_models[id] = nullptr;
                 continue;
             }
             auto& motion = reg.motions.get(id);
-            auto& player_motion = reg.motions.get(reg.player);
 
             auto angle = std::fmod(motion.angle, 2 * PI);
             if (angle < 0) {
