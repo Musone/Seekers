@@ -174,7 +174,7 @@ namespace EntityFactory {
 
         // Use wall collider instead of AABB
         auto& bounds = registry.collision_bounds.emplace(entity,
-            CollisionBounds::create_wall(motion.scale));
+            CollisionBounds::create_wall(motion.scale, motion.angle));
 
         return entity;
     }

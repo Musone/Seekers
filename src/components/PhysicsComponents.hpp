@@ -1,8 +1,12 @@
 #pragma once
 
 #include <glm/vec2.hpp>
+#include <glm/geometric.hpp>  // for normalize
+#include <glm/common.hpp>     // for min, max
 #include "ecs/Entity.hpp"
 #include <vector>
+#include <limits>
+#include <cmath>
 
 struct Motion
 {
@@ -195,21 +199,62 @@ struct CollisionBounds {
         return bounds;
     }
     
-    static CollisionBounds create_wall(const glm::vec2& size) {
+    static CollisionBounds create_wall(const glm::vec2& size, float angle) {
         CollisionBounds bounds;
         bounds.type = ColliderType::Wall;
         bounds.wall = new WallCollider;
         
-        bounds.wall->aabb.min = -size/2.0f;
-        bounds.wall->aabb.max = size/2.0f;
-        
+        // Create rotated AABB
         glm::vec2 half_size = size/2.0f;
-        bounds.wall->edges = {
-            {{-half_size.x, -half_size.y}, {half_size.x, -half_size.y}, {0.0f, -1.0f}},
-            {{half_size.x, -half_size.y}, {half_size.x, half_size.y}, {1.0f, 0.0f}},
-            {{half_size.x, half_size.y}, {-half_size.x, half_size.y}, {0.0f, 1.0f}},
-            {{-half_size.x, half_size.y}, {-half_size.x, -half_size.y}, {-1.0f, 0.0f}}
+        glm::vec2 corners[4] = {
+            {-half_size.x, -half_size.y},
+            {half_size.x, -half_size.y},
+            {half_size.x, half_size.y},
+            {-half_size.x, half_size.y}
         };
+        
+        // Rotation matrix
+        float cos_a = cos(angle);
+        float sin_a = sin(angle);
+        
+        // Calculate rotated corners and AABB bounds
+        glm::vec2 min_bound(std::numeric_limits<float>::max());
+        glm::vec2 max_bound(std::numeric_limits<float>::lowest());
+        
+        // Rotate corners and update bounds
+        glm::vec2 rotated_corners[4];
+        for (int i = 0; i < 4; i++) {
+            // Rotate corner
+            rotated_corners[i] = glm::vec2(
+                corners[i].x * cos_a - corners[i].y * sin_a,
+                corners[i].x * sin_a + corners[i].y * cos_a
+            );
+            
+            // Component-wise min/max
+            min_bound.x = std::min(min_bound.x, rotated_corners[i].x);
+            min_bound.y = std::min(min_bound.y, rotated_corners[i].y);
+            max_bound.x = std::max(max_bound.x, rotated_corners[i].x);
+            max_bound.y = std::max(max_bound.y, rotated_corners[i].y);
+        }
+        
+        bounds.wall->aabb.min = min_bound;
+        bounds.wall->aabb.max = max_bound;
+        
+        // Create edges with proper normals
+        bounds.wall->edges.clear();
+        for (int i = 0; i < 4; i++) {
+            int next = (i + 1) % 4;
+            glm::vec2 edge_vec = rotated_corners[next] - rotated_corners[i];
+            glm::vec2 normal(-edge_vec.y, edge_vec.x);
+            normal = glm::normalize(normal);
+            
+            bounds.wall->edges.push_back({
+                rotated_corners[i],
+                rotated_corners[next],
+                normal
+            });
+        }
+        
         return bounds;
     }
     
