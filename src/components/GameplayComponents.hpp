@@ -107,3 +107,7 @@ struct InDodge {
 struct NearPlayer {
 
 };
+
+struct NearCamera {
+
+};

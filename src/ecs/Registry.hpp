@@ -37,12 +37,14 @@ public:
 	ComponentContainer<InDodge> in_dodges;
 	ComponentContainer<AIComponent> ais;
 	ComponentContainer<NearPlayer> near_players;
+	ComponentContainer<NearCamera> near_cameras;
 	ComponentContainer<Wall> walls;
 	ComponentContainer<Enemy> enemies;
 	ComponentContainer<StaticObject> static_objects;
 	GridMap grid_map;
 	Entity player;
 	InputState input_state;
+	glm::vec2 camera_pos;
 
 	Registry() {
 		m_registry_list.push_back(&motions);
@@ -64,6 +66,7 @@ public:
 		m_registry_list.push_back(&static_objects);
 		m_registry_list.push_back(&walls);
 		m_registry_list.push_back(&enemies);
+		m_registry_list.push_back(&near_cameras);
 	}
 
 	Registry(Registry const&) = delete;

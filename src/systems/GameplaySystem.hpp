@@ -29,18 +29,24 @@ namespace GameplaySystem {
         }
     }
 
-    inline void update_near_player() {
+    inline void update_near_player_camera() {
         Registry& registry = Registry::get_instance();
 
         registry.near_players.clear();
+        registry.near_cameras.clear();
 
         auto& player_motion = registry.motions.get(registry.player);
         for (Entity& e : registry.motions.entities) {
             auto& motion = registry.motions.get(e);
 
-            float distance = glm::distance(player_motion.position, motion.position);
-            if (distance < Globals::update_distance) {
+            float distance_player = glm::distance(player_motion.position, motion.position);
+            if (distance_player < Globals::update_distance) {
                 registry.near_players.emplace(e);
+            }
+
+            float distance_camera = glm::distance(registry.camera_pos, motion.position);
+            if (distance_camera < Globals::update_distance) {
+                registry.near_cameras.emplace(e);
             }
         }
     }
