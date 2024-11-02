@@ -12,6 +12,8 @@ struct InputState {
 	bool a_down = false;
 	bool s_down = false;
 	bool d_down = false;
+	bool space_down = false;
+	bool mouse_button_left_down = false;
 	glm::vec2 mouse_pos = {0.f, 0.f};
 };
 
