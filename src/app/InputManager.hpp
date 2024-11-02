@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <utils/Transform.hpp>
 #include <systems/AudioSystem.hpp>
+#include <systems/GameplaySystem.hpp>
 
 #include <app/EntityFactory.hpp>
 #include "ecs/Registry.hpp"
@@ -43,9 +44,7 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_SPACE) {
                 audio_system.play_dodge();
-                if (!registry.in_dodges.has(registry.player)) {
-                    registry.in_dodges.emplace(registry.player, player_motion.position, player_motion.position + Common::normalize(player_motion.velocity) * Globals::dodgeMoveMag, Globals::timer.GetTime(), Globals::dodgeDuration);
-                }
+                GameplaySystem::dodge(registry.player);
             }
         }
         if (action == GLFW_RELEASE) {
@@ -83,9 +82,8 @@ namespace InputManager {
         if (action == GLFW_PRESS) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 if (!registry.attack_cooldowns.has(registry.player)) {
-                    EntityFactory::create_projectile(registry.motions.get(registry.player), player_attacker, weapon_stats, TEAM_ID::FRIENDLY);
+                    GameplaySystem::attack(registry.player);
                     audio_system.play_attack();
-                    registry.attack_cooldowns.emplace(registry.player, weapon_stats.attack_cooldown);
                 }
             }
         }

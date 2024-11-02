@@ -21,8 +21,10 @@ namespace EntityFactory {
         locomotion.health = 200.0f;
         locomotion.max_health = 200.0f;
         locomotion.movement_speed = 25.0f;
-        locomotion.energy = 100.0f;
         locomotion.max_energy = 100.0f;
+        locomotion.energy = locomotion.max_energy;
+        locomotion.max_poise = 30.0f;
+        locomotion.poise = locomotion.max_poise;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::FRIENDLY;
@@ -36,7 +38,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_weapon(glm::vec2 position, float damage, float attack_cooldown = 0.15f, WEAPON_TYPE weapon_type = WEAPON_TYPE::SWORD) {
+    inline Entity create_weapon(glm::vec2 position, float damage, float attack_cooldown = 0.5f, WEAPON_TYPE weapon_type = WEAPON_TYPE::SWORD) {
         Registry& registry = Registry::get_instance();
 
         auto entity = Entity();
@@ -51,6 +53,9 @@ namespace EntityFactory {
         weapon.range = 30.0f;
         weapon.proj_speed = 100.0f;
         weapon.attack_cooldown = attack_cooldown;
+        weapon.stagger_duration = 0.5f;
+        weapon.poise_points = 10.0f;
+        weapon.attack_energy_cost = 10.0f;
         if (weapon_type == WEAPON_TYPE::BOW) {
             weapon.projectile_type = PROJECTILE_TYPE::ARROW;
         } else {
@@ -72,6 +77,10 @@ namespace EntityFactory {
         auto& locomotion = registry.locomotion_stats.emplace(entity);
         locomotion.health = 50.0f;
         locomotion.max_health = 50.0f;
+        locomotion.max_energy = 100.0f;
+        locomotion.energy = locomotion.max_energy;
+        locomotion.max_poise = 10.0f;
+        locomotion.poise = locomotion.max_poise;
         locomotion.movement_speed = 5.0f;
 
         auto& team = registry.teams.emplace(entity);
@@ -90,11 +99,11 @@ namespace EntityFactory {
 
         Entity enemy_weapon;
         if (enemy_type == ENEMY_TYPE::ZOMBIE) {
-            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.15f, WEAPON_TYPE::PUNCH);
+            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.5f, WEAPON_TYPE::PUNCH);
         } else if (enemy_type == ENEMY_TYPE::ARCHER) {
-            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.15f, WEAPON_TYPE::BOW);
+            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.5f, WEAPON_TYPE::BOW);
         } else {
-            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.15f, WEAPON_TYPE::SWORD);
+            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.5f, WEAPON_TYPE::SWORD);
         }
         attacker.weapon_id = enemy_weapon;
 
@@ -120,6 +129,8 @@ namespace EntityFactory {
         auto& projectile = registry.projectiles.emplace(entity);
         projectile.damage = weapon.damage;
         projectile.range_remaining = weapon.range;
+        projectile.stagger_duration = weapon.stagger_duration;
+        projectile.poise_points = weapon.poise_points;
         projectile.enchantment = ENCHANTMENT::NONE;
         projectile.projectile_type = weapon.projectile_type;
 

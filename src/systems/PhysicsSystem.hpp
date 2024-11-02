@@ -11,7 +11,7 @@ namespace PhysicsSystem
         Registry& registry = Registry::get_instance();
 
         for (Entity& entity : registry.near_players.entities) {
-            if (registry.motions.has(entity)) {
+            if (registry.motions.has(entity) && !registry.death_cooldowns.has(entity)) {
                 Motion& motion = registry.motions.get(entity);
                 if (!registry.in_dodges.has(entity)) {
                     glm::vec2 drag = -Common::normalize(motion.velocity) * motion.drag;
