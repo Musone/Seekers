@@ -363,10 +363,10 @@ namespace ProceduralGenerationSystem {
 
             if (wall.horizontal) {
                 x += wall.length/2;
-                EntityFactory::create_no_collision_wall({x, y}, 0, glm::vec2(wall.length, 1.0f));
+                EntityFactory::create_wall({x, y}, 0, glm::vec2(wall.length, 1.0f));
             } else {
                 y -= wall.length/2;
-                EntityFactory::create_no_collision_wall({x, y}, PI / 2.0f, glm::vec2(wall.length, 1.0f));
+                EntityFactory::create_wall({x, y}, PI / 2.0f, glm::vec2(wall.length, 1.0f));
             }
         }
     }
