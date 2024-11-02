@@ -60,7 +60,7 @@ public:
 
     // play music
     void start_music() {
-        set_music_volume(4);
+        set_music_volume(7);
         play_music(-1);
     }
 
@@ -122,20 +122,29 @@ public:
         }
     }
 
+    inline float find_multiplier_with_distance(float distance = 0.0f) {
+        return (1/(0.1*distance+1)) * (1/(0.1*distance+1));
+    }
 
     // Play sword sound effect
-    void play_attack_sword() {
-        play_sound_effect(audio_path("swordslash.wav"), 0, MIX_MAX_VOLUME / 4);
+    void play_attack_sword(float distance = 0.0f) {
+        int max_volume = MIX_MAX_VOLUME / 4;
+        int volume = max_volume * find_multiplier_with_distance(distance);
+        play_sound_effect(audio_path("swordslash.wav"), 0, volume);
     }
 
     // Play bow sound effect
-    void play_attack_bow() {
-        play_sound_effect(audio_path("bowshot.wav"), 0, MIX_MAX_VOLUME / 4);
+    void play_attack_bow(float distance = 0.0f) {
+        int max_volume = MIX_MAX_VOLUME / 4;
+        int volume = max_volume * find_multiplier_with_distance(distance);
+        play_sound_effect(audio_path("bowshot.wav"), 0, volume);
     }
 
     // Play dodge sound effect
-    void play_dodge() {
-        play_sound_effect(audio_path("dodge.wav"), 0, MIX_MAX_VOLUME / 6);
+    void play_dodge(float distance = 0.0f) {
+        int max_volume = MIX_MAX_VOLUME / 5;
+        int volume = max_volume * find_multiplier_with_distance(distance);
+        play_sound_effect(audio_path("dodge.wav"), 0, volume);
     }
 
     // Stop a sound effect playing on a specific channel

@@ -125,10 +125,11 @@ namespace GameplaySystem {
         registry.attack_cooldowns.emplace(e, weapon.attack_cooldown);
         deplete_energy(e, weapon.attack_energy_cost);
 
+        float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
         if (weapon.type == WEAPON_TYPE::BOW) {
-            audio.play_attack_bow();
+            audio.play_attack_bow(distance_from_camera);
         } else {
-            audio.play_attack_sword();
+            audio.play_attack_sword(distance_from_camera);
         }
     }
 
@@ -146,6 +147,7 @@ namespace GameplaySystem {
         registry.in_dodges.emplace(e, motion.position, motion.position + Common::normalize(motion.velocity) * Globals::dodgeMoveMag, Globals::timer.GetTime(), Globals::dodgeDuration);
         deplete_energy(e, Globals::dodge_energy_cost);
 
-        audio.play_dodge();
+        float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
+        audio.play_dodge(distance_from_camera);
     }
 };
