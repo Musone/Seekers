@@ -1,3 +1,5 @@
+#define NOMINMAX
+
 #include <utils/Log.hpp>
 #include <app/Application.hpp>
 #include <Testing.hpp>

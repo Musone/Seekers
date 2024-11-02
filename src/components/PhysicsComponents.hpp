@@ -231,10 +231,10 @@ struct CollisionBounds {
             );
             
             // Component-wise min/max
-            min_bound.x = std::min(min_bound.x, rotated_corners[i].x);
-            min_bound.y = std::min(min_bound.y, rotated_corners[i].y);
-            max_bound.x = std::max(max_bound.x, rotated_corners[i].x);
-            max_bound.y = std::max(max_bound.y, rotated_corners[i].y);
+            min_bound.x = std::fmin(min_bound.x, rotated_corners[i].x);
+            min_bound.y = std::fmin(min_bound.y, rotated_corners[i].y);
+            max_bound.x = std::fmax(max_bound.x, rotated_corners[i].x);
+            max_bound.y = std::fmax(max_bound.y, rotated_corners[i].y);
         }
         
         bounds.wall->aabb.min = min_bound;
