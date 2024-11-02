@@ -118,6 +118,8 @@ public:
     glm::mat4 get_model_matrix() const { 
         return Transform::create_model_matrix(m_position, m_rotation, m_scale); 
     }
+
+    std::string get_name() const { return m_name; };
 #pragma endregion
 
 protected:

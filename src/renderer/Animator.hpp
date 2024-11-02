@@ -27,18 +27,16 @@ private:
         m_animation_time += delta_time;
         
         if (m_current_animation) {
-            // if (m_animation_time > m_current_animation->get_duration()) {
             if (m_animation_time > m_duration_s) {
                 
                 if (!m_should_repeat) {
-                    set_animation(nullptr);
+                    m_animation_time = m_duration_s;
+                    // set_animation(nullptr);
                     return;
                 }
 
-                // m_animation_time = fmod(m_animation_time, m_current_animation->get_duration());
                 m_animation_time = fmod(m_animation_time, m_duration_s);
                 if (m_animation_time < 0) {  // fmod can return negative values
-                    // m_animation_time += m_current_animation->get_duration();
                     m_animation_time += m_duration_s;
                 }
             }
