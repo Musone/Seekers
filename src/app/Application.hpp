@@ -92,7 +92,6 @@ public:
             cube_layout
         );
 
-
         VertexBufferLayout square_layout;
         square_layout.push<float>(3); // position
         square_layout.push<float>(3); // normal
@@ -150,6 +149,7 @@ public:
         Shader animated_shader("AnimatedBlinnPhong");
         Shader static_shader("StaticBlinnPhong");
         
+#pragma region HERO
         // AnimatedModel hero("models/Hero/Hero.dae", &animated_shader);
         // hero.load_animation_from_file("models/Hero/Left.dae");
         // hero.load_animation_from_file("models/Hero/Right.dae");
@@ -182,7 +182,9 @@ public:
         );
         hero.print_bones();
         hero.print_animations();
+#pragma endregion
 
+#pragma region WARRIOR
         AnimatedModel warrior_grunt("models/Warrior Grunt/Warrior Grunt (drake).dae", &animated_shader);
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Left.dae");
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Right.dae");
@@ -202,7 +204,9 @@ public:
         );
         warrior_grunt.print_bones();
         warrior_grunt.print_animations();
+#pragma endregion
 
+#pragma region ARCHER
         AnimatedModel archer_grunt("models/Archer Grunt/Archer Grunt.dae", &animated_shader);
         archer_grunt.load_animation_from_file("models/Archer Grunt/Left.dae");
         archer_grunt.load_animation_from_file("models/Archer Grunt/Right.dae");
@@ -222,7 +226,9 @@ public:
         );
         archer_grunt.print_bones();
         archer_grunt.print_animations();
+#pragma endregion
 
+#pragma region ZOMBIE
         AnimatedModel zombie_grunt("models/Zombie Grunt/Zombie Grunt.dae", &animated_shader);
         zombie_grunt.load_animation_from_file("models/Zombie Grunt/Forward.dae");
         zombie_grunt.load_animation_from_file("models/Zombie Grunt/Roll.dae");
@@ -239,6 +245,7 @@ public:
         );
         zombie_grunt.print_bones();
         zombie_grunt.print_animations();
+#pragma endregion
 
         // Texture2D old_hero("player.png");
 
@@ -289,12 +296,6 @@ public:
             // while (delta_time < FRAME_TIME_60FPS) {
             //     delta_time = float(timer.GetTime()) - time_of_last_frame;
             // }
-            
-            if (Globals::is_3d_mode) {
-                // m_renderer->lock_cursor();
-            } else {
-                m_renderer->terminate();
-            }
 
             world.step(delta_time);
             const Motion& player_motion = reg.motions.get(reg.player);
@@ -395,6 +396,13 @@ public:
 
             m_renderer->end_draw();
             time_of_last_frame = float(timer.GetTime());
+
+            if (Globals::is_3d_mode) {
+                // m_renderer->lock_cursor();
+            } else { // Hacky way to quit game.
+                m_renderer->terminate();
+            }
+
         };
     };
 
