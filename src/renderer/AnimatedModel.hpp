@@ -27,7 +27,8 @@ public:
         m_position = original.m_position;
         m_rotation = original.m_rotation;
         m_scale = original.m_scale;
-        m_name = original.m_name + " (copy " + std::to_string(version_number) + ")";
+        // m_name = original.m_name + " (copy " + std::to_string(version_number) + ")";
+        m_name = original.m_name;
         m_shader = original.m_shader;
         m_attachments = original.m_attachments;
         m_name_to_animation_id = original.m_name_to_animation_id;
@@ -93,7 +94,7 @@ public:
         Log::log_success("(" + std::string(model_path) + ") Animated Model loaded successfully with " + std::to_string(num_meshes) + " meshes", 
             __FILE__, __LINE__);
 
-        m_name = std::string(model_path);
+        m_name = Common::split_string(Common::replace_char(std::string(model_path), '\\', '/'), '/').back();
         m_importer.FreeScene();
         m_scene = nullptr;
     }
@@ -158,7 +159,7 @@ public:
         std::cout << "\n\n";
     }
 
-    void play_animation(const std::string& name, const float& duration_s = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+    void play_animation(const std::string& name, const float& duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
         auto it = m_name_to_animation_id.find(name);
         if (it != m_name_to_animation_id.end()) {
             play_animation(it->second, duration_s, should_repeat, should_finish);
@@ -171,15 +172,35 @@ public:
         return m_animator.portion_complete();
     }
 
-    void play_animation(const size_t& index, const float& duration_s = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
-        if (duration_s <= 0) {
-            Log::log_error_and_terminate("Speed of an animation should be greater than 0", __FILE__, __LINE__);
-        }
+    void play_animation(const size_t& index, float duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
         if (index < m_animations.size()) {
             if (index != get_current_animation_id()) {
                 if (!m_animator.should_finish() || m_animator.portion_complete() >= 0.9999f) {
+                    if (duration_s <= 0) {
+                        duration_s = m_animations[index]->get_duration();
+                    }
                     m_animator.set_animation(m_animations[index], duration_s, should_repeat, should_finish);
                 }
+            }
+        }
+    }
+
+    void force_play_animation(const std::string& name, const float& duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+        auto it = m_name_to_animation_id.find(name);
+        if (it != m_name_to_animation_id.end()) {
+            force_play_animation(it->second, duration_s, should_repeat, should_finish);
+        } else {
+            Log::log_warning("Model " + m_name + " does not have animtion: \"" + name, __FILE__, __LINE__);
+        }
+    }
+
+    void force_play_animation(const size_t& index, float duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+        if (index < m_animations.size()) {
+            if (index != get_current_animation_id()) {
+                if (duration_s <= 0) {
+                    duration_s = m_animations[index]->get_duration();
+                }
+                m_animator.set_animation(m_animations[index], duration_s, should_repeat, should_finish);
             }
         }
     }
