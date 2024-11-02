@@ -197,24 +197,6 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_no_collision_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
-        Registry& registry = Registry::get_instance();
-        auto entity = Entity();
-
-        auto& motion = registry.motions.emplace(entity);
-        motion.position = position;
-        motion.angle = angle;
-        motion.scale = scale;
-
-        auto& team = registry.teams.emplace(entity);
-        team.team_id = TEAM_ID::NEUTRAL;
-
-        auto& wall = registry.walls.emplace(entity);
-        wall.type = WALL_TYPE::BRICK;
-
-        return entity;
-    }
-
     inline Entity create_tree(glm::vec2 position) {
         Registry& registry = Registry::get_instance();
         auto entity = Entity();
