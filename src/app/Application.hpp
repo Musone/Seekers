@@ -295,12 +295,12 @@ public:
         float base_camera_speed = 1.0f;
         float camera_speed = base_camera_speed;
         while (!m_renderer->is_terminated()) {
-            float delta_time = 0.001f * float(timer.GetTime()) - time_of_last_frame;
-            while (delta_time < 1000.0f / 60.0f) { delta_time = 0.001f * (float(timer.GetTime()) - time_of_last_frame); }
-            // float delta_time = float(timer.GetTime()) - time_of_last_frame;
-            // while (delta_time < FRAME_TIME_60FPS) {
-            //     delta_time = float(timer.GetTime()) - time_of_last_frame;
-            // }
+            // float delta_time = 0.001f * float(timer.GetTime()) - time_of_last_frame;
+            // while (delta_time < 1000.0f / 60.0f) { delta_time = 0.001f * (float(timer.GetTime()) - time_of_last_frame); }
+            float delta_time = float(timer.GetTime()) - time_of_last_frame;
+            while (delta_time < FRAME_TIME_60FPS) {
+                delta_time = float(timer.GetTime()) - time_of_last_frame;
+            }
 
             // Camera stuff
             const Motion& player_motion = reg.motions.get(reg.player);
@@ -355,7 +355,7 @@ public:
             }
 
             reg.camera_pos = m_camera.get_position();
-            world.step(delta_time);
+            world.step(delta_time * 0.001f);
             // _handle_free_camera_inputs();
             m_light_pos = m_camera.get_position();
             
