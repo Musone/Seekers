@@ -1004,7 +1004,7 @@ private:
             if (!reg.motions.has(entity)) { continue; }
             auto& motion = reg.motions.get(entity);
             glm::vec3 wall_scale = glm::vec3(motion.scale, 10.0f);
-            m_wall_shader->set_uniform_3f("u_scale", {wall_scale.x, wall_scale.z, wall_scale.y});
+            m_wall_shader->set_uniform_3f("u_scale", {wall_scale.x / 8, wall_scale.z / 8, wall_scale.y});
             m_wall_shader->set_uniform_mat4f(
                 "u_model",
                 Transform::create_model_matrix(
