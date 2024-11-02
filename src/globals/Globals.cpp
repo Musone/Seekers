@@ -18,4 +18,5 @@ namespace Globals {
     float poise_regen_multiplier = 0.1f;
     float dodge_energy_cost = 15.0f;
     float energy_no_regen_duration = 2.0f;
+    bool restart_renderer = true;
 }

@@ -43,6 +43,7 @@ void World::restart_game() {
             registry.grid_map.grid_boxes[i].push_back(GridMap::GridBox());
         }
     }
+    Globals::restart_renderer = true;
 }
 
 
