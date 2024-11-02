@@ -7,6 +7,7 @@
 #include "systems/GameplaySystem.hpp"
 #include "systems/PhysicsSystem.hpp"
 #include "systems/GridMapSystem.hpp"
+#include "systems/AudioSystem.hpp"
 
 #include "systems/AISystem.hpp"
 
@@ -48,12 +49,8 @@ void World::restart_game() {
 void World::demo_init() {
     // Initialize, load sounds and play background music
     m_audioSystem.initialize();
-    m_audioSystem.load_music(audio_path("music.wav"));
-    m_audioSystem.load_sound_effect(audio_path("footstep.wav"));
-    m_audioSystem.load_sound_effect(audio_path("teleport.wav"));
-    m_audioSystem.load_sound_effect(audio_path("attack.wav"));
-    m_audioSystem.set_music_volume(16);
-    m_audioSystem.play_music(-1);
+    m_audioSystem.load_all_sound();
+    m_audioSystem.start_music();
 
     restart_game();
 
@@ -110,6 +107,8 @@ void World::step(float elapsed_ms) {
 
     CollisionSystem::check_collisions();
     CollisionSystem::handle_collisions();
+
+    m_audioSystem.handle_audio_per_frame();
 
     AISystem::AI_step();
 

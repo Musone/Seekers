@@ -15,14 +15,10 @@ namespace InputManager {
     inline void on_key_pressed(GLFWwindow* window, int key, int scancode, int action, int mods) {
         Registry& registry = Registry::get_instance();
         Motion& player_motion = registry.motions.get(registry.player);
-        AudioSystem& audio_system = AudioSystem::get_instance();
 
         if (action == GLFW_PRESS) {
             if (key == GLFW_KEY_Z) {
                 Globals::is_3d_mode = !Globals::is_3d_mode;
-            }
-            if (key == GLFW_KEY_W || key == GLFW_KEY_S || key == GLFW_KEY_A || key == GLFW_KEY_D) {
-                audio_system.play_footstep();
             }
             if (key == GLFW_KEY_W) {
                 registry.input_state.w_down = true;
@@ -43,8 +39,8 @@ namespace InputManager {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
             }
             if (key == GLFW_KEY_SPACE) {
-                audio_system.play_dodge();
                 GameplaySystem::dodge(registry.player);
+                registry.input_state.space_down = true;
             }
         }
         if (action == GLFW_RELEASE) {
@@ -62,7 +58,6 @@ namespace InputManager {
             }
             if (!registry.input_state.w_down && !registry.input_state.s_down &&
                 !registry.input_state.a_down && !registry.input_state.d_down) {
-                audio_system.stop_footstep(-1);
             }
             if (key == GLFW_KEY_Q) {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
@@ -77,13 +72,12 @@ namespace InputManager {
         Registry& registry = Registry::get_instance();
         Attacker& player_attacker = registry.attackers.get(registry.player);
         Weapon& weapon_stats = registry.weapons.get(player_attacker.weapon_id);
-        AudioSystem& audio_system = AudioSystem::get_instance();
 
         if (action == GLFW_PRESS) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 if (!registry.attack_cooldowns.has(registry.player)) {
                     GameplaySystem::attack(registry.player);
-                    audio_system.play_attack();
+                    registry.input_state.mouse_button_left_down = true;
                 }
             }
         }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <utils/Common.hpp>
+#include <ecs/Registry.hpp>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -48,11 +49,35 @@ public:
         }
     }
 
+    // load all sound
+    void load_all_sound() {
+        load_music(audio_path("music.wav"));
+        load_sound_effect(audio_path("footstep.wav"));
+        load_sound_effect(audio_path("dodge.wav"));
+        load_sound_effect(audio_path("bowshot.wav"));
+        load_sound_effect(audio_path("swordslash.wav"));
+    }
+
+    // play music
+    void start_music() {
+        set_music_volume(4);
+        play_music(-1);
+    }
+
     // Set music volume (0 to 128)
     void set_music_volume(int volume) {
         if (volume < 0) volume = 0;
         if (volume > MIX_MAX_VOLUME) volume = MIX_MAX_VOLUME;
         Mix_VolumeMusic(volume);
+    }
+
+    void handle_audio_per_frame() {
+        Registry& registry = Registry::get_instance();
+        InputState& input_state = registry.input_state;
+
+        handle_footstep(input_state);
+        handle_attack(input_state);
+        handle_dodge(input_state);
     }
 
     // play background music
@@ -63,9 +88,12 @@ public:
     }
 
     // -1 to infinitely loop
-    int play_sound_effect(const std::string& file_path, int loop) {
+    int play_sound_effect(const std::string& file_path, int loop, int volume = MIX_MAX_VOLUME) {
         if (sound_effects.find(file_path) != sound_effects.end()) {
             int channel = Mix_PlayChannel(-1, sound_effects[file_path], loop);
+            if (channel != -1) {
+                Mix_Volume(channel, volume); // Set volume for the specific channel
+            }
             return channel;
         }
         else {
@@ -74,13 +102,27 @@ public:
         }
     }
 
-    // Play footstep sound effect
-    int play_footstep() {
-        if (!footstep_playing) {
-            footstep_channel = play_sound_effect(audio_path("footstep.wav"), -1);
-            footstep_playing = true;
+    // Handle dodge sound
+    void handle_dodge(const InputState& input_state) {
+        Registry& registry = Registry::get_instance();
+
+        if (registry.input_state.space_down) {
+            play_dodge();
+            registry.input_state.space_down = false;
         }
-        return footstep_channel;
+    }
+
+    // Handle footstep sound
+    void handle_footstep(const InputState& input_state) {
+        if (input_state.w_down || input_state.s_down || input_state.a_down || input_state.d_down) {
+            if (!footstep_playing) {
+                footstep_channel = play_sound_effect(audio_path("footstep.wav"), -1);
+                footstep_playing = true;
+            }
+        }
+        else if (footstep_playing) {
+            stop_footstep(footstep_channel);
+        }
     }
 
     // Stop footstep sound effect
@@ -92,14 +134,30 @@ public:
         }
     }
 
-    // Play attack sound effect
-    void play_attack() {
-        play_sound_effect(audio_path("attack.wav"), 0);
+    // Handle attack sound
+    void handle_attack(const InputState& input_state) {
+        Registry& registry = Registry::get_instance();
+
+        if (input_state.mouse_button_left_down) {
+            play_attack_bow();
+            registry.input_state.mouse_button_left_down = false;
+        }
+    }
+
+
+    // Play sword sound effect
+    void play_attack_sword() {
+        play_sound_effect(audio_path("swordslash.wav"), 0, MIX_MAX_VOLUME / 4);
+    }
+
+    // Play bow sound effect
+    void play_attack_bow() {
+        play_sound_effect(audio_path("bowshot.wav"), 0, MIX_MAX_VOLUME / 4);
     }
 
     // Play dodge sound effect
     void play_dodge() {
-        play_sound_effect(audio_path("teleport.wav"), 0);
+        play_sound_effect(audio_path("dodge.wav"), 0, MIX_MAX_VOLUME / 6);
     }
 
     // Stop a sound effect playing on a specific channel
