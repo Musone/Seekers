@@ -61,6 +61,8 @@ class Application {
 
     std::vector<int> m_to_be_updated_and_drawn;
 
+    std::string m_window_name = "Seekers";
+
     std::unordered_map<unsigned int, AnimatedModel*> m_models;
 public:
 
@@ -68,7 +70,7 @@ public:
         // Setup
         m_renderer = &Renderer::get_instance();
         m_renderer->init(
-            "Seekers",
+            m_window_name,
             WINDOW_WIDTH,
             WINDOW_HEIGHT,
             true,
@@ -125,6 +127,7 @@ public:
         );
 
         m_bow = new StaticModel("models/Bow.obj", m_wall_shader);
+        m_sword = new StaticModel("models/Sword.obj", m_wall_shader);
 
         m_arrow = new StaticModel("models/Arrow.dae", m_wall_shader);
         m_arrow->set_scale(glm::vec3(5));
@@ -151,8 +154,6 @@ public:
     }
 
     void run_game_loop() { 
-        m_camera.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
-
         // Get keys inputs from input manager
         m_renderer->set_on_key_callback_fn((void*)InputManager::on_key_pressed);
         m_renderer->set_on_mouse_move_callback_fn((void*)InputManager::on_mouse_move);
@@ -172,6 +173,7 @@ public:
         hero.load_animation_from_file("models/Hero/Running Attack.dae");
         hero.load_animation_from_file("models/Hero/Dying.dae");
         hero.load_animation_from_file("models/Hero/Stagger.dae");
+        hero.load_animation_from_file("models/Dance.dae");
         // AnimatedModel hero("models/Hero/Hero (no sword).dae", &animated_shader);
         // hero.load_animation_from_file("models/Hero/Left.dae");
         // hero.load_animation_from_file("models/Hero/Right.dae");
@@ -204,6 +206,7 @@ public:
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Running Attack.dae");
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Dying.dae");
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Stagger.dae");
+        warrior_grunt.load_animation_from_file("models/Dance.dae");
         warrior_grunt.set_pre_transform(
             Transform::create_model_matrix(
                 glm::vec3(0),
@@ -226,6 +229,7 @@ public:
         archer_grunt.load_animation_from_file("models/Archer Grunt/Running Attack.dae");
         archer_grunt.load_animation_from_file("models/Archer Grunt/Dying.dae");
         archer_grunt.load_animation_from_file("models/Archer Grunt/Stagger.dae");
+        archer_grunt.load_animation_from_file("models/Dance.dae");
         archer_grunt.set_pre_transform(
             Transform::create_model_matrix(
                 glm::vec3(0),
@@ -245,6 +249,7 @@ public:
         zombie_grunt.load_animation_from_file("models/Zombie Grunt/Running Attack.dae");
         zombie_grunt.load_animation_from_file("models/Zombie Grunt/Dying.dae");
         zombie_grunt.load_animation_from_file("models/Zombie Grunt/Stagger.dae");
+        zombie_grunt.load_animation_from_file("models/Dance.dae");
         zombie_grunt.set_pre_transform(
             Transform::create_model_matrix(
                 glm::vec3(0),
@@ -280,10 +285,14 @@ public:
             while (delta_time < FRAME_TIME_60FPS) {
                 delta_time = float(timer.GetTime()) - time_of_last_frame;
             }
+            float delta_time_s = delta_time * 0.000001f;
+            m_renderer->set_title(m_window_name + " | FPS: " + std::to_string(1.0f / delta_time_s));
+            time_of_last_frame = float(timer.GetTime());
 
             // Game restart
             if (Globals::restart_renderer) {
                 Globals::restart_renderer = false;
+                m_camera.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
                 for (auto& kv : m_models) {
                     if (kv.second == nullptr) { continue; }
                     delete kv.second;
@@ -297,6 +306,13 @@ public:
                     if (enemy.type == ENEMY_TYPE::WARRIOR) {
                         m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
                         const auto& model = m_models[entity.get_id()];
+                        model->attach_to_joint(
+                            m_sword, 
+                            "mixamorig_RightHand", 
+                            {63.0, 35.0, 7.0}, // pos
+                            {4.7752223, 19.3731594, 11.5401363}, // rot
+                            {11.5, 11.5, 11.5} // scale
+                        );
                     } else if (enemy.type == ENEMY_TYPE::ARCHER) {
                         m_models[entity.get_id()] = new AnimatedModel(archer_grunt, counter++);
                         const auto& model = m_models[entity.get_id()];
@@ -415,7 +431,6 @@ public:
             _draw_aim();
 
             m_renderer->end_draw();
-            time_of_last_frame = float(timer.GetTime());
 
             if (Globals::is_3d_mode) {
                 // m_renderer->lock_cursor();
@@ -1181,14 +1196,14 @@ private:
         m_renderer->disable_depth_test();
 
         _draw_resource(
-            {-1 + 3 * size / 2, -1 + 2 * size / 2},
+            {-1 + 3 * size / 2, -1 + 3 * size / 2},
             size,
             health_percentage,
             {0.33, 0, 0}
         );
 
         _draw_resource(
-            {1 - 3 * size / 2, -1 + 2 * size / 2},
+            {1 - 3 * size / 2, -1 + 3 * size / 2},
             size,
             energy_percentage,
             {0, 0.33, 0}
@@ -1249,6 +1264,9 @@ private:
             } else if (reg.stagger_cooldowns.has(entity)) {
                 const auto& cooldown = reg.stagger_cooldowns.get(entity);
                 model->force_play_animation("Stagger.dae", cooldown.timer + buffer_time);
+            } else if (reg.death_cooldowns.has(reg.player)) {
+                const auto& cooldown = reg.death_cooldowns.get(reg.player);
+                model->force_play_animation("Dance.dae", cooldown.timer + 2.0f * buffer_time);
             } else {
                 if (reg.in_dodges.has(entity)) {
                     const auto& dodge = reg.in_dodges.get(entity);
@@ -1279,7 +1297,7 @@ private:
                     }
 
                 } else {
-                    model->play_animation("default0", 5.0f);
+                    model->play_animation("default0");
                 }
             }
             

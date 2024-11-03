@@ -90,7 +90,9 @@ public:
         glfwSwapInterval((unsigned int)enable_vsync);
 
         if (fullscreen) {
-            glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
+            // uncommenting this removes the health top bar.
+            // Keeping top bar for now to track FPS.
+            // glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
             const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
             window_width = mode->width;
             window_height = mode->height;
@@ -182,6 +184,13 @@ public:
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
         return bool(glfwWindowShouldClose(m_window));
+    }
+
+    void set_title(const std::string& new_title) const {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
+        }
+        GL_Call(glfwSetWindowTitle(m_window, new_title.c_str()));
     }
 
     void terminate() const {
