@@ -151,8 +151,6 @@ public:
     }
 
     void run_game_loop() { 
-        m_camera.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
-
         // Get keys inputs from input manager
         m_renderer->set_on_key_callback_fn((void*)InputManager::on_key_pressed);
         m_renderer->set_on_mouse_move_callback_fn((void*)InputManager::on_mouse_move);
@@ -172,6 +170,7 @@ public:
         hero.load_animation_from_file("models/Hero/Running Attack.dae");
         hero.load_animation_from_file("models/Hero/Dying.dae");
         hero.load_animation_from_file("models/Hero/Stagger.dae");
+        hero.load_animation_from_file("models/Dance.dae");
         // AnimatedModel hero("models/Hero/Hero (no sword).dae", &animated_shader);
         // hero.load_animation_from_file("models/Hero/Left.dae");
         // hero.load_animation_from_file("models/Hero/Right.dae");
@@ -204,6 +203,7 @@ public:
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Running Attack.dae");
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Dying.dae");
         warrior_grunt.load_animation_from_file("models/Warrior Grunt/Stagger.dae");
+        warrior_grunt.load_animation_from_file("models/Dance.dae");
         warrior_grunt.set_pre_transform(
             Transform::create_model_matrix(
                 glm::vec3(0),
@@ -226,6 +226,7 @@ public:
         archer_grunt.load_animation_from_file("models/Archer Grunt/Running Attack.dae");
         archer_grunt.load_animation_from_file("models/Archer Grunt/Dying.dae");
         archer_grunt.load_animation_from_file("models/Archer Grunt/Stagger.dae");
+        archer_grunt.load_animation_from_file("models/Dance.dae");
         archer_grunt.set_pre_transform(
             Transform::create_model_matrix(
                 glm::vec3(0),
@@ -245,6 +246,7 @@ public:
         zombie_grunt.load_animation_from_file("models/Zombie Grunt/Running Attack.dae");
         zombie_grunt.load_animation_from_file("models/Zombie Grunt/Dying.dae");
         zombie_grunt.load_animation_from_file("models/Zombie Grunt/Stagger.dae");
+        zombie_grunt.load_animation_from_file("models/Dance.dae");
         zombie_grunt.set_pre_transform(
             Transform::create_model_matrix(
                 glm::vec3(0),
@@ -284,6 +286,7 @@ public:
             // Game restart
             if (Globals::restart_renderer) {
                 Globals::restart_renderer = false;
+                m_camera.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
                 for (auto& kv : m_models) {
                     if (kv.second == nullptr) { continue; }
                     delete kv.second;
@@ -1249,6 +1252,8 @@ private:
             } else if (reg.stagger_cooldowns.has(entity)) {
                 const auto& cooldown = reg.stagger_cooldowns.get(entity);
                 model->force_play_animation("Stagger.dae", cooldown.timer + buffer_time);
+            } else if (reg.death_cooldowns.has(reg.player)) {
+                model->force_play_animation("Dance.dae");
             } else {
                 if (reg.in_dodges.has(entity)) {
                     const auto& dodge = reg.in_dodges.get(entity);
@@ -1279,7 +1284,7 @@ private:
                     }
 
                 } else {
-                    model->play_animation("default0", 5.0f);
+                    model->play_animation("default0");
                 }
             }
             
