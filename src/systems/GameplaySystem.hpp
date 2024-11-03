@@ -9,37 +9,61 @@ namespace GameplaySystem {
     inline void update_cooldowns(float elapsed_ms) {
         Registry& registry = Registry::get_instance();
 
+        std::vector<Entity> to_be_removed;
+
+        to_be_removed.reserve(registry.attack_cooldowns.size());
         for (Entity& e : registry.attack_cooldowns.entities) {
             auto& attack_cooldown = registry.attack_cooldowns.get(e);
             attack_cooldown.timer -= elapsed_ms / 1000.0f;
             if (attack_cooldown.timer <= 0) {
-                registry.attack_cooldowns.remove(e);
+                to_be_removed.push_back(e);
             }
         }
+        for (Entity& e : to_be_removed) {
+            registry.attack_cooldowns.remove(e);
+        }
 
+        to_be_removed.clear();
+        to_be_removed.reserve(registry.energy_no_regen_cooldowns.size());
         for (Entity& e : registry.energy_no_regen_cooldowns.entities) {
             auto& energy_no_regen_cooldown = registry.energy_no_regen_cooldowns.get(e);
             energy_no_regen_cooldown.timer -= elapsed_ms / 1000.0f;
             if (energy_no_regen_cooldown.timer <= 0) {
-                registry.energy_no_regen_cooldowns.remove(e);
+                to_be_removed.push_back(e);
             }
         }
+        for (Entity& e : to_be_removed) {
+            registry.energy_no_regen_cooldowns.remove(e);
+        }
 
+        to_be_removed.clear();
+        to_be_removed.reserve(registry.stagger_cooldowns.size());
         for (Entity& e : registry.stagger_cooldowns.entities) {
             auto& stagger_cooldown = registry.stagger_cooldowns.get(e);
             stagger_cooldown.timer -= elapsed_ms / 1000.0f;
             if (stagger_cooldown.timer <= 0) {
-                registry.stagger_cooldowns.remove(e);
+                to_be_removed.push_back(e);
             }
         }
+        for (Entity& e : to_be_removed) {
+            registry.stagger_cooldowns.remove(e);
+        }
 
+        to_be_removed.clear();
+        to_be_removed.reserve(registry.death_cooldowns.entities.size());
         for (Entity& e : registry.death_cooldowns.entities) {
             auto& death_cooldown = registry.death_cooldowns.get(e);
             death_cooldown.timer -= elapsed_ms / 1000.0f;
             if (death_cooldown.timer <= 0) {
-                registry.remove_all_components_of(e);
-                if (registry.player == e) {World::restart_game();}
+                to_be_removed.push_back(e);
             }
+        }
+        for (Entity& e : to_be_removed) {
+            if (registry.player == e) {
+                World::restart_game();
+                return;
+            }
+            registry.remove_all_components_of(e);
         }
     }
 
@@ -63,12 +87,18 @@ namespace GameplaySystem {
     inline void update_projectile_range(float elapsed_ms) {
         Registry& registry = Registry::get_instance();
 
+        std::vector<Entity> to_be_removed;
+
+        to_be_removed.reserve(registry.projectiles.size());
         for (Entity& e : registry.projectiles.entities) {
             Projectile& projectile = registry.projectiles.get(e);
             projectile.range_remaining -= (elapsed_ms / 1000) * glm::length(registry.motions.get(e).velocity);
             if (projectile.range_remaining <= 0) {
-                registry.remove_all_components_of(e);
+                to_be_removed.push_back(e);
             }
+        }
+        for (Entity& e : to_be_removed) {
+            registry.remove_all_components_of(e);
         }
     }
 
@@ -111,6 +141,7 @@ namespace GameplaySystem {
 
     inline void attack(Entity& e) {
         Registry& registry = Registry::get_instance();
+        AudioSystem& audio = AudioSystem::get_instance();
 
         LocomotionStats& locomotion = registry.locomotion_stats.get(e);
 
@@ -123,10 +154,18 @@ namespace GameplaySystem {
         EntityFactory::create_projectile(motion, attacker, weapon, registry.teams.get(e).team_id);
         registry.attack_cooldowns.emplace(e, weapon.attack_cooldown);
         deplete_energy(e, weapon.attack_energy_cost);
+
+        float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
+        if (weapon.type == WEAPON_TYPE::BOW) {
+            audio.play_attack_bow(distance_from_camera);
+        } else {
+            audio.play_attack_sword(distance_from_camera);
+        }
     }
 
     inline void dodge(Entity& e) {
         Registry& registry = Registry::get_instance();
+        AudioSystem& audio = AudioSystem::get_instance();
 
         LocomotionStats& locomotion = registry.locomotion_stats.get(e);
 
@@ -137,5 +176,8 @@ namespace GameplaySystem {
         // TODO: maybe jump back when 0 velocity
         registry.in_dodges.emplace(e, motion.position, motion.position + Common::normalize(motion.velocity) * Globals::dodgeMoveMag, Globals::timer.GetTime(), Globals::dodgeDuration);
         deplete_energy(e, Globals::dodge_energy_cost);
+
+        float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
+        audio.play_dodge(distance_from_camera);
     }
 };

@@ -15,14 +15,10 @@ namespace InputManager {
     inline void on_key_pressed(GLFWwindow* window, int key, int scancode, int action, int mods) {
         Registry& registry = Registry::get_instance();
         Motion& player_motion = registry.motions.get(registry.player);
-        AudioSystem& audio_system = AudioSystem::get_instance();
 
         if (action == GLFW_PRESS) {
             if (key == GLFW_KEY_Z) {
                 Globals::is_3d_mode = !Globals::is_3d_mode;
-            }
-            if (key == GLFW_KEY_W || key == GLFW_KEY_S || key == GLFW_KEY_A || key == GLFW_KEY_D) {
-                audio_system.play_footstep();
             }
             if (key == GLFW_KEY_W) {
                 registry.input_state.w_down = true;
@@ -43,7 +39,6 @@ namespace InputManager {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
             }
             if (key == GLFW_KEY_SPACE) {
-                audio_system.play_dodge();
                 GameplaySystem::dodge(registry.player);
             }
         }
@@ -62,7 +57,6 @@ namespace InputManager {
             }
             if (!registry.input_state.w_down && !registry.input_state.s_down &&
                 !registry.input_state.a_down && !registry.input_state.d_down) {
-                audio_system.stop_footstep(-1);
             }
             if (key == GLFW_KEY_Q) {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
@@ -77,13 +71,11 @@ namespace InputManager {
         Registry& registry = Registry::get_instance();
         Attacker& player_attacker = registry.attackers.get(registry.player);
         Weapon& weapon_stats = registry.weapons.get(player_attacker.weapon_id);
-        AudioSystem& audio_system = AudioSystem::get_instance();
 
         if (action == GLFW_PRESS) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 if (!registry.attack_cooldowns.has(registry.player)) {
                     GameplaySystem::attack(registry.player);
-                    audio_system.play_attack();
                 }
             }
         }
@@ -92,8 +84,10 @@ namespace InputManager {
     inline void on_mouse_move(GLFWwindow* window, double x, double y) {
         Registry& registry = Registry::get_instance();
         if (Globals::is_3d_mode) {
-            auto& player_motion = registry.motions.get(registry.player);
-            player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
+            if (!registry.death_cooldowns.has(registry.player)) {
+                auto& player_motion = registry.motions.get(registry.player);
+                player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
+            }
         }
         registry.input_state.mouse_pos = glm::vec2(x, WINDOW_HEIGHT - y);
     }
@@ -112,10 +106,15 @@ namespace InputManager {
         if (input_state.s_down) {move_dir.x -= 1.f;}
         if (input_state.a_down) {move_dir.y += 1.f;}
         if (input_state.d_down) {move_dir.y -= 1.f;}
+
         move_dir = Common::normalize(move_dir);
         move_dir *= player_stats.movement_speed;
         glm::vec4 temp = Transform::create_rotation_matrix({ 0, 0, player_motion.angle }) * glm::vec4(move_dir, 0, 1);
-        player_motion.velocity = { temp.x, temp.y };
+        if (!registry.stagger_cooldowns.has(registry.player)) {
+            player_motion.velocity = { temp.x, temp.y };
+        } else {
+            player_motion.velocity = 0.25f * glm::vec2(temp.x, temp.y);
+        }
 
         // update aim
         if (Globals::is_3d_mode) {
