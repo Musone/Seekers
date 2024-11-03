@@ -249,7 +249,7 @@ namespace CollisionSystem {
 
         // Check collisions using spatial grid
         for (auto& entity_i : registry.near_players.entities) {
-            if (!registry.collision_bounds.has(entity_i)) continue;
+            if (!registry.collision_bounds.has(entity_i) || registry.death_cooldowns.has(entity_i)) continue;
 
             const auto& bounds_i = registry.collision_bounds.get(entity_i);
             const auto& motion_i = registry.motions.get(entity_i);
@@ -274,7 +274,7 @@ namespace CollisionSystem {
                 Entity& entity_j = *entity_j_ptr;
                 if (&entity_i == &entity_j) continue;
 
-                if (!registry.collision_bounds.has(entity_j)) continue;
+                if (!registry.collision_bounds.has(entity_j) || registry.death_cooldowns.has(entity_j)) continue;
 
                 const auto& bounds_j = registry.collision_bounds.get(entity_j);
                 const auto& motion_j = registry.motions.get(entity_j);
@@ -407,20 +407,36 @@ namespace CollisionSystem {
     inline void proj_loco_collision(Entity& proj, Entity& loco) {
         Registry& registry = Registry::get_instance();
 
-        // Apply damage to locomotive entity
-        registry.locomotion_stats.get(loco).health -= registry.projectiles.get(proj).damage;
+        if (registry.in_dodges.has(loco)) return;
+
+        // Apply damage and poise points to locomotive entity
+        auto& loco_stats = registry.locomotion_stats.get(loco);
+        auto& projectile = registry.projectiles.get(proj);
+
+        if (std::find(projectile.hit_locos.begin(), projectile.hit_locos.end(), (unsigned int)loco) != projectile.hit_locos.end()) return;
+        projectile.hit_locos.push_back(loco);
+
+        loco_stats.health -= projectile.damage;
+        loco_stats.poise -= projectile.poise_points;
+        if (loco_stats.poise <= 0 && !registry.stagger_cooldowns.has(loco)) {
+            registry.stagger_cooldowns.emplace(loco, projectile.stagger_duration);
+            loco_stats.poise = loco_stats.max_poise;
+        }
 
         // Remove projectile after hit
-        registry.remove_all_components_of(proj);
+        if (projectile.projectile_type == PROJECTILE_TYPE::ARROW) {
+            registry.remove_all_components_of(proj);
+        }
 
         // Handle locomotive entity death if health depleted
-        if (registry.locomotion_stats.get(loco).health <= 0) {
-            // Clean up associated weapon
+        if (loco_stats.health <= 0 && !registry.death_cooldowns.has(loco)) {
+            // Clean up associated weapon TODO: Drop weapon
             unsigned int weapon_id = registry.attackers.get(loco).weapon_id;
             registry.move_withs.remove(weapon_id);
             registry.rotate_withs.remove(weapon_id);
             // Remove the dead entity
-            registry.remove_all_components_of(loco);
+            // registry.remove_all_components_of(loco);
+            registry.death_cooldowns.emplace(loco, 5);
         }
     }
 

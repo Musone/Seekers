@@ -51,6 +51,10 @@ class Application {
     Shader* m_floor_shader;
 
     Shader* m_health_shader;
+    Shader* m_hud_health_shader;
+    Texture2D* m_hud_health_texture_fill;
+    Texture2D* m_hud_health_texture_border;
+    Texture2D* m_hud_health_texture_bacground;
 
     glm::vec3 m_light_pos;
     glm::vec3 m_light_colour;
@@ -68,14 +72,20 @@ public:
             WINDOW_WIDTH,
             WINDOW_HEIGHT,
             true,
-            false
+            false,
+            true
         );
         m_camera.init(m_renderer->get_window_width(), m_renderer->get_window_height());
+        
+        m_hud_health_texture_fill = new Texture2D("sphere_fill.png");
+        m_hud_health_texture_border = new Texture2D("sphere_border.png");
+        m_hud_health_texture_bacground = new Texture2D("sphere_background.png");
 
         m_skybox_shader = new Shader("Skybox");
         m_skybox_texture = new SkyboxTexture("random_skybox.png");
         m_map_texture = new Texture2D("jungle_tile_1.jpg");
-        m_wall_texture = new Texture2D("tileset_1.png");
+        // m_wall_texture = new Texture2D("tileset_1.png");
+        m_wall_texture = new Texture2D("jungle_tile_1.jpg");
         m_wall_shader = new Shader("StaticBlinnPhong");
         m_floor_shader = new Shader("StaticBlinnPhong");
 
@@ -115,6 +125,7 @@ public:
         );
 
         m_bow = new StaticModel("models/Bow.obj", m_wall_shader);
+
         m_arrow = new StaticModel("models/Arrow.dae", m_wall_shader);
         m_arrow->set_scale(glm::vec3(5));
         m_arrow->set_pre_transform(
@@ -129,6 +140,7 @@ public:
         m_light_colour = glm::vec3(1.0f);
 
         m_health_shader = new Shader("MapDemoHealth");
+        m_hud_health_shader = new Shader("TexturedHealthBar");
     }
 
     ~Application() {
@@ -254,40 +266,7 @@ public:
         world.demo_init();
         Registry& reg = Registry::get_instance();
 
-        m_models[reg.player.get_id()] = &hero;
-        // hero.attach_to_joint(
-        //     m_bow, 
-        //     "mixamorig_RightHand", 
-        //     {63.0, 35.0, -10.5}, // pos
-        //     {10.3044329, 14.5560884, 12.8805599}, // rot
-        //     {25.5, 25.5, 25.5} // scale
-        // );
-        unsigned int counter = 1;
-        for (const auto& entity : reg.enemies.entities) {
-            const auto& enemy = reg.enemies.get(entity);
-            if (enemy.type == ENEMY_TYPE::WARRIOR) {
-                m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
-                const auto& model = m_models[entity.get_id()];
-            } else if (enemy.type == ENEMY_TYPE::ARCHER) {
-                m_models[entity.get_id()] = new AnimatedModel(archer_grunt, counter++);
-                const auto& model = m_models[entity.get_id()];
-                model->attach_to_joint(
-                    m_bow, 
-                    "mixamorig_RightHand", 
-                    {63.0, 35.0, -10.5}, // pos
-                    {10.3044329, 14.5560884, 12.8805599}, // rot
-                    {25.5, 25.5, 25.5} // scale
-                );
-            } else {
-                m_models[entity.get_id()] = new AnimatedModel(zombie_grunt, counter++);
-                const auto& model = m_models[entity.get_id()];
-            }
-            // if (!reg.motions.has(entity) || !) { continue; }
-            // const auto& motion = reg.motions.get(entity);
-            // if (reg.locomotion_stats.has(entity)) {
-                // m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
-            // }
-        }
+        AnimatedModel* player_model;
 
         Timer timer;
         float time_of_last_frame = 0;
@@ -300,6 +279,40 @@ public:
             float delta_time = float(timer.GetTime()) - time_of_last_frame;
             while (delta_time < FRAME_TIME_60FPS) {
                 delta_time = float(timer.GetTime()) - time_of_last_frame;
+            }
+
+            // Game restart
+            if (Globals::restart_renderer) {
+                Globals::restart_renderer = false;
+                for (auto& kv : m_models) {
+                    if (kv.second == nullptr) { continue; }
+                    delete kv.second;
+                    kv.second = nullptr;
+                }
+
+                unsigned int counter = 1;
+                m_models[reg.player.get_id()] = new AnimatedModel(hero, counter++);
+                for (const auto& entity : reg.enemies.entities) {
+                    const auto& enemy = reg.enemies.get(entity);
+                    if (enemy.type == ENEMY_TYPE::WARRIOR) {
+                        m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
+                        const auto& model = m_models[entity.get_id()];
+                    } else if (enemy.type == ENEMY_TYPE::ARCHER) {
+                        m_models[entity.get_id()] = new AnimatedModel(archer_grunt, counter++);
+                        const auto& model = m_models[entity.get_id()];
+                        model->attach_to_joint(
+                            m_bow, 
+                            "mixamorig_RightHand", 
+                            {63.0, 35.0, -10.5}, // pos
+                            {10.3044329, 14.5560884, 12.8805599}, // rot
+                            {25.5, 25.5, 25.5} // scale
+                        );
+                    } else {
+                        m_models[entity.get_id()] = new AnimatedModel(zombie_grunt, counter++);
+                        const auto& model = m_models[entity.get_id()];
+                    }
+                }
+                player_model = m_models[reg.player.get_id()];
             }
 
             // Camera stuff
@@ -318,7 +331,7 @@ public:
                     m_renderer->lock_cursor();
 
                 bool is_dodging = false;
-                if (hero.get_current_animation_id() == hero.get_animation_id("Roll.dae")) {
+                if (player_model->get_current_animation_id() == player_model->get_animation_id("Roll.dae")) {
                     is_dodging = true;
                 }
 
@@ -342,7 +355,7 @@ public:
                 m_camera.set_rotation({ PI / 2, 0, _vector_to_angle(glm::vec2(dir_to_look)) - PI / 2});
                 float amount_to_move = fmin(dist_from_desired_pos, camera_speed);
                 if (is_dodging) {
-                    float portion_complete = hero.get_portion_complete_of_curr_animation();
+                    float portion_complete = player_model->get_portion_complete_of_curr_animation();
                     camera_speed = portion_complete * base_camera_speed;
                 } else {
                     camera_speed = base_camera_speed;
@@ -374,7 +387,6 @@ public:
             static_shader.set_uniform_1i("u_has_texture", true);
             static_shader.set_uniform_1i("u_has_vertex_colors", false);
 
-
             m_to_be_updated_and_drawn.assign(reg.near_cameras.size(), -1);
             int i = 0;
             for (const auto& entity : reg.near_cameras.entities) {   
@@ -399,6 +411,7 @@ public:
                 kv->second->draw();
             }
             
+            _draw_hud();
             _draw_aim();
 
             m_renderer->end_draw();
@@ -407,7 +420,8 @@ public:
             if (Globals::is_3d_mode) {
                 // m_renderer->lock_cursor();
             } else { // Hacky way to quit game.
-                m_renderer->terminate();
+                // m_renderer->terminate();
+                return;
             }
 
         };
@@ -991,7 +1005,7 @@ private:
             if (!reg.motions.has(entity)) { continue; }
             auto& motion = reg.motions.get(entity);
             glm::vec3 wall_scale = glm::vec3(motion.scale, 10.0f);
-            m_wall_shader->set_uniform_3f("u_scale", wall_scale);
+            m_wall_shader->set_uniform_3f("u_scale", {wall_scale.x / 8, wall_scale.z / 8, wall_scale.y});
             m_wall_shader->set_uniform_mat4f(
                 "u_model",
                 Transform::create_model_matrix(
@@ -1046,6 +1060,7 @@ private:
 
         for (const auto& loco_entity : reg.locomotion_stats.entities) {
             // Render health bar
+            if (loco_entity.get_id() == reg.player.get_id()) { continue; } 
             if (!reg.motions.has(loco_entity)) { continue; }
             const auto& loco = reg.locomotion_stats.get(loco_entity);
             const auto& loco_motion = reg.motions.get(loco_entity);
@@ -1065,73 +1080,37 @@ private:
 
             // Red health bar layer
             float z_index = 1.1;
-            // if (Globals::is_3d_mode) {
-                glm::vec3 health_bar_pos;
-                glm::vec3 health_bar_angle;
-                if (loco_entity.get_id() == reg.player.get_id()) {
-                    health_bar_pos = glm::vec3(m_camera.get_position());
-                    const auto cam_dir_3d = glm::normalize(m_camera.rotate_to_camera_direction({ 0, 0, -1 }));
-                    const auto& temp = Transform::create_rotation_matrix({ m_camera.get_rotation().x - PI / 2, m_camera.get_rotation().y, m_camera.get_rotation().z }) * glm::vec4(0, 0, -1, 1);
-                    const auto& down_from_camera = glm::vec3(temp);
-                    const auto& left_from_camera = glm::normalize(glm::cross(cam_dir_3d, down_from_camera));
-                    health_bar_pos += (-2.75f * down_from_camera) + (3.0f * cam_dir_3d) + (2.75f * left_from_camera);
-                    // health_bar_pos += glm::vec3();
-                } else {
-                    health_bar_pos = glm::vec3({ loco_motion.position.x, loco_motion.position.y, loco_motion.scale.y + HEALTH_BAR_HEIGHT / 2 + 0.5});
-                }
-                health_bar_angle = m_camera.get_rotation();
+            glm::vec3 health_bar_pos;
+            glm::vec3 health_bar_angle;
 
-                m_health_shader->set_uniform_mat4f(
-                    "u_mvp",
-                    m_camera.get_view_project_matrix()
-                    * Transform::create_model_matrix(
-                        health_bar_pos,
-                        health_bar_angle,
-                        glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
-                    )
-                );
-                m_health_shader->set_uniform_3f("u_colour", { 0.05, 0.05, 0.05 });
-                m_renderer->draw(m_square_mesh, *m_health_shader);
+            health_bar_pos = glm::vec3({ loco_motion.position.x, loco_motion.position.y, loco_motion.scale.y + HEALTH_BAR_HEIGHT / 2 + 0.5});
+            
+            health_bar_angle = m_camera.get_rotation();
 
-                // Green health bar layer
-                m_health_shader->set_uniform_mat4f(
-                    "u_mvp",
-                    m_camera.get_view_project_matrix()
-                    * Transform::create_model_matrix(
-                        health_bar_pos - (0.001f * m_camera.rotate_to_camera_direction({ 0, 0, -1 })),
-                        health_bar_angle,
-                        glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
-                    )
-                );
-                m_health_shader->set_uniform_3f("u_colour", { 0.5, 0, 0 });
-                m_renderer->draw(m_square_mesh, *m_health_shader);
-            // } else {
-            //     m_health_shader->set_uniform_mat4f(
-            //         "u_mvp",
-            //         m_camera.get_view_project_matrix()
-            //         * Transform::create_model_matrix(
-            //             glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
-            //             glm::vec3({ 0, 0, 0 }),
-            //             glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
-            //         )
-            //     );
-            //     m_health_shader->set_uniform_3f("u_colour", { 1, 0, 0 });
-            //     m_renderer->draw(m_square_mesh, *m_health_shader);
+            m_health_shader->set_uniform_mat4f(
+                "u_mvp",
+                m_camera.get_view_project_matrix()
+                * Transform::create_model_matrix(
+                    health_bar_pos,
+                    health_bar_angle,
+                    glm::vec3({ loco_motion.scale.x, HEALTH_BAR_HEIGHT, 1 })
+                )
+            );
+            m_health_shader->set_uniform_3f("u_colour", { 0.05, 0.05, 0.05 });
+            m_renderer->draw(m_square_mesh, *m_health_shader);
 
-            //     z_index += 0.001;
-            //     // Green health bar layer
-            //     m_health_shader->set_uniform_mat4f(
-            //         "u_mvp",
-            //         m_camera.get_view_project_matrix()
-            //         * Transform::create_model_matrix(
-            //             glm::vec3({ loco_motion.position.x, loco_motion.position.y - loco_motion.scale.y / 2 - HEALTH_BAR_HEIGHT / 2, z_index }),
-            //             glm::vec3({ 0, 0, Globals::is_3d_mode ? player_motion.angle : 0 }),
-            //             glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
-            //         )
-            //     );
-            //     m_health_shader->set_uniform_3f("u_colour", { 0, 1, 0});
-            //     m_renderer->draw(m_square_mesh, *m_health_shader);
-            // }
+            // Green health bar layer
+            m_health_shader->set_uniform_mat4f(
+                "u_mvp",
+                m_camera.get_view_project_matrix()
+                * Transform::create_model_matrix(
+                    health_bar_pos - (0.001f * m_camera.rotate_to_camera_direction({ 0, 0, -1 })),
+                    health_bar_angle,
+                    glm::vec3({ loco_motion.scale.x * health_percentage, HEALTH_BAR_HEIGHT, 1 })
+                )
+            );
+            m_health_shader->set_uniform_3f("u_colour", { 0.5, 0, 0 });
+            m_renderer->draw(m_square_mesh, *m_health_shader);
         }
     }
 
@@ -1157,6 +1136,75 @@ private:
             )
         );
         m_renderer->draw(m_square_mesh, *m_health_shader);
+    }
+
+    void _draw_resource(const glm::vec2& pos, const float size, const float& percent_remaining, const glm::vec3 colour) {
+        const float aspect_ratio = float(m_renderer->get_window_width()) / float(m_renderer->get_window_height());
+
+        const float width = size;
+        const float height = size * aspect_ratio;
+
+        const float pos_x = pos.x;
+        const float pos_y = pos.y;
+        const auto& health_bar_container_tranform = Transform::create_model_matrix(
+            {pos_x, pos_y, 0.0f},
+            {0, 0, 0},
+            {width, height, 1}
+        );
+
+        m_hud_health_shader->set_uniform_3f("u_colour", colour);
+        m_hud_health_shader->set_uniform_1i("u_texture", m_hud_health_texture_fill->bind(28));
+        m_hud_health_shader->set_uniform_1f("u_health_percentage", percent_remaining);
+        m_hud_health_shader->set_uniform_mat4f("u_model", 
+            Transform::create_model_matrix(
+                {pos_x, pos_y - height * (1.0f - percent_remaining) / 2.0f, 0.0f},
+                {0, 0, 0},
+                {width, height * percent_remaining, 1}
+            )
+        );
+        m_renderer->draw(m_square_mesh, *m_hud_health_shader);
+
+        m_hud_health_shader->set_uniform_3f("u_colour", glm::vec3(1, 1, 1));
+        m_hud_health_shader->set_uniform_mat4f("u_model", health_bar_container_tranform);
+        m_hud_health_shader->set_uniform_1i("u_texture", m_hud_health_texture_border->bind(28));
+        m_hud_health_shader->set_uniform_1f("u_health_percentage", 1.0f);
+        m_renderer->draw(m_square_mesh, *m_hud_health_shader);
+    }
+
+    void _draw_hud() {
+        auto& reg = Registry::get_instance();
+        auto& player_loco = reg.locomotion_stats.get(reg.player);
+        float health_percentage = player_loco.health / player_loco.max_health;
+        float energy_percentage = player_loco.energy / player_loco.max_energy;
+        float size = 0.25;
+        
+        m_renderer->disable_depth_test();
+
+        _draw_resource(
+            {-1 + 3 * size / 2, -1 + 2 * size / 2},
+            size,
+            health_percentage,
+            {0.33, 0, 0}
+        );
+
+        _draw_resource(
+            {1 - 3 * size / 2, -1 + 2 * size / 2},
+            size,
+            energy_percentage,
+            {0, 0.33, 0}
+        );
+        
+        m_renderer->enable_depth_test();
+        
+        
+        // health_bar_pos = glm::vec3(m_camera.get_position());
+        // const auto cam_dir_3d = glm::normalize(m_camera.rotate_to_camera_direction({ 0, 0, -1 }));
+        // const auto& temp = Transform::create_rotation_matrix({ m_camera.get_rotation().x - PI / 2, m_camera.get_rotation().y, m_camera.get_rotation().z }) * glm::vec4(0, 0, -1, 1);
+        // const auto& down_from_camera = glm::vec3(temp);
+        // const auto& left_from_camera = glm::normalize(glm::cross(cam_dir_3d, down_from_camera));
+        // health_bar_pos += (-2.75f * down_from_camera) + (3.0f * cam_dir_3d) + (2.75f * left_from_camera);
+        // health_bar_pos += glm::vec3();
+        
     }
 
     void _update_models() {
@@ -1194,39 +1242,47 @@ private:
             bool rotate_opposite_to_velocity_dir = false;
             bool is_zombie = model->get_name() == "Zombie Grunt.dae";
             // const float buffer_time = 0.45f;
-            const float buffer_time = 0.25f;
+            // const float buffer_time = 0.25f;
+            const float buffer_time = 0.5f;
             if (reg.death_cooldowns.has(entity)) {
                 model->force_play_animation("Dying.dae", -1, false, true);
-            }else if (reg.stagger_cooldowns.has(entity)) {
+            } else if (reg.stagger_cooldowns.has(entity)) {
                 const auto& cooldown = reg.stagger_cooldowns.get(entity);
-                model->force_play_animation("Stagger.dae", cooldown.timer + buffer_time, false, true);
-            } else if (reg.in_dodges.has(entity)) {
-                const auto& dodge = reg.in_dodges.get(entity);
-                model->play_animation("Roll.dae", dodge.duration + buffer_time, false, true);
-            } else if (reg.attack_cooldowns.has(entity)) {
-                const auto& cooldown = reg.attack_cooldowns.get(entity);
-                if (glm::length(motion.velocity) > 0.0f) {
-                    model->play_animation("Running Attack.dae", cooldown.timer + buffer_time, false, true);
-                } else {
-                    model->play_animation("Standing Attack.dae", cooldown.timer + buffer_time, false, true);
-                }
-            } else if (glm::length(motion.velocity) > 0.0f) {
-                // const auto& speed = glm::length(motion.velocity);
-                if (angle_between_view_and_velo < PI / 3 || is_zombie) {
-                    model->play_animation("Forward.dae", 0.7f);
-                } else if (angle_between_view_and_velo > 2 * PI / 3) {
-                    model->play_animation("Backward.dae", 0.7f);
-                } else if (
-                    (velocity_angle - angle < PI && velocity_angle - angle >= 0)
-                    || velocity_angle - angle < -PI && velocity_angle - angle < 0) {
-                    model->play_animation("Left.dae", 0.75f);
-                } else {
-                    model->play_animation("Right.dae", 0.75f);
+                model->force_play_animation("Stagger.dae", cooldown.timer + buffer_time);
+            } else {
+                if (reg.in_dodges.has(entity)) {
+                    const auto& dodge = reg.in_dodges.get(entity);
+                    model->force_play_animation("Roll.dae", dodge.duration + buffer_time, false, true);
+                } 
+                
+                if (reg.attack_cooldowns.has(entity)) {
+                    const auto& cooldown = reg.attack_cooldowns.get(entity);
+                    if (glm::length(motion.velocity) > 0.0f) {
+                        model->play_animation("Running Attack.dae", cooldown.timer + buffer_time, false, true);
+                    } else {
+                        model->play_animation("Standing Attack.dae", cooldown.timer + buffer_time, false, true);
+                    }
                 }
 
-            } else {
-                model->play_animation("default0", 5.0f);
+                if (glm::length(motion.velocity) > 0.0f) {
+                    // const auto& speed = glm::length(motion.velocity);
+                    if (angle_between_view_and_velo < PI / 3 || is_zombie) {
+                        model->play_animation("Forward.dae", 0.7f);
+                    } else if (angle_between_view_and_velo > 2 * PI / 3) {
+                        model->play_animation("Backward.dae", 0.7f);
+                    } else if (
+                        (velocity_angle - angle < PI && velocity_angle - angle >= 0)
+                        || velocity_angle - angle < -PI && velocity_angle - angle < 0) {
+                        model->play_animation("Left.dae", 0.75f);
+                    } else {
+                        model->play_animation("Right.dae", 0.75f);
+                    }
+
+                } else {
+                    model->play_animation("default0", 5.0f);
+                }
             }
+            
 
             const auto current_anim_id = model->get_current_animation_id();
             if (glm::length(motion.velocity) > 0.001f) {

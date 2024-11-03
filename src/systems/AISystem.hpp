@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GameplaySystem.hpp"
 #include "../ecs/Entity.hpp"
 #include "../components/Components.hpp"
 #include "../ecs/Registry.hpp"
@@ -161,8 +162,6 @@ namespace AISystem
         Registry& registry = Registry::get_instance();
         Motion& motion = registry.motions.get(e);
         Attacker& attacker = registry.attackers.get(e);
-        Weapon& weapon_stats = registry.weapons.get(attacker.weapon_id);
-
 
         glm::vec2 player_position = registry.motions.get(registry.player).position;
         glm::vec2 direction = player_position - motion.position;
@@ -171,10 +170,7 @@ namespace AISystem
 
         motion.angle = atan2(attacker.aim.y, attacker.aim.x);
 
-        if (!registry.attack_cooldowns.has(e)) {
-            EntityFactory::create_projectile(motion, attacker, weapon_stats, TEAM_ID::FOW);
-            registry.attack_cooldowns.emplace(e, weapon_stats.attack_cooldown);
-        }
+        GameplaySystem::attack(e);
     }
 
     inline void AI_change_state(Entity& e) {
@@ -194,8 +190,8 @@ namespace AISystem
     inline void AI_step() {
         Registry& registry = Registry::get_instance();
 
-        for (Entity& e : registry.ais.entities) {
-            if (registry.near_players.has(e)) {
+        for (Entity& e : registry.near_players.entities) {
+            if (registry.ais.has(e) && !registry.death_cooldowns.has(e) && !registry.stagger_cooldowns.has(e)) {
                 AIComponent &ai = registry.ais.get(e);
                 if (ai.current_state == AI_STATE::PATROL) {
                     AI_patrol_step(e);
