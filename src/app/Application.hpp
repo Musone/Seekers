@@ -61,6 +61,8 @@ class Application {
 
     std::vector<int> m_to_be_updated_and_drawn;
 
+    std::string m_window_name = "Seekers";
+
     std::unordered_map<unsigned int, AnimatedModel*> m_models;
 public:
 
@@ -68,7 +70,7 @@ public:
         // Setup
         m_renderer = &Renderer::get_instance();
         m_renderer->init(
-            "Seekers",
+            m_window_name,
             WINDOW_WIDTH,
             WINDOW_HEIGHT,
             true,
@@ -282,6 +284,9 @@ public:
             while (delta_time < FRAME_TIME_60FPS) {
                 delta_time = float(timer.GetTime()) - time_of_last_frame;
             }
+            float delta_time_s = delta_time * 0.000001f;
+            m_renderer->set_title(m_window_name + " | FPS: " + std::to_string(1.0f / delta_time_s));
+            time_of_last_frame = float(timer.GetTime());
 
             // Game restart
             if (Globals::restart_renderer) {
@@ -418,7 +423,6 @@ public:
             _draw_aim();
 
             m_renderer->end_draw();
-            time_of_last_frame = float(timer.GetTime());
 
             if (Globals::is_3d_mode) {
                 // m_renderer->lock_cursor();
@@ -1184,14 +1188,14 @@ private:
         m_renderer->disable_depth_test();
 
         _draw_resource(
-            {-1 + 3 * size / 2, -1 + 2 * size / 2},
+            {-1 + 3 * size / 2, -1 + 3 * size / 2},
             size,
             health_percentage,
             {0.33, 0, 0}
         );
 
         _draw_resource(
-            {1 - 3 * size / 2, -1 + 2 * size / 2},
+            {1 - 3 * size / 2, -1 + 3 * size / 2},
             size,
             energy_percentage,
             {0, 0.33, 0}
