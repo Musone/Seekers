@@ -141,34 +141,75 @@ namespace EntityFactory {
         auto& team = registry.teams.emplace(entity);
         team.team_id = team_id;
 
-        // Test: Mesh based collider for an arrow/projectile shape
-        // TODO: Replace with actual projectile model when we have one
-        std::vector<glm::vec2> vertices = {
+        // Get the appropriate model from registry
+        StaticModel* projectile_model = nullptr;
+        if (!registry.projectile_models.entities.empty()) {
+            const auto& models = registry.projectile_models.components[0];
+            if (weapon.projectile_type == PROJECTILE_TYPE::ARROW) {
+                projectile_model = models.arrow_model;
+            } else if (weapon.projectile_type == PROJECTILE_TYPE::MELEE) {
+                projectile_model = models.melee_model;
+            }
+        }
+
+        // Create collision mesh from model if available
+        if (projectile_model && projectile_model->mesh_list.size() > 0) {
+            const Mesh* mesh = projectile_model->mesh_list[0].get();
+            std::vector<glm::vec2> vertices_2d;
+            
+            // Convert 3D mesh triangles to 2D vertices for collision
+            for (const Triangle& tri : mesh->triangles) {
+                // Apply pre-transform from static model to vertices
+                glm::vec4 v0 = projectile_model->get_model_matrix() * projectile_model->get_pre_transform() * glm::vec4(tri.v0, 1.0f);
+                glm::vec4 v1 = projectile_model->get_model_matrix() * projectile_model->get_pre_transform() * glm::vec4(tri.v1, 1.0f);
+                glm::vec4 v2 = projectile_model->get_model_matrix() * projectile_model->get_pre_transform() * glm::vec4(tri.v2, 1.0f);
+                
+                vertices_2d.push_back(glm::vec2(v0.x, v0.y));
+                vertices_2d.push_back(glm::vec2(v1.x, v1.y));
+                vertices_2d.push_back(glm::vec2(v2.x, v2.y));
+            }
+
+            float cos_angle = cos(motion.angle);
+            float sin_angle = sin(motion.angle);
+            for (auto& vertex : vertices_2d) {
+                float x = vertex.x;
+                float y = vertex.y;
+                vertex.x = x * cos_angle - y * sin_angle;
+                vertex.y = x * sin_angle + y * cos_angle;
+            }
+
+            auto& bounds = registry.collision_bounds.emplace(entity,
+                CollisionBounds::create_mesh(vertices_2d, Common::max_of(motion.scale)));
+        } else {
+            // Fallback to default arrow shape if no model available
             // Define arrow/projectile shape
-            {-0.5f, -0.1f},  // back left
-            {-0.3f, -0.2f},  // wing left
-            {0.5f, 0.0f},    // tip
-            {-0.3f, 0.2f},   // wing right
-            {-0.5f, 0.1f}    // back right
-        };
+            std::vector<glm::vec2> vertices = {
+                // Define arrow/projectile shape
+                {-0.5f, -0.1f},  // back left
+                {-0.3f, -0.2f},  // wing left
+                {0.5f, 0.0f},    // tip
+                {-0.3f, 0.2f},   // wing right
+                {-0.5f, 0.1f}    // back right
+            };
 
-        // Scale vertices
-        for (auto& vertex : vertices) {
-            vertex *= motion.scale;
+            // Scale vertices
+            for (auto& vertex : vertices) {
+                vertex *= motion.scale;
+            }
+
+            // Rotate vertices based on motion.angle
+            float cos_angle = cos(motion.angle);
+            float sin_angle = sin(motion.angle);
+            for (auto& vertex : vertices) {
+                float x = vertex.x;
+                float y = vertex.y;
+                vertex.x = x * cos_angle - y * sin_angle;
+                vertex.y = x * sin_angle + y * cos_angle;
+            }
+
+            auto& bounds = registry.collision_bounds.emplace(entity,
+                CollisionBounds::create_mesh(vertices, Common::max_of(motion.scale)));
         }
-
-        // Rotate vertices based on motion.angle
-        float cos_angle = cos(motion.angle);
-        float sin_angle = sin(motion.angle);
-        for (auto& vertex : vertices) {
-            float x = vertex.x;
-            float y = vertex.y;
-            vertex.x = x * cos_angle - y * sin_angle;
-            vertex.y = x * sin_angle + y * cos_angle;
-        }
-
-        auto& bounds = registry.collision_bounds.emplace(entity,
-            CollisionBounds::create_mesh(vertices, Common::max_of(motion.scale)));
 
         // Circle collider will also work
         // auto& bounds = registry.collision_bounds.emplace(entity,

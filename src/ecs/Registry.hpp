@@ -44,6 +44,7 @@ public:
 	ComponentContainer<StaggerCooldown> stagger_cooldowns;
 	ComponentContainer<DeathCooldown> death_cooldowns;
 	ComponentContainer<EnergyNoRegenCooldown> energy_no_regen_cooldowns;
+	ComponentContainer<ProjectileModels> projectile_models;
 	GridMap grid_map;
 	Entity player;
 	InputState input_state;
@@ -73,6 +74,7 @@ public:
 		m_registry_list.push_back(&stagger_cooldowns);
 		m_registry_list.push_back(&death_cooldowns);
 		m_registry_list.push_back(&energy_no_regen_cooldowns);
+		m_registry_list.push_back(&projectile_models);
 	}
 
 	Registry(Registry const&) = delete;
