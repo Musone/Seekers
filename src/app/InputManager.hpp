@@ -84,8 +84,10 @@ namespace InputManager {
     inline void on_mouse_move(GLFWwindow* window, double x, double y) {
         Registry& registry = Registry::get_instance();
         if (Globals::is_3d_mode) {
-            auto& player_motion = registry.motions.get(registry.player);
-            player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
+            if (!registry.death_cooldowns.has(registry.player)) {
+                auto& player_motion = registry.motions.get(registry.player);
+                player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
+            }
         }
         registry.input_state.mouse_pos = glm::vec2(x, WINDOW_HEIGHT - y);
     }
@@ -104,10 +106,15 @@ namespace InputManager {
         if (input_state.s_down) {move_dir.x -= 1.f;}
         if (input_state.a_down) {move_dir.y += 1.f;}
         if (input_state.d_down) {move_dir.y -= 1.f;}
+
         move_dir = Common::normalize(move_dir);
         move_dir *= player_stats.movement_speed;
         glm::vec4 temp = Transform::create_rotation_matrix({ 0, 0, player_motion.angle }) * glm::vec4(move_dir, 0, 1);
-        player_motion.velocity = { temp.x, temp.y };
+        if (!registry.stagger_cooldowns.has(registry.player)) {
+            player_motion.velocity = { temp.x, temp.y };
+        } else {
+            player_motion.velocity = 0.25f * glm::vec2(temp.x, temp.y);
+        }
 
         // update aim
         if (Globals::is_3d_mode) {

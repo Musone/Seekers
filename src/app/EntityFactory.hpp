@@ -20,7 +20,7 @@ namespace EntityFactory {
         auto& locomotion = registry.locomotion_stats.emplace(entity);
         locomotion.health = 200.0f;
         locomotion.max_health = 200.0f;
-        locomotion.movement_speed = 25.0f;
+        locomotion.movement_speed = 15.0f;
         locomotion.max_energy = 100.0f;
         locomotion.energy = locomotion.max_energy;
         locomotion.max_poise = 30.0f;
@@ -50,8 +50,12 @@ namespace EntityFactory {
         auto& weapon = registry.weapons.emplace(entity);
         weapon.type = weapon_type;
         weapon.damage = damage;
-        weapon.range = 30.0f;
-        weapon.proj_speed = 100.0f;
+        if (weapon_type == WEAPON_TYPE::BOW) {
+            weapon.range = 30.0f;
+        } else {
+            weapon.range = 5.0f;
+        }
+        weapon.proj_speed = 80.0f;
         weapon.attack_cooldown = attack_cooldown;
         weapon.stagger_duration = 0.5f;
         weapon.poise_points = 10.0f;
@@ -81,7 +85,7 @@ namespace EntityFactory {
         locomotion.energy = locomotion.max_energy;
         locomotion.max_poise = 10.0f;
         locomotion.poise = locomotion.max_poise;
-        locomotion.movement_speed = 5.0f;
+        locomotion.movement_speed = 10.0f;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::FOW;

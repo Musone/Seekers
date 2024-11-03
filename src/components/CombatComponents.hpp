@@ -77,6 +77,7 @@ struct Projectile
     float range_remaining;
     float stagger_duration;
     float poise_points;
+    std::vector<unsigned int> hit_locos;
     PROJECTILE_TYPE projectile_type;
     ENCHANTMENT enchantment; // Added for future milestones
 };

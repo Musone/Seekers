@@ -412,6 +412,10 @@ namespace CollisionSystem {
         // Apply damage and poise points to locomotive entity
         auto& loco_stats = registry.locomotion_stats.get(loco);
         auto& projectile = registry.projectiles.get(proj);
+
+        if (std::find(projectile.hit_locos.begin(), projectile.hit_locos.end(), (unsigned int)loco) != projectile.hit_locos.end()) return;
+        projectile.hit_locos.push_back(loco);
+
         loco_stats.health -= projectile.damage;
         loco_stats.poise -= projectile.poise_points;
         if (loco_stats.poise <= 0 && !registry.stagger_cooldowns.has(loco)) {
@@ -420,7 +424,9 @@ namespace CollisionSystem {
         }
 
         // Remove projectile after hit
-        registry.remove_all_components_of(proj);
+        if (projectile.projectile_type == PROJECTILE_TYPE::ARROW) {
+            registry.remove_all_components_of(proj);
+        }
 
         // Handle locomotive entity death if health depleted
         if (loco_stats.health <= 0 && !registry.death_cooldowns.has(loco)) {
