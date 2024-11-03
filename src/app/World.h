@@ -6,7 +6,6 @@
 #include <globals/Globals.h>
 #include <utils/Common.hpp>
 #include <systems/AudioSystem.hpp>
-#include <systems/TutorialSystem.hpp>
 
 class World {
 public:
@@ -25,5 +24,4 @@ private:
 
 	Registry& m_registry;
 	AudioSystem& m_audioSystem;
-	TutorialSystem& m_tutorialSystem;
 };
