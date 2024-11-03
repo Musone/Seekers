@@ -55,9 +55,6 @@ namespace InputManager {
             if (key == GLFW_KEY_D) {
                 registry.input_state.d_down = false;
             }
-            if (!registry.input_state.w_down && !registry.input_state.s_down &&
-                !registry.input_state.a_down && !registry.input_state.d_down) {
-            }
             if (key == GLFW_KEY_Q) {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
             }
