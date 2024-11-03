@@ -1257,7 +1257,8 @@ private:
                 const auto& cooldown = reg.stagger_cooldowns.get(entity);
                 model->force_play_animation("Stagger.dae", cooldown.timer + buffer_time);
             } else if (reg.death_cooldowns.has(reg.player)) {
-                model->force_play_animation("Dance.dae");
+                const auto& cooldown = reg.death_cooldowns.get(reg.player);
+                model->force_play_animation("Dance.dae", cooldown.timer + 2.0f * buffer_time);
             } else {
                 if (reg.in_dodges.has(entity)) {
                     const auto& dodge = reg.in_dodges.get(entity);
