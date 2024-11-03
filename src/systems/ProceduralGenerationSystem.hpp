@@ -379,26 +379,53 @@ namespace ProceduralGenerationSystem {
         return room;
     }
 
-    inline void create_enemies(const std::vector<Room>& rooms, const Room& spawn_room) {
-        int total_num_enemies = 0;
+    inline bool enemies_objects_overlap(const std::vector<std::pair<int, int>>& positions, int x, int y) {
+        int empty_radius = 4;
+        for (const auto& pos : positions) {
+            if ((pos.first-x)*(pos.first-x) + (pos.second-y)*(pos.second-y) < empty_radius * empty_radius) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    inline void create_enemies_and_objects(const std::vector<Room>& rooms, const Room& spawn_room) {
         for (const Room& room : rooms) {
             if (room == spawn_room) {continue;}
+
+            std::vector<std::pair<int, int>> enemies_and_objects_pos;
 
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> pos_x_dist(room.position.x - room.size.x / 2 + 2, room.position.x + room.size.x / 2 - 2);
             std::uniform_int_distribution<> pos_y_dist(room.position.y - room.size.y / 2 + 2, room.position.y + room.size.y / 2 - 2);
             std::uniform_int_distribution<> enemy_num_dist(1, room.size.x * room.size.y / 400);
+            std::uniform_int_distribution<> object_num_dist(1, room.size.x * room.size.y / 600);
             std::uniform_int_distribution<> enemy_type_dist(0, (int)ENEMY_TYPE::ENEMY_TYPE_COUNT - 1);
 
             int enemy_num = enemy_num_dist(gen);
             for (int i = 0; i < enemy_num; i++) {
-                EntityFactory::create_enemy({pos_x_dist(gen), pos_y_dist(gen)}, (ENEMY_TYPE)enemy_type_dist(gen));
+                int x = pos_x_dist(gen);
+                int y = pos_y_dist(gen);
+                while (enemies_objects_overlap(enemies_and_objects_pos, x, y)) {
+                    x = pos_x_dist(gen);
+                    y = pos_y_dist(gen);
+                }
+                EntityFactory::create_enemy({x, y}, (ENEMY_TYPE)enemy_type_dist(gen));
+                enemies_and_objects_pos.push_back({x, y});
             }
-            total_num_enemies += enemy_num;
+            int object_num = object_num_dist(gen);
+            for (int i = 0; i < object_num; i++) {
+                int x = pos_x_dist(gen);
+                int y = pos_y_dist(gen);
+                while (enemies_objects_overlap(enemies_and_objects_pos, x, y)) {
+                    x = pos_x_dist(gen);
+                    y = pos_y_dist(gen);
+                }
+                EntityFactory::create_tree({x, y});
+                enemies_and_objects_pos.push_back({x, y});
+            }
         }
-
-        std::cout << "number of enemies: " << total_num_enemies << std::endl;
     }
 
     inline void GenerateDungeon(int map_width, int map_height, Motion& player_motion) {
@@ -413,7 +440,7 @@ namespace ProceduralGenerationSystem {
         place_walls_on_map(map);
         create_walls(map);
 
-        create_enemies(rooms, spawn_room);
+        create_enemies_and_objects(rooms, spawn_room);
 
         // print map
         for (const auto& row : map) {
