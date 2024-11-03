@@ -9,6 +9,41 @@
 
 namespace AISystem
 {
+    inline void update_player_vision(float elapsed_ms) {
+        Registry& registry = Registry::get_instance();
+
+        for (Entity& e : registry.ais.entities) {
+            if (!registry.near_players.has(e)) {
+                continue;
+            }
+            Motion& motion = registry.motions.get(e);
+
+            glm::vec2 ai_position = get_grid_map_coordinates(motion);
+            glm::vec2 target_position = get_grid_map_coordinates(registry.motions.get(registry.player));
+            CollisionBounds ai_box = registry.collision_bounds.get(e);
+
+            int collision_radius = 0;
+            if (ai_box.type == ColliderType::Circle) {
+                collision_radius = ai_box.circle.radius;
+            }
+
+            bool can_see_player = can_see(registry.grid_map.grid_boxes, ai_position.x, ai_position.y, collision_radius, target_position.x, target_position.y);
+            if (registry.vision_to_players.has(e)) {
+                auto& vision_to_player = registry.vision_to_players.get(e);
+                if (can_see_player) {
+                    vision_to_player.timer = 5.0f;
+                } else {
+                    vision_to_player.timer -= elapsed_ms / 1000.0f;
+                    if (vision_to_player.timer <= 0) {
+                        registry.attack_cooldowns.remove(e);
+                    }
+                }
+            } else if (can_see_player) {
+                registry.vision_to_players.emplace(e, 5.0f);
+            }
+        }
+    }
+
 //    I didn't know where to put this, so I put it here for now
     inline glm::vec2 rotate_vector(const glm::vec2& vec, float angle_degrees) {
         // Convert angle from degrees to radians

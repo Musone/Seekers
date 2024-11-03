@@ -73,3 +73,28 @@ glm::vec2 get_position_from_grid_map_coordinates(int x, int y) {
     position.y += y - int(Globals::update_distance);
     return position;
 }
+
+bool can_see(
+        std::vector<std::vector<GridMap::GridBox>>& grid,
+        int current_x, int current_y,
+        int self_radius,
+        int target_x,
+        int target_y
+) {
+    glm::vec2 dir = Common::normalize(glm::vec2({target_x, target_y}) - glm::vec2({current_x, current_y}));
+    float next_x = current_x + dir.x;
+    float next_y = current_y + dir.y;
+    int occupied_cells = 0;
+    while (glm::length(glm::vec2({target_x, target_y}) - glm::vec2({next_x, next_y})) >= 1) {
+        bool is_occupied = grid[int(std::round(next_x))][int(std::round(next_y))].is_occupied;
+        if (is_occupied) {
+            occupied_cells++;
+        }
+        if (occupied_cells > self_radius + 2) {
+            return false;
+        }
+        next_x += dir.x;
+        next_y += dir.y;
+    }
+    return true;
+}

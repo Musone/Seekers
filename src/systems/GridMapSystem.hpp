@@ -105,5 +105,26 @@ namespace GridMapSystem {
         std::vector<std::vector<GridMap::GridBox>> &grid_boxes = Registry::get_instance().grid_map.grid_boxes;
         grid_boxes[int(Globals::update_distance)][int(Globals::update_distance)].distance = 0;
         update_grid_distances(grid_boxes, int(Globals::update_distance), int(Globals::update_distance));
+
+        //                            printmap
+        for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
+            for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
+                if (registry.grid_map.grid_boxes[i][j].is_occupied) {
+                    printf("*   ");
+                }
+                else if (registry.grid_map.grid_boxes[i][j].distance == -1) {
+                    printf("-1  ");
+                } else if (registry.grid_map.grid_boxes[i][j].distance >= 100) {
+                    printf("%d ", registry.grid_map.grid_boxes[i][j].distance);
+                }
+                else if (registry.grid_map.grid_boxes[i][j].distance >= 10) {
+                    printf("%d  ", registry.grid_map.grid_boxes[i][j].distance);
+                } else {
+                    printf("%d   ", registry.grid_map.grid_boxes[i][j].distance);
+                }
+            }
+            printf("X\n");
+        }
+        printf("-----------------------------------------------------------------------------\n");
     }
 };
