@@ -54,6 +54,8 @@ void World::demo_init() {
     m_audioSystem.load_all_sound();
     m_audioSystem.start_music();
 
+    m_tutorialSystem.load_tutorial();
+
     restart_game();
 
     // // Bottom wall (with entrance in the middle)
@@ -110,6 +112,7 @@ void World::step(float elapsed_ms) {
     CollisionSystem::check_collisions();
     CollisionSystem::handle_collisions();
 
+    m_tutorialSystem.handle_tutorial_per_frame();
     m_audioSystem.handle_audio_per_frame();
 
     AISystem::AI_step();
@@ -120,8 +123,6 @@ void World::step(float elapsed_ms) {
     GameplaySystem::update_regen_stats(elapsed_ms);
     GameplaySystem::update_projectile_range(elapsed_ms);
     GameplaySystem::update_near_player_camera();
-
-    m_tutorialSystem.handle_tutorial_per_frame();
 
     enforce_boundaries(m_registry.player);
 }
