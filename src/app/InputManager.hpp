@@ -2,14 +2,12 @@
 
 #include <GLFW/glfw3.h>
 #include <utils/Transform.hpp>
-#include <systems/AudioSystem.hpp>
 #include <systems/GameplaySystem.hpp>
+#include <systems/TutorialSystem.hpp>
 
-#include <app/EntityFactory.hpp>
 #include "ecs/Registry.hpp"
 #include "globals/Globals.h"
 #include "utils/Common.hpp"
-#include "utils/Timer.h"
 
 namespace InputManager {
     inline void on_key_pressed(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -22,15 +20,19 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_W) {
                 registry.input_state.w_down = true;
+                TutorialSystem::pass_movements();
             }
             if (key == GLFW_KEY_S) {
                 registry.input_state.s_down = true;
+                TutorialSystem::pass_movements();
             }
             if (key == GLFW_KEY_A) {
                 registry.input_state.a_down = true;
+                TutorialSystem::pass_movements();
             }
             if (key == GLFW_KEY_D) {
                 registry.input_state.d_down = true;
+                TutorialSystem::pass_movements();
             }
             if (key == GLFW_KEY_Q) {
                 player_motion.rotation_velocity += Globals::cameraRotationSpeed;
@@ -40,6 +42,7 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_SPACE) {
                 GameplaySystem::dodge(registry.player);
+                TutorialSystem::pass_dodge();
             }
         }
         if (action == GLFW_RELEASE) {
@@ -54,9 +57,6 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_D) {
                 registry.input_state.d_down = false;
-            }
-            if (!registry.input_state.w_down && !registry.input_state.s_down &&
-                !registry.input_state.a_down && !registry.input_state.d_down) {
             }
             if (key == GLFW_KEY_Q) {
                 player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
@@ -77,6 +77,7 @@ namespace InputManager {
                 if (!registry.attack_cooldowns.has(registry.player)) {
                     GameplaySystem::attack(registry.player);
                 }
+                TutorialSystem::pass_attack();
             }
         }
     }
@@ -90,6 +91,7 @@ namespace InputManager {
             }
         }
         registry.input_state.mouse_pos = glm::vec2(x, WINDOW_HEIGHT - y);
+        TutorialSystem::pass_aim();
     }
 
     // handle inputs that need updates every frame which should be called in World::step()
