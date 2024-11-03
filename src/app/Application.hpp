@@ -127,6 +127,7 @@ public:
         );
 
         m_bow = new StaticModel("models/Bow.obj", m_wall_shader);
+        m_sword = new StaticModel("models/Sword.obj", m_wall_shader);
 
         m_arrow = new StaticModel("models/Arrow.dae", m_wall_shader);
         m_arrow->set_scale(glm::vec3(5));
@@ -305,6 +306,13 @@ public:
                     if (enemy.type == ENEMY_TYPE::WARRIOR) {
                         m_models[entity.get_id()] = new AnimatedModel(warrior_grunt, counter++);
                         const auto& model = m_models[entity.get_id()];
+                        model->attach_to_joint(
+                            m_sword, 
+                            "mixamorig_RightHand", 
+                            {63.0, 35.0, 7.0}, // pos
+                            {4.7752223, 19.3731594, 11.5401363}, // rot
+                            {11.5, 11.5, 11.5} // scale
+                        );
                     } else if (enemy.type == ENEMY_TYPE::ARCHER) {
                         m_models[entity.get_id()] = new AnimatedModel(archer_grunt, counter++);
                         const auto& model = m_models[entity.get_id()];

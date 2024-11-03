@@ -189,7 +189,7 @@ namespace Testing {
         tree.set_rotation(PI / 2, 0, 0);
         tree.set_position(500, 500, 0);
         // StaticModel sword("models/sword.dae", &static_shader);
-        StaticModel bow("models/Bow.obj", &static_shader);
+        StaticModel bow("models/Sword.obj", &static_shader);
         bow.set_scale(10, 10, 10);
         // bow.set_position(750, 0, 0);
         StaticModel katana("models/katana.obj", &static_shader);
@@ -281,13 +281,13 @@ namespace Testing {
             static_shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
             static_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
 
-            // hero.draw();
+            hero.draw();
             // tree.draw();
             // bow.draw();
             // wolf.draw();
             // guy.draw();
-            melee.set_rotation(attach->offset_rotation);
-            melee.draw();
+            // melee.set_rotation(attach->offset_rotation);
+            // melee.draw();
             // arrow.set_rotation(attach->offset_rotation);
             // arrow.set_rotation(attach->offset_rotation);
             // arrow.draw();
