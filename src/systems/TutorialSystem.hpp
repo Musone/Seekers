@@ -48,5 +48,10 @@ public:
         }
     }
 
+    inline static void skip_tutorial() {
+        TutorialSystem& instance = TutorialSystem::get_instance();
+        instance.state = TUTORIAL_STATE::TUTORIAL_DONE;
+    }
+
 private:
 };

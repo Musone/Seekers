@@ -44,6 +44,9 @@ namespace InputManager {
                 GameplaySystem::dodge(registry.player);
                 TutorialSystem::pass_dodge();
             }
+            if (key == GLFW_KEY_P) {
+                TutorialSystem::skip_tutorial();
+            }
         }
         if (action == GLFW_RELEASE) {
             if (key == GLFW_KEY_W) {
