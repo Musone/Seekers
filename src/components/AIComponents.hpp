@@ -18,3 +18,9 @@ struct AIComponent
     float detection_radius; // Radius within which the AI can detect entities
     std::vector<glm::vec2> patrol_points; // List of points for the AI to patrol
 };
+
+struct VisionToPlayer
+{
+    float timer;
+    VisionToPlayer(float t) : timer(t) {}
+};
