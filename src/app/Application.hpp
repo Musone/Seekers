@@ -335,6 +335,8 @@ public:
             const Motion& player_motion = reg.motions.get(reg.player);
             glm::vec2 cam_dir;
             glm::vec3 ortho_cam_dir;
+            // m_camera.set_position(glm::vec3(player_motion.position, 2.0f));
+            // m_camera.set_rotation({PI / 2, 0, player_motion.angle - PI / 2});
             {
                     float the_3d_angle = 0;
                     m_camera.set_rotation({ PI / 2, 0, player_motion.angle - PI / 2});
@@ -427,8 +429,8 @@ public:
                 kv->second->draw();
             }
             
-            _draw_hud();
             _draw_aim();
+            _draw_hud();
 
             m_renderer->end_draw();
 
@@ -1186,6 +1188,40 @@ private:
         m_renderer->draw(m_square_mesh, *m_hud_health_shader);
     }
 
+    std::vector<Texture2D*> m_tutorial_slides;
+
+    void _load_tutorial() {
+        if (m_tutorial_slides.size() < 1) {
+            m_tutorial_slides.push_back(new Texture2D("tutorial/wasd.png"));
+            m_tutorial_slides.push_back(new Texture2D("tutorial/mousemove.png"));
+            m_tutorial_slides.push_back(new Texture2D("tutorial/spacebar.png"));
+            m_tutorial_slides.push_back(new Texture2D("tutorial/leftclick.png"));
+        }
+    }
+
+    void _draw_tutorial() {
+        _load_tutorial();
+        auto& tutorial = TutorialSystem::get_instance();
+        const unsigned int state = (unsigned int)tutorial.state;
+        if (tutorial.state == TutorialSystem::TUTORIAL_STATE::TUTORIAL_DONE) { return; }
+        const float aspect_ratio = float(m_renderer->get_window_width()) / float(m_renderer->get_window_height());
+        const float image_aspect_ratio = float(m_tutorial_slides[state]->get_width()) / float(m_tutorial_slides[state]->get_height());
+        const float width = 0.5;
+        const float height = width / image_aspect_ratio * aspect_ratio;
+
+        m_hud_health_shader->set_uniform_3f("u_colour", {1, 1, 1});
+        m_hud_health_shader->set_uniform_1i("u_texture", m_tutorial_slides[state]->bind(27));
+        m_hud_health_shader->set_uniform_1f("u_health_percentage", 1.0f);
+        m_hud_health_shader->set_uniform_mat4f("u_model", 
+            Transform::create_model_matrix(
+                {1.5f * width / 2, 0, 0},
+                {0, 0, 0},
+                {width, height, 1}
+            )
+        );
+        m_renderer->draw(m_square_mesh, *m_hud_health_shader);
+    }
+
     void _draw_hud() {
         auto& reg = Registry::get_instance();
         auto& player_loco = reg.locomotion_stats.get(reg.player);
@@ -1209,6 +1245,8 @@ private:
             {0, 0.33, 0}
         );
         
+        _draw_tutorial();
+
         m_renderer->enable_depth_test();
         
         
