@@ -30,6 +30,22 @@ Seekers is a top-down 2D/3D action RPG that melds dungeon crawling with open-wor
 - **Quit Game**: Z key
 - **Aim**: Mouse movement
 
+### Project Structure
+
+- `src/`: Source code
+  - `app/`: Core application logic (World, EntityFactory, InputManager)
+  - `components/`: ECS components (AI, Combat, Physics, Render, etc.)
+  - `ecs/`: Entity Component System implementation
+  - `globals/`: Global variables and constants
+  - `renderer/`: OpenGL rendering utilities
+  - `systems/`: Game systems (Collision, Gameplay, Physics)
+  - `shaders/`: GLSL shader files
+  - `textures/`: Game textures and sprites
+  - `utils/`: Utility functions and classes
+  - `main.cpp`: Entry point of the application
+- `doc/`: Documentation files
+- `CMakeLists.txt`: CMake build configuration
+
 ## Milestone 2 Implementation Details
 
 ### Mandatory Requirements (80%)
@@ -133,23 +149,7 @@ Seekers is a top-down 2D/3D action RPG that melds dungeon crawling with open-wor
    - Obstacle avoidance
    - Dynamic path updates
 
-### Project Structure
-
-- `src/`: Source code
-  - `app/`: Core application logic (World, EntityFactory, InputManager)
-  - `components/`: ECS components (AI, Combat, Physics, Render, etc.)
-  - `ecs/`: Entity Component System implementation
-  - `globals/`: Global variables and constants
-  - `renderer/`: OpenGL rendering utilities
-  - `systems/`: Game systems (Collision, Gameplay, Physics)
-  - `shaders/`: GLSL shader files
-  - `textures/`: Game textures and sprites
-  - `utils/`: Utility functions and classes
-  - `main.cpp`: Entry point of the application
-- `doc/`: Documentation files
-- `CMakeLists.txt`: CMake build configuration
-
-### Acknowledgments
+## Acknowledgments
 
 - OpenGL and GLFW communities
 - SDL2 developers
