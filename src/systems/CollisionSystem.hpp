@@ -204,6 +204,9 @@ namespace CollisionSystem {
         const CircleCollider& circle, const glm::vec2& circle_pos,
         const MeshCollider& mesh, const glm::vec2& mesh_pos
     ) {
+        std::cout << "Checking circle-mesh collision with " 
+                  << mesh.vertices.size() << " vertices" << std::endl;
+
         // Broad phase using bounding radius
         if (glm::length(mesh_pos - circle_pos) > (circle.radius + mesh.bound_radius)) {
             return false;
@@ -406,6 +409,7 @@ namespace CollisionSystem {
      */
     inline void proj_loco_collision(Entity& proj, Entity& loco) {
         Registry& registry = Registry::get_instance();
+        std::cout << "Projectile collision detected with locomotive entity" << std::endl;
 
         if (registry.in_dodges.has(loco)) return;
 

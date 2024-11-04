@@ -154,66 +154,104 @@ namespace EntityFactory {
 
         // Create collision mesh from model if available
         if (projectile_model && projectile_model->mesh_list.size() > 0) {
-            const Mesh* mesh = projectile_model->mesh_list[0].get();
-            std::vector<glm::vec2> vertices_2d;
+            // Find mesh with most triangles
+            const Mesh* best_mesh = nullptr;
+            size_t max_triangles = 0;
             
-            // Convert 3D mesh triangles to 2D vertices for collision
-            for (const Triangle& tri : mesh->triangles) {
-                // Apply pre-transform from static model to vertices
-                glm::vec4 v0 = projectile_model->get_model_matrix() * projectile_model->get_pre_transform() * glm::vec4(tri.v0, 1.0f);
-                glm::vec4 v1 = projectile_model->get_model_matrix() * projectile_model->get_pre_transform() * glm::vec4(tri.v1, 1.0f);
-                glm::vec4 v2 = projectile_model->get_model_matrix() * projectile_model->get_pre_transform() * glm::vec4(tri.v2, 1.0f);
+            std::cout << "Checking " << projectile_model->mesh_list.size() 
+                      << " meshes for projectile type: " 
+                      << (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") << std::endl;
+            
+            for (size_t i = 0; i < projectile_model->mesh_list.size(); i++) {
+                const Mesh* current_mesh = projectile_model->mesh_list[i].get();
+                size_t triangle_count = current_mesh->triangles.size();
+                std::cout << "Mesh " << i << " has " << triangle_count << " triangles" << std::endl;
                 
-                vertices_2d.push_back(glm::vec2(v0.x, v0.y));
-                vertices_2d.push_back(glm::vec2(v1.x, v1.y));
-                vertices_2d.push_back(glm::vec2(v2.x, v2.y));
+                if (triangle_count > max_triangles) {
+                    max_triangles = triangle_count;
+                    best_mesh = current_mesh;
+                }
+            }
+            
+            if (!best_mesh) {
+                std::cout << "No valid meshes found with triangles" << std::endl;
+                auto& bounds = registry.collision_bounds.emplace(entity,
+                    CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+                return entity;
             }
 
-            float cos_angle = cos(motion.angle);
-            float sin_angle = sin(motion.angle);
-            for (auto& vertex : vertices_2d) {
-                float x = vertex.x;
-                float y = vertex.y;
-                vertex.x = x * cos_angle - y * sin_angle;
-                vertex.y = x * sin_angle + y * cos_angle;
-            }
-
-            auto& bounds = registry.collision_bounds.emplace(entity,
-                CollisionBounds::create_mesh(vertices_2d, Common::max_of(motion.scale)));
-        } else {
-            // Fallback to default arrow shape if no model available
-            // Define arrow/projectile shape
-            std::vector<glm::vec2> vertices = {
-                // Define arrow/projectile shape
-                {-0.5f, -0.1f},  // back left
-                {-0.3f, -0.2f},  // wing left
-                {0.5f, 0.0f},    // tip
-                {-0.3f, 0.2f},   // wing right
-                {-0.5f, 0.1f}    // back right
+            const Mesh* mesh = best_mesh;
+            std::cout << "Using mesh with " << max_triangles << " triangles" << std::endl;
+            
+            // Get model scale from the model itself
+            glm::vec3 model_scale = projectile_model->get_scale();
+            
+            // Create transformation matrices
+            glm::mat4 pre_transform = projectile_model->get_pre_transform();
+            glm::mat4 model_matrix = Transform::create_model_matrix(
+                glm::vec3(0, 0, 0),  // We'll add position later
+                glm::vec3(0, 0, motion.angle),  // Only rotate around Z
+                glm::vec3(model_scale)  // Use model scale instead of motion scale
+            );
+            
+            // Transform and collect vertices
+            std::vector<glm::vec2> vertices_2d;
+            auto add_unique_vertex = [&vertices_2d](const glm::vec2& v) {
+                const float EPSILON = 0.0001f;
+                for (const auto& existing : vertices_2d) {
+                    if (glm::length(existing - v) < EPSILON) return; // Already exists
+                }
+                vertices_2d.push_back(v);
             };
 
-            // Scale vertices
-            for (auto& vertex : vertices) {
-                vertex *= motion.scale;
+            for (const Triangle& tri : mesh->triangles) {
+                // Transform vertices through pre-transform and model matrix
+                glm::vec4 v0 = model_matrix * pre_transform * glm::vec4(tri.v0, 1.0f);
+                glm::vec4 v1 = model_matrix * pre_transform * glm::vec4(tri.v1, 1.0f);
+                glm::vec4 v2 = model_matrix * pre_transform * glm::vec4(tri.v2, 1.0f);
+                
+                // Project to 2D and add unique vertices
+                add_unique_vertex(glm::vec2(v0.x, v0.y));
+                add_unique_vertex(glm::vec2(v1.x, v1.y));
+                add_unique_vertex(glm::vec2(v2.x, v2.y));
             }
-
-            // Rotate vertices based on motion.angle
-            float cos_angle = cos(motion.angle);
-            float sin_angle = sin(motion.angle);
-            for (auto& vertex : vertices) {
-                float x = vertex.x;
-                float y = vertex.y;
-                vertex.x = x * cos_angle - y * sin_angle;
-                vertex.y = x * sin_angle + y * cos_angle;
+            
+            if (vertices_2d.empty()) {
+                std::cout << "No vertices found in mesh, using circle collider" << std::endl;
+                auto& bounds = registry.collision_bounds.emplace(entity,
+                    CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+            } else {
+                // Compute centroid
+                glm::vec2 centroid(0.0f);
+                for (const auto& v : vertices_2d) {
+                    centroid += v;
+                }
+                centroid /= static_cast<float>(vertices_2d.size());
+                
+                // Sort vertices by angle around centroid
+                std::sort(vertices_2d.begin(), vertices_2d.end(),
+                    [centroid](const glm::vec2& a, const glm::vec2& b) {
+                        return atan2(a.y - centroid.y, a.x - centroid.x) <
+                               atan2(b.y - centroid.y, b.x - centroid.x);
+                    });
+                
+                // Calculate bound radius
+                float bound_radius = 0.0f;
+                for (const auto& vertex : vertices_2d) {
+                    bound_radius = std::max(bound_radius, glm::length(vertex - centroid));
+                }
+                
+                std::cout << "Creating mesh collider with " << vertices_2d.size() 
+                          << " vertices and radius " << bound_radius << std::endl;
+                
+                auto& bounds = registry.collision_bounds.emplace(entity,
+                    CollisionBounds::create_mesh(vertices_2d, bound_radius));
             }
-
+        } else {
+            std::cout << "No valid mesh found for projectile, using circle collider" << std::endl;
             auto& bounds = registry.collision_bounds.emplace(entity,
-                CollisionBounds::create_mesh(vertices, Common::max_of(motion.scale)));
+                CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
         }
-
-        // Circle collider will also work
-        // auto& bounds = registry.collision_bounds.emplace(entity,
-        //     CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
     }

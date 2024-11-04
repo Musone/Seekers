@@ -25,7 +25,21 @@ void World::restart_game() {
     std::cout << "Restarting game..." << std::endl;
 
     Registry& registry = Registry::get_instance();
+    
+    // Store the models before clearing
+    StaticModel* arrow_model = nullptr;
+    StaticModel* melee_model = nullptr;
+    if (!registry.projectile_models.entities.empty()) {
+        arrow_model = registry.projectile_models.components[0].arrow_model;
+        melee_model = registry.projectile_models.components[0].melee_model;
+    }
+
     registry.clear_all_components();
+
+    // Restore the models after clearing
+    auto& models = registry.projectile_models.emplace(Entity());
+    models.arrow_model = arrow_model;
+    models.melee_model = melee_model;
 
     // Create Player
     auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
