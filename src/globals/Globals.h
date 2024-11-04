@@ -29,5 +29,6 @@ namespace Globals {
     extern float poise_regen_multiplier;
     extern float dodge_energy_cost;
     extern float energy_no_regen_duration;
+    extern float static_render_distance;
     extern bool restart_renderer;
 }

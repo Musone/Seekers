@@ -1028,6 +1028,7 @@ private:
         for (auto& entity : reg.walls.entities) {
             if (!reg.motions.has(entity)) { continue; }
             auto& motion = reg.motions.get(entity);
+            if (glm::distance(motion.position, glm::vec2(m_camera.get_position())) > Globals::static_render_distance) { continue; }
             glm::vec3 wall_scale = glm::vec3(motion.scale, 10.0f);
             m_wall_shader->set_uniform_3f("u_scale", {wall_scale.x / 8, wall_scale.z / 8, wall_scale.y});
             m_wall_shader->set_uniform_mat4f(
@@ -1043,9 +1044,10 @@ private:
 
         for (auto& entity : reg.static_objects.entities) {
             if (!reg.motions.has(entity)) { continue; }
+            auto& motion = reg.motions.get(entity);
+            if (glm::distance(motion.position, glm::vec2(m_camera.get_position())) > Globals::static_render_distance) { continue; }
             auto& static_object = reg.static_objects.get(entity);
             if (static_object.type != STATIC_OBJECT_TYPE::TREE) { continue; }
-            auto& motion = reg.motions.get(entity);
             m_spooky_tree->set_position(glm::vec3(motion.position, -0.3f));
             m_spooky_tree->draw();
         }
