@@ -119,6 +119,8 @@ public:
         return Transform::create_model_matrix(m_position, m_rotation, m_scale); 
     }
 
+    glm::mat4 get_pre_transform() const { return m_pre_transform; }
+
     std::string get_name() const { return m_name; };
 #pragma endregion
 

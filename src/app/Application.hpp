@@ -144,6 +144,11 @@ public:
 
         m_health_shader = new Shader("MapDemoHealth");
         m_hud_health_shader = new Shader("TexturedHealthBar");
+
+        Registry& registry = Registry::get_instance();
+        auto& models = registry.projectile_models.emplace(Entity());
+        models.arrow_model = m_arrow;
+        models.melee_model = m_banana;
     }
 
     ~Application() {

@@ -32,7 +32,7 @@ namespace EntityFactory {
         registry.attackers.emplace(entity);
 
         // Use circle collider for player
-        auto& bounds = registry.collision_bounds.emplace(entity,
+        registry.collision_bounds.emplace(entity,
             CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
@@ -114,7 +114,7 @@ namespace EntityFactory {
         attacker.weapon_id = enemy_weapon;
 
         // Use circle collider for enemy
-        auto& bounds = registry.collision_bounds.emplace(entity,
+        registry.collision_bounds.emplace(entity,
             CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
@@ -143,38 +143,135 @@ namespace EntityFactory {
         auto& team = registry.teams.emplace(entity);
         team.team_id = team_id;
 
-        // Test: Mesh based collider for an arrow/projectile shape
-        // TODO: Replace with actual projectile model when we have one
-        std::vector<glm::vec2> vertices = {
-            // Define arrow/projectile shape
-            {-0.5f, -0.1f},  // back left
-            {-0.3f, -0.2f},  // wing left
-            {0.5f, 0.0f},    // tip
-            {-0.3f, 0.2f},   // wing right
-            {-0.5f, 0.1f}    // back right
-        };
-
-        // Scale vertices
-        for (auto& vertex : vertices) {
-            vertex *= motion.scale;
+        // Get the appropriate model from registry
+        StaticModel* projectile_model = nullptr;
+        if (!registry.projectile_models.entities.empty()) {
+            const auto& models = registry.projectile_models.components[0];
+            if (weapon.projectile_type == PROJECTILE_TYPE::ARROW) {
+                projectile_model = models.arrow_model;
+            } else if (weapon.projectile_type == PROJECTILE_TYPE::MELEE) {
+                projectile_model = models.melee_model;
+            }
         }
 
-        // Rotate vertices based on motion.angle
-        float cos_angle = cos(motion.angle);
-        float sin_angle = sin(motion.angle);
-        for (auto& vertex : vertices) {
-            float x = vertex.x;
-            float y = vertex.y;
-            vertex.x = x * cos_angle - y * sin_angle;
-            vertex.y = x * sin_angle + y * cos_angle;
+        if (projectile_model && projectile_model->mesh_list.size() > 0) {
+            // Find mesh with most triangles
+            const Mesh* best_mesh = nullptr;
+            size_t max_triangles = 0;
+            
+            // Added logging because hard to debug mesh-based collisions; we can remove later
+            Log::log_info(std::string("Processing meshes for ") + 
+                          (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") + 
+                          " projectile. Total meshes: " + std::to_string(projectile_model->mesh_list.size()), 
+                          __FILE__, __LINE__);
+            
+            for (size_t i = 0; i < projectile_model->mesh_list.size(); i++) {
+                const Mesh* current_mesh = projectile_model->mesh_list[i].get();
+                size_t triangle_count = current_mesh->triangles.size();
+                
+                if (triangle_count > max_triangles) {
+                    max_triangles = triangle_count;
+                    best_mesh = current_mesh;
+                }
+            }
+            
+            if (!best_mesh || max_triangles == 0) {
+                Log::log_warning(std::string("No valid mesh found for ") + 
+                                (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") + 
+                                " projectile, falling back to circle collider", 
+                                __FILE__, __LINE__);
+                registry.collision_bounds.emplace(entity,
+                    CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+                return entity;
+            }
+
+            const Mesh* mesh = best_mesh;
+            
+            // Create transformation matrices
+            glm::mat4 pre_transform = projectile_model->get_pre_transform();
+            
+            // Scale from model's inherent scale
+            glm::vec3 model_scale = projectile_model->get_scale();
+            
+            // Create model matrix for initial orientation (without position)
+            glm::mat4 model_matrix = Transform::create_model_matrix(
+                glm::vec3(0),           // Position will be handled by physics system
+                glm::vec3(0, 0, motion.angle),  // Only rotate around Z axis
+                model_scale             // Use model's scale
+            );
+            
+            // Transform vertices through model space to world space
+            std::vector<glm::vec2> vertices_2d;
+            auto add_unique_vertex = [&vertices_2d](const glm::vec2& v) {
+                const float EPSILON = 0.0001f;
+                for (const auto& existing : vertices_2d) {
+                    if (glm::length(existing - v) < EPSILON) return;
+                }
+                vertices_2d.push_back(v);
+            };
+
+            // Transform all vertices through the combined transformation
+            glm::mat4 transform = model_matrix * pre_transform;
+            for (const Triangle& tri : mesh->triangles) {
+                // Transform vertices to world space (excluding position)
+                glm::vec4 v0 = transform * glm::vec4(tri.v0, 1.0f);
+                glm::vec4 v1 = transform * glm::vec4(tri.v1, 1.0f);
+                glm::vec4 v2 = transform * glm::vec4(tri.v2, 1.0f);
+                
+                // Project to 2D (XY plane) and add unique vertices
+                add_unique_vertex(glm::vec2(v0.x, v0.y));
+                add_unique_vertex(glm::vec2(v1.x, v1.y));
+                add_unique_vertex(glm::vec2(v2.x, v2.y));
+            }
+            
+            if (vertices_2d.empty()) {
+                Log::log_warning(std::string("No valid vertices after transformation for ") + 
+                                (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") + 
+                                " projectile, falling back to circle collider", 
+                                __FILE__, __LINE__);
+                registry.collision_bounds.emplace(entity,
+                    CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+                return entity;
+            }
+            
+            // Compute centroid for sorting
+            glm::vec2 centroid(0.0f);
+            for (const auto& v : vertices_2d) {
+                centroid += v;
+            }
+            centroid /= static_cast<float>(vertices_2d.size());
+            
+            // Sort vertices counter-clockwise around centroid
+            std::sort(vertices_2d.begin(), vertices_2d.end(),
+                [centroid](const glm::vec2& a, const glm::vec2& b) {
+                    return atan2(a.y - centroid.y, a.x - centroid.x) <
+                           atan2(b.y - centroid.y, b.x - centroid.x);
+                });
+            
+            // Calculate bound radius for broad-phase collision
+            float bound_radius = 0.0f;
+            for (const auto& vertex : vertices_2d) {
+                bound_radius = std::max(bound_radius, glm::length(vertex - centroid));
+            }
+            
+            // Added logging because hard to debug mesh-based collisions; we can remove later
+            Log::log_success(std::string("Created ") + 
+                             (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") + 
+                             " projectile collider with " + std::to_string(vertices_2d.size()) + 
+                             " vertices and radius " + std::to_string(bound_radius), 
+                             __FILE__, __LINE__);
+            
+            registry.collision_bounds.emplace(entity,
+                CollisionBounds::create_mesh(vertices_2d, bound_radius));
+        } else {
+            // Added logging because hard to debug mesh-based collisions; we can remove later
+            Log::log_warning(std::string("No valid mesh found for ") + 
+                                (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") + 
+                                " projectile, falling back to circle collider", 
+                                __FILE__, __LINE__);
+            registry.collision_bounds.emplace(entity,
+                CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
         }
-
-        auto& bounds = registry.collision_bounds.emplace(entity,
-            CollisionBounds::create_mesh(vertices, Common::max_of(motion.scale)));
-
-        // Circle collider will also work
-        // auto& bounds = registry.collision_bounds.emplace(entity,
-        //     CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
     }
@@ -199,7 +296,7 @@ namespace EntityFactory {
         //     CollisionBounds::create_aabb(motion.scale));
 
         // Use wall collider instead of AABB
-        auto& bounds = registry.collision_bounds.emplace(entity,
+        registry.collision_bounds.emplace(entity,
             CollisionBounds::create_wall(motion.scale, motion.angle));
 
         return entity;
@@ -238,7 +335,7 @@ namespace EntityFactory {
         tree.type = STATIC_OBJECT_TYPE::TREE;
 
         // Use circle collider for tree
-        auto& bounds = registry.collision_bounds.emplace(entity,
+        registry.collision_bounds.emplace(entity,
             CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         registry.rotate_withs.emplace(entity, registry.player);
