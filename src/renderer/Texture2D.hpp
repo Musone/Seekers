@@ -9,7 +9,7 @@
 #include <glfw/glfw3.h>
 
 // Documentation in ext/stb_image/stb_image.h says to do this.
-#define STB_IMAGE_IMPLEMENTATION
+// #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 // Don't touch it ;)
 
