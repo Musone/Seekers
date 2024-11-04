@@ -160,10 +160,10 @@ namespace EntityFactory {
             size_t max_triangles = 0;
             
             // Added logging because hard to debug mesh-based collisions; we can remove later
-            Log::log_info(std::string("Processing meshes for ") + 
-                          (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") + 
-                          " projectile. Total meshes: " + std::to_string(projectile_model->mesh_list.size()), 
-                          __FILE__, __LINE__);
+            // Log::log_info(std::string("Processing meshes for ") + 
+            //               (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") + 
+            //               " projectile. Total meshes: " + std::to_string(projectile_model->mesh_list.size()), 
+            //               __FILE__, __LINE__);
             
             for (size_t i = 0; i < projectile_model->mesh_list.size(); i++) {
                 const Mesh* current_mesh = projectile_model->mesh_list[i].get();
@@ -255,11 +255,11 @@ namespace EntityFactory {
             }
             
             // Added logging because hard to debug mesh-based collisions; we can remove later
-            Log::log_success(std::string("Created ") + 
-                             (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") + 
-                             " projectile collider with " + std::to_string(vertices_2d.size()) + 
-                             " vertices and radius " + std::to_string(bound_radius), 
-                             __FILE__, __LINE__);
+            // Log::log_success(std::string("Created ") + 
+            //                  (weapon.projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") + 
+            //                  " projectile collider with " + std::to_string(vertices_2d.size()) + 
+            //                  " vertices and radius " + std::to_string(bound_radius), 
+            //                  __FILE__, __LINE__);
             
             registry.collision_bounds.emplace(entity,
                 CollisionBounds::create_mesh(vertices_2d, bound_radius));

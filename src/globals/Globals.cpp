@@ -19,4 +19,5 @@ namespace Globals {
     float dodge_energy_cost = 10.0f;
     float energy_no_regen_duration = 2.0f;
     bool restart_renderer = true;
+    float static_render_distance = 200.0f;
 }
