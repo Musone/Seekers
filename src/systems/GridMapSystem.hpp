@@ -48,14 +48,16 @@ namespace GridMapSystem {
     // }
 
     inline void update_grid_distances(std::vector<std::vector<GridMap::GridBox>> &grid_boxes, int x, int y) {
-        std::queue<std::array<int, 2>> points;
+        std::queue<std::pair<int, int>> points;
         grid_boxes[x][y].distance = 0;
         points.push({x, y});
 
         const int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // Up, Down, Left, Right
 
         while (!points.empty()) {
-            auto [cx, cy] = points.front();
+            auto pair = points.front();
+            auto cx = pair.first;
+            auto cy = pair.second;
             points.pop();
             int current_distance = grid_boxes[cx][cy].distance;
 
