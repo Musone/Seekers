@@ -465,18 +465,18 @@ namespace CollisionSystem {
             float overlap = combined_radius - distance;
 
             if (overlap > 0) {
-                const float BUFFER = 0.04f;
-                // Push both entities apart equally
-                motion1.position += normal * (overlap/2.0f + BUFFER);
-                motion2.position -= normal * (overlap/2.0f + BUFFER);
+                const float BUFFER = 0.01f;
+                // Minimal position adjustment
+                motion1.position += normal * (overlap/8.0f + BUFFER);
+                motion2.position -= normal * (overlap/8.0f + BUFFER);
 
-                // Optionally: adjust velocities to prevent sticking
+                // Almost completely stop relative motion
                 float vel1_along_normal = glm::dot(motion1.velocity, normal);
                 float vel2_along_normal = glm::dot(motion2.velocity, normal);
 
                 if (vel1_along_normal - vel2_along_normal < 0) {
-                    // They're moving towards each other, zero out relative velocity
-                    glm::vec2 impulse = normal * (vel1_along_normal - vel2_along_normal) * 0.5f;
+                    // Very minimal velocity adjustment
+                    glm::vec2 impulse = normal * (vel1_along_normal - vel2_along_normal) * 0.05f;
                     motion1.velocity -= impulse;
                     motion2.velocity += impulse;
                 }
