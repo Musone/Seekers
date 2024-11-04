@@ -23,5 +23,5 @@ int main(void) {
         Log::log_error_and_terminate(message, __FILE__, __LINE__);
     }
 
-    return 0;
+    return 0; 
 }

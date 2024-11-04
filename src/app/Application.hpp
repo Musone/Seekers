@@ -329,6 +329,7 @@ public:
                     }
                 }
                 player_model = m_models[reg.player.get_id()];
+                delta_time = delta_time_s = 0;
             }
 
             // Camera stuff

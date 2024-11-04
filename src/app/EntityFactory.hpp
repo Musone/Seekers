@@ -52,6 +52,8 @@ namespace EntityFactory {
         weapon.damage = damage;
         if (weapon_type == WEAPON_TYPE::BOW) {
             weapon.range = 30.0f;
+        } else if (weapon_type == WEAPON_TYPE::SWORD) {
+            weapon.range = 10.0f;
         } else {
             weapon.range = 5.0f;
         }
@@ -59,7 +61,7 @@ namespace EntityFactory {
         weapon.attack_cooldown = attack_cooldown;
         weapon.stagger_duration = 0.5f;
         weapon.poise_points = 10.0f;
-        weapon.attack_energy_cost = 10.0f;
+        weapon.attack_energy_cost = 10.0f; 
         if (weapon_type == WEAPON_TYPE::BOW) {
             weapon.projectile_type = PROJECTILE_TYPE::ARROW;
         } else {
