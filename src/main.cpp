@@ -6,8 +6,8 @@
 
 int main(void) {
     try {
-        // app.run_demo_world();
         Application app;
+        // app.run_demo_world();
         app.run_game_loop();
         // Testing::try_assimp();
     } catch (const std::exception& e) {
