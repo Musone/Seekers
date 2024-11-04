@@ -25,13 +25,13 @@ void main() {
     vec3 view_dir = normalize(u_view_pos - v_frag_pos);
     vec3 halfway_dir = normalize(light_dir + view_dir);
 
-    float max_light_range = 10.0;
+    float max_light_range = 7.0;
     float dist_from_light = distance(v_frag_pos, u_light_pos);
     float light_strength = max_light_range / dist_from_light;
     light_strength = min(light_strength, 1.0);
 
     // Ambient
-    float ambient_strength = 0.1;
+    float ambient_strength = 0.005;
     vec3 ambient = ambient_strength * u_light_color;
 
     // Diffuse

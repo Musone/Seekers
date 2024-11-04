@@ -44,6 +44,7 @@ void World::restart_game() {
             registry.grid_map.grid_boxes[i].push_back(GridMap::GridBox());
         }
     }
+
     Globals::restart_renderer = true;
 }
 
@@ -55,6 +56,24 @@ void World::demo_init() {
     m_audioSystem.start_music();
 
     restart_game();
+
+    // // Create Player
+    // auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
+    // auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f);
+    // m_registry.attackers.get(player).weapon_id = weapon;
+    // m_registry.player = player;
+    //
+    // EntityFactory::create_enemy({30, 30}, ENEMY_TYPE::ARCHER);
+    // EntityFactory::create_wall({-20, -20}, 0, {10, 1});
+    //
+    // // create grid map entities
+    // m_registry.grid_map = GridMap();
+    // for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
+    //     m_registry.grid_map.grid_boxes.push_back(std::vector<GridMap::GridBox>());
+    //     for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
+    //         m_registry.grid_map.grid_boxes[i].push_back(GridMap::GridBox());
+    //     }
+    // }
 
     // // Bottom wall (with entrance in the middle)
     // for (int i = 0; i < 5; ++i) {
@@ -102,7 +121,10 @@ void World::demo_init() {
 void World::step(float elapsed_ms) {
     // TODO: Update the game world
     // 1. Update physics
+    // {
+    // Timer timer;
     GridMapSystem::update_grid_map();
+    // }
 
     PhysicsSystem::step(elapsed_ms);
     PhysicsSystem::update_interpolations();

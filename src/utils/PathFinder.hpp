@@ -30,25 +30,25 @@ void update_next_position(
 
 glm::vec2 get_next_point_of_path_to_player(
         std::vector<std::vector<GridMap::GridBox>>& grid,
-        int start_x, int start_y,
+        int start_i, int start_j,
         float self_radius
 ) {
-    int max_self_radius = int(std::ceil(self_radius)) + 2;
+    int max_self_radius = int(std::ceil(self_radius)) + 1;
     int minimum_distance_found = -1;
-    glm::vec2 next_position = {start_x, start_y};
+    glm::vec2 next_position = {start_i, start_j};
     std::vector<glm::vec2> directions = {
         {1, 0}, {-1, 0}, {0, 1}, {0, -1},
         {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
     };
 
     for (auto& direction : directions) {
-        int x_diff = direction.x;
-        int y_diff = direction.y;
-        update_next_position(grid, {start_x + x_diff * max_self_radius, start_y + y_diff * max_self_radius}, minimum_distance_found, next_position);
+        int i_diff = direction.x;
+        int j_diff = direction.y;
+        update_next_position(grid, {start_i + i_diff * max_self_radius, start_j + j_diff * max_self_radius}, minimum_distance_found, next_position);
     }
 
     if (minimum_distance_found <= 5) {
-        return {start_x, start_y};
+        return {start_i, start_j};
     }
 
     return next_position;
@@ -58,18 +58,41 @@ glm::vec2 get_grid_map_coordinates(Motion& motion) {
     Registry& registry = Registry::get_instance();
     Motion& player_motion = registry.motions.get(registry.player);
     glm::vec2 distance = motion.position - player_motion.position;
-    int grid_i = int(std::floor(distance.x))
-                 + int(Globals::update_distance);
-    int grid_j = int(std::floor(distance.y))
-                 + int(Globals::update_distance);;
+    int grid_i = int(Globals::update_distance) - int(std::floor(distance.y));
+    int grid_j = int(Globals::update_distance) + int(std::floor(distance.x));
     return {grid_i, grid_j};
 }
 
-glm::vec2 get_position_from_grid_map_coordinates(int x, int y) {
+glm::vec2 get_position_from_grid_map_coordinates(int i, int j) {
     Registry& registry = Registry::get_instance();
     Motion& player_motion = registry.motions.get(registry.player);
     glm::vec2 position = player_motion.position;
-    position.x += x - int(Globals::update_distance);
-    position.y += y - int(Globals::update_distance);
+    position.x += j - int(Globals::update_distance);
+    position.y += int(Globals::update_distance) - i;
     return position;
+}
+
+bool can_see(
+        std::vector<std::vector<GridMap::GridBox>>& grid,
+        int current_x, int current_y,
+        int self_radius,
+        int target_x,
+        int target_y
+) {
+    glm::vec2 dir = Common::normalize(glm::vec2({target_x, target_y}) - glm::vec2({current_x, current_y}));
+    float next_x = current_x + dir.x;
+    float next_y = current_y + dir.y;
+    int occupied_cells = 0;
+    while (glm::length(glm::vec2({target_x, target_y}) - glm::vec2({next_x, next_y})) >= 1) {
+        bool is_occupied = grid[int(std::round(next_x))][int(std::round(next_y))].is_occupied;
+        if (is_occupied) {
+            occupied_cells++;
+        }
+        if (occupied_cells > self_radius + 2) {
+            return false;
+        }
+        next_x += dir.x;
+        next_y += dir.y;
+    }
+    return true;
 }

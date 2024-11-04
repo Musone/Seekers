@@ -4,6 +4,14 @@
 #include <app/Application.hpp>
 #include <Testing.hpp>
 
+#if __APPLE__
+#else
+extern "C" 
+{
+  __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+};
+#endif // !__APPLE__
+
 int main(void) {
     try {
         Application app;
@@ -15,5 +23,5 @@ int main(void) {
         Log::log_error_and_terminate(message, __FILE__, __LINE__);
     }
 
-    return 0;
+    return 0; 
 }
