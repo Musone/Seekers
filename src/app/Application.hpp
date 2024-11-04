@@ -276,7 +276,7 @@ public:
         Timer timer;
         float time_of_last_frame = 0;
         const float FRAME_TIME_60FPS = 1000000.0f / 60.0f;
-        float base_camera_speed = 1.0f;
+        float base_camera_speed = 30.0f;
         float camera_speed = base_camera_speed;
         while (!m_renderer->is_terminated()) {
             // float delta_time = 0.001f * float(timer.GetTime()) - time_of_last_frame;
@@ -371,13 +371,13 @@ public:
                     current_camera_position
                 );
                 m_camera.set_rotation({ PI / 2, 0, _vector_to_angle(glm::vec2(dir_to_look)) - PI / 2});
-                float amount_to_move = fmin(dist_from_desired_pos, camera_speed);
                 if (is_dodging) {
                     float portion_complete = player_model->get_portion_complete_of_curr_animation();
-                    camera_speed = portion_complete * base_camera_speed;
+                    camera_speed = portion_complete * base_camera_speed * delta_time_s;
                 } else {
-                    camera_speed = base_camera_speed;
+                    camera_speed = base_camera_speed * delta_time_s;
                 }
+                float amount_to_move = fmin(dist_from_desired_pos, camera_speed);
                 if (amount_to_move < 0.000001f) {
                     m_camera.set_position(desired_camera_pos);
                 } else {
