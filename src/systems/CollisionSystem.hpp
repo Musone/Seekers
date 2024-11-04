@@ -204,8 +204,10 @@ namespace CollisionSystem {
         const CircleCollider& circle, const glm::vec2& circle_pos,
         const MeshCollider& mesh, const glm::vec2& mesh_pos
     ) {
-        std::cout << "Checking circle-mesh collision with " 
-                  << mesh.vertices.size() << " vertices" << std::endl;
+        // Added logging because hard to debug mesh-based collisions; we can remove later
+        Log::log_info(std::string("Processing collision between circle and mesh (") + 
+                      std::to_string(mesh.vertices.size()) + " vertices)", 
+                      __FILE__, __LINE__);
 
         // Broad phase using bounding radius
         if (glm::length(mesh_pos - circle_pos) > (circle.radius + mesh.bound_radius)) {
@@ -409,7 +411,17 @@ namespace CollisionSystem {
      */
     inline void proj_loco_collision(Entity& proj, Entity& loco) {
         Registry& registry = Registry::get_instance();
-        std::cout << "Projectile collision detected with locomotive entity" << std::endl;
+        
+        // Get team information for better logging
+        const auto& proj_team = registry.teams.get(proj);
+        const auto& loco_team = registry.teams.get(loco);
+        
+        // Added logging because hard to debug mesh-based collisions; we can remove later
+        Log::log_info(std::string("Projectile collision: ") + 
+                      (registry.projectiles.get(proj).projectile_type == PROJECTILE_TYPE::ARROW ? "ARROW" : "MELEE") +
+                      " from team " + std::to_string((int)proj_team.team_id) + 
+                      " hit entity from team " + std::to_string((int)loco_team.team_id), 
+                      __FILE__, __LINE__);
 
         if (registry.in_dodges.has(loco)) return;
 
