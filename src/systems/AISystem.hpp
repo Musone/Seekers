@@ -1,5 +1,7 @@
 #pragma once
 
+#include <random>
+
 #include "GameplaySystem.hpp"
 #include "../ecs/Entity.hpp"
 #include "../components/Components.hpp"
@@ -191,6 +193,15 @@ namespace AISystem
     }
 
     inline void AI_attack_step(Entity& e) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> attack_dodge_dist(1, 50);
+
+        if (attack_dodge_dist(gen) < 2) {
+            GameplaySystem::dodge(e);
+            return;
+        }
+
         Registry& registry = Registry::get_instance();
         Motion& motion = registry.motions.get(e);
         Attacker& attacker = registry.attackers.get(e);
