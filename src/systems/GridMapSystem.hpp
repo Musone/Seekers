@@ -16,31 +16,58 @@ namespace GridMapSystem {
         }
     }
 
-    inline void update_grid_distances(std::vector<std::vector<GridMap::GridBox>> &grid_boxes, int x, int y) {
-        std::vector<std::vector<int>> points;
-        grid_boxes[x][y].distance = 0; // Start point
-        points.push_back({x, y});
+    // inline void update_grid_distances(std::vector<std::vector<GridMap::GridBox>> &grid_boxes, int x, int y) {
+    //     Timer timer;
+    //
+    //     std::vector<std::vector<int>> points;
+    //     grid_boxes[x][y].distance = 0; // Start point
+    //     points.push_back({x, y});
+    //
+    //     for (size_t i = 0; i < points.size(); ++i) {
+    //         int cx = points[i][0];
+    //         int cy = points[i][1];
+    //         int current_distance = grid_boxes[cx][cy].distance;
+    //
+    //         if (cx - 1 >= 0 && !grid_boxes[cx - 1][cy].is_occupied && grid_boxes[cx - 1][cy].distance == -1) {
+    //             grid_boxes[cx - 1][cy].distance = current_distance + 1;
+    //             points.push_back({cx - 1, cy});
+    //         }
+    //         if (cx + 1 < grid_boxes.size() && !grid_boxes[cx + 1][cy].is_occupied && grid_boxes[cx + 1][cy].distance == -1) {
+    //             grid_boxes[cx + 1][cy].distance = current_distance + 1;
+    //             points.push_back({cx + 1, cy});
+    //         }
+    //         if (cy - 1 >= 0 && !grid_boxes[cx][cy - 1].is_occupied && grid_boxes[cx][cy - 1].distance == -1) {
+    //             grid_boxes[cx][cy - 1].distance = current_distance + 1;
+    //             points.push_back({cx, cy - 1});
+    //         }
+    //         if (cy + 1 < grid_boxes[cx].size() && !grid_boxes[cx][cy + 1].is_occupied && grid_boxes[cx][cy + 1].distance == -1) {
+    //             grid_boxes[cx][cy + 1].distance = current_distance + 1;
+    //             points.push_back({cx, cy + 1});
+    //         }
+    //     }
+    // }
 
-        for (size_t i = 0; i < points.size(); ++i) {
-            int cx = points[i][0];
-            int cy = points[i][1];
+    inline void update_grid_distances(std::vector<std::vector<GridMap::GridBox>> &grid_boxes, int x, int y) {
+        std::queue<std::array<int, 2>> points;
+        grid_boxes[x][y].distance = 0;
+        points.push({x, y});
+
+        const int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // Up, Down, Left, Right
+
+        while (!points.empty()) {
+            auto [cx, cy] = points.front();
+            points.pop();
             int current_distance = grid_boxes[cx][cy].distance;
 
-            if (cx - 1 >= 0 && !grid_boxes[cx - 1][cy].is_occupied && grid_boxes[cx - 1][cy].distance == -1) {
-                grid_boxes[cx - 1][cy].distance = current_distance + 1;
-                points.push_back({cx - 1, cy});
-            }
-            if (cx + 1 < grid_boxes.size() && !grid_boxes[cx + 1][cy].is_occupied && grid_boxes[cx + 1][cy].distance == -1) {
-                grid_boxes[cx + 1][cy].distance = current_distance + 1;
-                points.push_back({cx + 1, cy});
-            }
-            if (cy - 1 >= 0 && !grid_boxes[cx][cy - 1].is_occupied && grid_boxes[cx][cy - 1].distance == -1) {
-                grid_boxes[cx][cy - 1].distance = current_distance + 1;
-                points.push_back({cx, cy - 1});
-            }
-            if (cy + 1 < grid_boxes[cx].size() && !grid_boxes[cx][cy + 1].is_occupied && grid_boxes[cx][cy + 1].distance == -1) {
-                grid_boxes[cx][cy + 1].distance = current_distance + 1;
-                points.push_back({cx, cy + 1});
+            for (const auto& dir : directions) {
+                int nx = cx + dir[0];
+                int ny = cy + dir[1];
+
+                if (nx >= 0 && nx < grid_boxes.size() && ny >= 0 && ny < grid_boxes[0].size() &&
+                    !grid_boxes[nx][ny].is_occupied && grid_boxes[nx][ny].distance == -1) {
+                    grid_boxes[nx][ny].distance = current_distance + 1;
+                    points.push({nx, ny});
+                    }
             }
         }
     }

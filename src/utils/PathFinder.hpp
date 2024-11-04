@@ -58,10 +58,6 @@ glm::vec2 get_grid_map_coordinates(Motion& motion) {
     Registry& registry = Registry::get_instance();
     Motion& player_motion = registry.motions.get(registry.player);
     glm::vec2 distance = motion.position - player_motion.position;
-    // int grid_i = int(std::floor(distance.x))
-    //              + int(Globals::update_distance);
-    // int grid_j = int(std::floor(distance.y))
-    //              + int(Globals::update_distance);
     int grid_i = int(Globals::update_distance) - int(std::floor(distance.y));
     int grid_j = int(Globals::update_distance) + int(std::floor(distance.x));
     return {grid_i, grid_j};
