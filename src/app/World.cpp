@@ -120,7 +120,10 @@ void World::demo_init() {
 void World::step(float elapsed_ms) {
     // TODO: Update the game world
     // 1. Update physics
-    GridMapSystem::update_grid_map();
+    {
+        Timer timer;
+        GridMapSystem::update_grid_map();
+    }
 
     PhysicsSystem::step(elapsed_ms);
     PhysicsSystem::update_interpolations();
