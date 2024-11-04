@@ -32,7 +32,7 @@ namespace EntityFactory {
         registry.attackers.emplace(entity);
 
         // Use circle collider for player
-        auto& bounds = registry.collision_bounds.emplace(entity,
+        registry.collision_bounds.emplace(entity,
             CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
@@ -112,7 +112,7 @@ namespace EntityFactory {
         attacker.weapon_id = enemy_weapon;
 
         // Use circle collider for enemy
-        auto& bounds = registry.collision_bounds.emplace(entity,
+        registry.collision_bounds.emplace(entity,
             CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
@@ -294,7 +294,7 @@ namespace EntityFactory {
         //     CollisionBounds::create_aabb(motion.scale));
 
         // Use wall collider instead of AABB
-        auto& bounds = registry.collision_bounds.emplace(entity,
+        registry.collision_bounds.emplace(entity,
             CollisionBounds::create_wall(motion.scale, motion.angle));
 
         return entity;
@@ -333,7 +333,7 @@ namespace EntityFactory {
         tree.type = STATIC_OBJECT_TYPE::TREE;
 
         // Use circle collider for tree
-        auto& bounds = registry.collision_bounds.emplace(entity,
+        registry.collision_bounds.emplace(entity,
             CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         registry.rotate_withs.emplace(entity, registry.player);
