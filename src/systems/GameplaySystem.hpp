@@ -173,8 +173,13 @@ namespace GameplaySystem {
 
         Motion& motion = registry.motions.get(e);
 
-        // TODO: maybe jump back when 0 velocity
-        registry.in_dodges.emplace(e, motion.position, motion.position + Common::normalize(motion.velocity) * Globals::dodgeMoveMag, Globals::timer.GetTime(), Globals::dodgeDuration);
+        glm::vec2 dodge_target_pos;
+        if (glm::length(motion.velocity) < 0.00001) {
+            dodge_target_pos = motion.position + -glm::vec2(cos(motion.angle), sin(motion.angle)) * Globals::dodgeMoveMag;
+        } else {
+            dodge_target_pos = motion.position + Common::normalize(motion.velocity) * Globals::dodgeMoveMag;
+        }
+        registry.in_dodges.emplace(e, motion.position, dodge_target_pos, Globals::timer.GetTime(), Globals::dodgeDuration);
         deplete_energy(e, Globals::dodge_energy_cost);
 
         float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
