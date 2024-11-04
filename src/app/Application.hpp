@@ -334,7 +334,8 @@ public:
                     }
                 }
                 player_model = m_models[reg.player.get_id()];
-                delta_time = delta_time_s = 0;
+                // delta_time = delta_time_s = 0.00000000001f;
+                time_of_last_frame = float(timer.GetTime());
             }
 
             // Camera stuff
