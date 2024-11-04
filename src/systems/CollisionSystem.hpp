@@ -513,7 +513,7 @@ namespace CollisionSystem {
         const auto& loco_bounds = registry.collision_bounds.get(loco);
         const auto& fixed_bounds = registry.collision_bounds.get(fixed);
 
-        const float BUFFER = 0.05f;
+        const float BASE_BUFFER = 0.05f;
 
         if (fixed_bounds.type == ColliderType::Wall) {
             // Handle wall collision
@@ -523,37 +523,35 @@ namespace CollisionSystem {
             if (check_circle_wall(loco_bounds.circle, loco_motion.position,
                                 *fixed_bounds.wall, fixed_motion.position,
                                 normal, penetration)) {
-                // Apply position correction
-                loco_motion.position += normal * (penetration + BUFFER);
+                // Simple position correction
+                loco_motion.position += normal * penetration;
 
-                // Adjust velocity for wall sliding
+                // Simplified velocity response
                 float vel_along_normal = glm::dot(loco_motion.velocity, normal);
                 if (vel_along_normal < 0) {
-                    // Remove velocity component in wall normal direction
+                    // Just cancel out the velocity towards the wall
                     loco_motion.velocity -= normal * vel_along_normal;
 
-                    // Apply wall friction to parallel component
+                    // Apply minimal wall friction
                     glm::vec2 tangent(-normal.y, normal.x);
                     float vel_along_tangent = glm::dot(loco_motion.velocity, tangent);
-                    const float WALL_FRICTION = 0.9f;
+                    const float WALL_FRICTION = 0.95f;  // High friction for stability
                     loco_motion.velocity = tangent * vel_along_tangent * WALL_FRICTION;
                 }
             }
         } else {
-            // Handle other fixed objects (like trees) using circle-circle collision
+            // Simple circle-circle collision for fixed objects (trees)
             glm::vec2 delta = loco_motion.position - fixed_motion.position;
             float dist = glm::length(delta);
 
-            if (dist > 0.0001f) {
-                glm::vec2 normal = delta / dist;
+            if (dist > 0.0001f) {  // Prevent division by zero
                 float combined_radius = loco_bounds.circle.radius + fixed_bounds.circle.radius;
-                float overlap = combined_radius - dist;
-
-                if (overlap > 0) {
-                    // Push locomotive entity away from fixed object
-                    loco_motion.position += normal * (overlap + BUFFER);
-
-                    // Adjust velocity to prevent sticking
+                if (dist < combined_radius) {  // Collision detected
+                    // Normalize and apply correction
+                    glm::vec2 normal = delta / dist;
+                    loco_motion.position = fixed_motion.position + normal * (combined_radius + BASE_BUFFER);
+                    
+                    // Zero out velocity toward the fixed object
                     float vel_along_normal = glm::dot(loco_motion.velocity, normal);
                     if (vel_along_normal < 0) {
                         loco_motion.velocity -= normal * vel_along_normal;
