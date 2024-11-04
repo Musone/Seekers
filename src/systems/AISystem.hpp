@@ -188,9 +188,6 @@ namespace AISystem
 
         glm::vec2 dir = Common::normalize(new_position - motion.position);
         motion.velocity = registry.locomotion_stats.get(e).movement_speed * dir;
-
-        glm::vec2 player_position = registry.motions.get(registry.player).position;
-
     }
 
     inline void AI_attack_step(Entity& e) {

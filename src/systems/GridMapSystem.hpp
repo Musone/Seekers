@@ -56,11 +56,10 @@ namespace GridMapSystem {
                 }
                 Motion& motion = registry.motions.get(e);
                 glm::vec2 distance = motion.position - player_motion.position;
-                int grid_i = int(std::floor(distance.x))
-                        + int(Globals::update_distance);
+                int grid_i = int(Globals::update_distance) - int(std::floor(distance.y));
                 // int grid_j = int(std::floor(distance.y))
                 //         + int(Globals::update_distance);
-                int grid_j = int(Globals::update_distance) - int(std::floor(distance.y));
+                int grid_j = int(Globals::update_distance) + int(std::floor(distance.x));
                 if (0 > grid_i || grid_i > int(Globals::update_distance) * 2 - 1) {
                     break;
                 }
@@ -83,10 +82,10 @@ namespace GridMapSystem {
                 }
 
                 // Update grid boxes within the size
-                for (int i = grid_i - int(std::floor(height))/2 - 1;        // maybe add -2
-                     i <= grid_i + int(std::floor(height))/2 + 1; i++) {    // maybe add +2
-                    for (int j = grid_j - int(std::floor(width))/2 - 1;     // same
-                         j <= grid_j + int(std::floor(width))/2 + 1; j++) { //same
+                for (int i = grid_i - int(std::floor(height))/2 - 1;           // maybe add -2
+                     i <= grid_i + int(std::floor(height))/2; i++) {    // maybe add +2
+                    for (int j = grid_j - int(std::floor(width))/2 - 1;        // same
+                         j <= grid_j + int(std::floor(width))/2; j++) { //same
                         if (0 > i || i > int(Globals::update_distance) * 2 - 1) {
                             break;
                         }
@@ -102,25 +101,25 @@ namespace GridMapSystem {
         grid_boxes[int(Globals::update_distance)][int(Globals::update_distance)].distance = 0;
         update_grid_distances(grid_boxes, int(Globals::update_distance), int(Globals::update_distance));
 
-        //                            printmap
-        for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
-            for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
-                if (registry.grid_map.grid_boxes[i][j].is_occupied) {
-                    printf("*   ");
-                }
-                else if (registry.grid_map.grid_boxes[i][j].distance == -1) {
-                    printf("-1  ");
-                } else if (registry.grid_map.grid_boxes[i][j].distance >= 100) {
-                    printf("%d ", registry.grid_map.grid_boxes[i][j].distance);
-                }
-                else if (registry.grid_map.grid_boxes[i][j].distance >= 10) {
-                    printf("%d  ", registry.grid_map.grid_boxes[i][j].distance);
-                } else {
-                    printf("%d   ", registry.grid_map.grid_boxes[i][j].distance);
-                }
-            }
-            printf("X\n");
-        }
-        printf("-----------------------------------------------------------------------------\n");
+        // //                            printmap
+        // for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
+        //     for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
+        //         if (registry.grid_map.grid_boxes[i][j].is_occupied) {
+        //             printf("*   ");
+        //         }
+        //         else if (registry.grid_map.grid_boxes[i][j].distance == -1) {
+        //             printf("-1  ");
+        //         } else if (registry.grid_map.grid_boxes[i][j].distance >= 100) {
+        //             printf("%d ", registry.grid_map.grid_boxes[i][j].distance);
+        //         }
+        //         else if (registry.grid_map.grid_boxes[i][j].distance >= 10) {
+        //             printf("%d  ", registry.grid_map.grid_boxes[i][j].distance);
+        //         } else {
+        //             printf("%d   ", registry.grid_map.grid_boxes[i][j].distance);
+        //         }
+        //     }
+        //     printf("X\n");
+        // }
+        // printf("-----------------------------------------------------------------------------\n");
     }
 };
