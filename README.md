@@ -4,7 +4,7 @@
 
 ## Team 23: Los Pollos Hermanos Gaming
 
-Seekers is a first person 3D action RPG that melds dungeon crawling with open-world exploration. Set in the dark fantasy world of Eldoria, players take on the role of a Seeker, striving to uncover ancient secrets and restore balance to a land shrouded in darkness.
+Seekers is a third person 3D action RPG that melds dungeon crawling with open-world exploration. Set in the dark fantasy world of Eldoria, players take on the role of a Seeker, striving to uncover ancient secrets and restore balance to a land shrouded in darkness.
 
 ### Key Features
 
@@ -22,7 +22,7 @@ Seekers is a first person 3D action RPG that melds dungeon crawling with open-wo
   - A: Move left
   - S: Move backward
   - D: Move right
-- **Camera Rotation**: Q and E keys
+- **Camera Rotation**: Mouse Movemement (or Q and E keys)
   - Q: Rotate camera left
   - E: Rotate camera right
 - **Attack**: Left mouse button
