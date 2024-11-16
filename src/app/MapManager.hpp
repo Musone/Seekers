@@ -14,7 +14,7 @@ public:
     void initialize_maps() {
         if (!open_world_registry) {
             open_world_registry = std::make_unique<Registry>();
-            // Populate open world entities here
+            // Populate open world entities here TODO
         }
         // if (!spire_one_registry) {
         //     spire_one_registry = std::make_unique<Registry>();
