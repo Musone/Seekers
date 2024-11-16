@@ -6,7 +6,7 @@
 
 namespace GridMapSystem {
     inline void _clear_grid_map() {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         for (auto& grid_row : registry.grid_map.grid_boxes) {
             for (auto& grid_box : grid_row) {
@@ -76,7 +76,7 @@ namespace GridMapSystem {
 
     inline void update_grid_map() {
         _clear_grid_map();
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         Motion& player_motion = registry.motions.get(registry.player);
         for (Entity& e : registry.near_players.entities) {
             if (registry.motions.has(e) && registry.collision_bounds.has(e)) {
@@ -126,7 +126,7 @@ namespace GridMapSystem {
                 }
             }
         }
-        std::vector<std::vector<GridMap::GridBox>> &grid_boxes = Registry::get_instance().grid_map.grid_boxes;
+        std::vector<std::vector<GridMap::GridBox>> &grid_boxes = MapManager::get_instance().get_active_registry().grid_map.grid_boxes;
         grid_boxes[int(Globals::update_distance)][int(Globals::update_distance)].distance = 0;
         update_grid_distances(grid_boxes, int(Globals::update_distance), int(Globals::update_distance));
 

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <utils/Common.hpp>
 #include <ecs/Registry.hpp>
+#include <app/MapManager.hpp>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -72,7 +73,7 @@ public:
     }
 
     void handle_audio_per_frame() {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         InputState& input_state = registry.input_state;
 
         handle_footstep(input_state);

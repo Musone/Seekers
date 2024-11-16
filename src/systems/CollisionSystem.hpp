@@ -240,7 +240,7 @@ namespace CollisionSystem {
      * Uses spatial partitioning to optimize collision checks
      */
     inline void check_collisions() {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         // Clear and rebuild spatial grid
         clear_grid();
@@ -410,7 +410,7 @@ namespace CollisionSystem {
      * @param loco Locomotive entity (player/enemy)
      */
     inline void proj_loco_collision(Entity& proj, Entity& loco) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         
         // Get team information for better logging
         const auto& proj_team = registry.teams.get(proj);
@@ -463,7 +463,7 @@ namespace CollisionSystem {
      * @param loco2 Second locomotive entity
      */
     inline void loco_loco_collision(Entity& loco1, Entity& loco2) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         Motion& motion1 = registry.motions.get(loco1);
         Motion& motion2 = registry.motions.get(loco2);
@@ -507,7 +507,7 @@ namespace CollisionSystem {
      * @param fixed Fixed entity (wall/obstacle)
      */
     inline void proj_fixed_collision(Entity& proj, Entity& fixed) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         registry.remove_all_components_of(proj);
     }
 
@@ -518,7 +518,7 @@ namespace CollisionSystem {
      * @param fixed Fixed entity
      */
     inline void loco_fixed_collision(Entity& loco, Entity& fixed) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         if (!registry.motions.has(loco) || !registry.motions.has(fixed)) {
             return;
@@ -591,7 +591,7 @@ namespace CollisionSystem {
      * Priority order: fixed collisions first, then other collisions
      */
     inline void handle_collisions() {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         // Create a separate vector to store collisions
         std::vector<std::pair<Entity, Entity>> collision_pairs;

@@ -26,7 +26,7 @@ World::~World() = default;
 void World::restart_game() {
     std::cout << "Restarting game..." << std::endl;
 
-    Registry& registry = Registry::get_instance();
+    Registry& registry = MapManager::get_instance().get_active_registry();
     
     // Store the models before clearing
     StaticModel* arrow_model = nullptr;
@@ -157,13 +157,13 @@ void World::step(float elapsed_ms) {
     GameplaySystem::update_projectile_range(elapsed_ms);
     GameplaySystem::update_near_player_camera();
 
-    enforce_boundaries(Registry::get_instance().player);
+    enforce_boundaries(MapManager::get_instance().get_active_registry().player);
 
     MapManager::get_instance().switch_map();
 }
 
 void World::enforce_boundaries(Entity entity) {
-    Registry& registry = Registry::get_instance();
+    Registry& registry = MapManager::get_instance().get_active_registry();
 
     if (registry.motions.has(entity)) {
         Motion& motion = registry.motions.get(entity);
