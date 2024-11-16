@@ -149,7 +149,7 @@ namespace GameplaySystem {
 
         Motion& motion = registry.motions.get(e);
         Attacker& attacker = registry.attackers.get(e);
-        Weapon& weapon = registry.weapons.get(attacker.weapon_id);
+        Weapon& weapon = registry.weapons.get(attacker.weapon);
 
         EntityFactory::create_projectile(motion, attacker, weapon, registry.teams.get(e).team_id);
         registry.attack_cooldowns.emplace(e, weapon.attack_cooldown);

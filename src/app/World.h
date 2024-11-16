@@ -22,6 +22,5 @@ private:
 	void handle_entity_collision(const Entity& entity1, const Entity& entity2);
 	void enforce_boundaries(Entity entity); // Method to enforce boundaries
 
-	Registry& m_registry;
 	AudioSystem& m_audioSystem;
 };

@@ -5,6 +5,7 @@
 #include <systems/GameplaySystem.hpp>
 #include <systems/TutorialSystem.hpp>
 
+#include "MapManager.hpp"
 #include "ecs/Registry.hpp"
 #include "globals/Globals.h"
 #include "utils/Common.hpp"
@@ -47,6 +48,13 @@ namespace InputManager {
             if (key == GLFW_KEY_P) {
                 TutorialSystem::skip_tutorial();
             }
+
+            if (key == GLFW_KEY_G) {
+                MapManager::get_instance().enter_dungeon_flag = true;
+            }
+            if (key == GLFW_KEY_R) {
+                MapManager::get_instance().return_open_world_flag = true;
+            }
         }
         if (action == GLFW_RELEASE) {
             if (key == GLFW_KEY_W) {
@@ -73,7 +81,7 @@ namespace InputManager {
     inline void on_mouse_button_pressed(GLFWwindow* window, int button, int action, int mods) {
         Registry& registry = Registry::get_instance();
         Attacker& player_attacker = registry.attackers.get(registry.player);
-        Weapon& weapon_stats = registry.weapons.get(player_attacker.weapon_id);
+        Weapon& weapon_stats = registry.weapons.get(player_attacker.weapon);
 
         if (action == GLFW_PRESS) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
@@ -86,7 +94,7 @@ namespace InputManager {
     }
 
     inline void on_mouse_move(GLFWwindow* window, double x, double y) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = Registry::get_instance()
         if (Globals::is_3d_mode) {
             if (!registry.death_cooldowns.has(registry.player)) {
                 auto& player_motion = registry.motions.get(registry.player);

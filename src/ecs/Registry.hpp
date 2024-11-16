@@ -79,14 +79,6 @@ public:
 		m_registry_list.push_back(&projectile_models);
 	}
 
-	Registry(Registry const&) = delete;
-	void operator=(Registry const&) = delete;
-
-	static Registry& get_instance() {
-		static Registry instance;
-		return instance;
-	}
-
 	void hello() {
 		std::cout << "hallo register\n"; 
 	}

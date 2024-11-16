@@ -683,7 +683,7 @@ public:
                         z_index += 0.1;
                         // Gonna put the weapon above entities.
                         for (const auto& attacker_entity : reg.attackers.entities) {
-                            if (reg.attackers.get(attacker_entity).weapon_id == textured_entity.get_id()) {
+                            if (reg.attackers.get(attacker_entity).weapon == textured_entity.get_id()) {
                                 // Move the weapon to the attacker position in 3d mode... We should really be using
                                 // child components and a Scene Graph for this...
                                 if (!reg.motions.has(attacker_entity)) { 

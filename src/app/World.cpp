@@ -17,9 +17,10 @@
 
 #include "systems/ProceduralGenerationSystem.hpp"
 
+# include "MapManager.hpp"
+
 World::World()
-    : m_registry(Registry::get_instance()),
-    m_audioSystem(AudioSystem::get_instance()) {}
+    : m_audioSystem(AudioSystem::get_instance()) {}
 World::~World() = default;
 
 void World::restart_game() {
@@ -45,8 +46,7 @@ void World::restart_game() {
     // Create Player
     auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
     auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f);
-    registry.attackers.get(player).weapon_id = weapon;
-    registry.player = player;
+    registry.attackers.get(player).weapon = weapon;
 
     ProceduralGenerationSystem::GenerateDungeon(MAP_WIDTH, MAP_HEIGHT, registry.motions.get(player));
 
@@ -74,7 +74,7 @@ void World::demo_init() {
     // // Create Player
     // auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
     // auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f);
-    // m_registry.attackers.get(player).weapon_id = weapon;
+    // m_registry.attackers.get(player).weapon = weapon;
     // m_registry.player = player;
     //
     // EntityFactory::create_enemy({30, 30}, ENEMY_TYPE::ARCHER);
@@ -123,7 +123,7 @@ void World::demo_init() {
     //         if (glm::length(tree_pos) >= 23) {
     //             Entity enemy = EntityFactory::create_enemy(tree_pos);
     //             auto enemy_weapon = EntityFactory::create_weapon(tree_pos, 5.0f, enemy, 0.5f);
-    //             m_registry.attackers.get(enemy).weapon_id = enemy_weapon;
+    //             m_registry.attackers.get(enemy).weapon = enemy_weapon;
     //         }
     //         continue;
     //     }
@@ -157,12 +157,16 @@ void World::step(float elapsed_ms) {
     GameplaySystem::update_projectile_range(elapsed_ms);
     GameplaySystem::update_near_player_camera();
 
-    enforce_boundaries(m_registry.player);
+    enforce_boundaries(Registry::get_instance().player);
+
+    MapManager::get_instance().switch_map();
 }
 
 void World::enforce_boundaries(Entity entity) {
-    if (m_registry.motions.has(entity)) {
-        Motion& motion = m_registry.motions.get(entity);
+    Registry& registry = Registry::get_instance();
+
+    if (registry.motions.has(entity)) {
+        Motion& motion = registry.motions.get(entity);
         
         // Adjust these values based on the actual visible boundaries of your map
         const float LEFT_BOUND = -MAP_WIDTH / 2.0f;  // Assuming the map is centered

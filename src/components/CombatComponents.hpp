@@ -46,7 +46,7 @@ struct Weapon
 struct Attacker
 {
     glm::vec2 aim = {0, 0}; // it is normalized
-    unsigned int weapon_id;
+    Entity weapon;
 };
 
 struct AttackCooldown

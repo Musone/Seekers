@@ -447,9 +447,9 @@ namespace CollisionSystem {
         // Handle locomotive entity death if health depleted
         if (loco_stats.health <= 0 && !registry.death_cooldowns.has(loco)) {
             // Clean up associated weapon TODO: Drop weapon
-            unsigned int weapon_id = registry.attackers.get(loco).weapon_id;
-            registry.move_withs.remove(weapon_id);
-            registry.rotate_withs.remove(weapon_id);
+            Entity weapon = registry.attackers.get(loco).weapon;
+            registry.move_withs.remove(weapon);
+            registry.rotate_withs.remove(weapon);
             // Remove the dead entity
             // registry.remove_all_components_of(loco);
             registry.death_cooldowns.emplace(loco, 5);
