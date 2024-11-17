@@ -312,16 +312,51 @@ private:
     }
 
     json serialize_registry(Registry& registry) {
-        // TODO: Serialize ALL components from registry
-        // TODO: Serialize registry.player
-        // TODO: Serialize registry.input_state
-        // TODO: Serialize registry.camera_pos
         json data;
         
-        // TODO: Implement full registry serialization
-        // For now, use existing player serialization
-        data["player"] = serialize_player_state(registry);
+        data["player"] = static_cast<unsigned int>(registry.player);
         
+        data["camera_pos"] = {
+            {"x", registry.camera_pos.x},
+            {"y", registry.camera_pos.y}
+        };
+        
+        data["input_state"] = {
+            {"w_down", registry.input_state.w_down},
+            {"a_down", registry.input_state.a_down},
+            {"s_down", registry.input_state.s_down},
+            {"d_down", registry.input_state.d_down},
+            {"mouse_pos", {
+                registry.input_state.mouse_pos.x,
+                registry.input_state.mouse_pos.y
+            }}
+        };
+
+        // Save all entities and their components
+        json entities;
+        
+        json motions = json::array();
+        for (size_t i = 0; i < registry.motions.entities.size(); i++) {
+            json motion_data;
+            Entity entity = registry.motions.entities[i];
+            const auto& motion = registry.motions.components[i];
+            
+            motion_data["entity"] = static_cast<unsigned int>(entity);
+            motion_data["position"] = {motion.position.x, motion.position.y};
+            motion_data["angle"] = motion.angle;
+            motion_data["scale"] = {motion.scale.x, motion.scale.y};
+            motion_data["velocity"] = {motion.velocity.x, motion.velocity.y};
+            motion_data["rotation_velocity"] = motion.rotation_velocity;
+            motion_data["acceleration"] = {motion.acceleration.x, motion.acceleration.y};
+            motion_data["drag"] = motion.drag;
+            
+            motions.push_back(motion_data);
+        }
+        entities["motions"] = motions;
+
+        // TODO: Add other components...
+        
+        data["entities"] = entities;
         return data;
     }
 
