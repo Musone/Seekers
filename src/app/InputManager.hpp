@@ -58,10 +58,16 @@ namespace InputManager {
             }
 
             if (key == GLFW_KEY_F5) {
+                // TODO: Show save game dialog (for now just use quicksave)
                 SaveLoadManager::get_instance().save_game("quicksave");
             }
             if (key == GLFW_KEY_F6) {
+                // TODO: Show load game dialog (for now just use quicksave)
                 SaveLoadManager::get_instance().load_game("quicksave");
+            }
+            if (key == GLFW_KEY_F9) {
+                // TODO: Show new game confirmation dialog
+                // SaveLoadManager::get_instance().create_new_game("New Game");
             }
         }
         if (action == GLFW_RELEASE) {
