@@ -59,5 +59,7 @@ void main() {
 
     vec3 result = (ambient + diffuse + specular) * base_color;
     result = clamp(result, 0.0, 1.0);
-    frag_color = vec4(result, 1.0);
+    // frag_color = vec4(result, 1.0);
+    frag_color = vec4(texture(u_texture, v_uv).rgb, 1.0);
+    // frag_color = vec4(1.0, 0.0, 0.0, 1.0);
 }

@@ -47,7 +47,7 @@ void main() {
 
     vec3 result = (ambient + diffuse + specular) * tex_color.xyz;
     result = clamp(result, 0.0, 1.0);
-    frag_color = vec4(result, tex_color.w);
+    // frag_color = vec4(result, tex_color.w);
     // frag_color = vec4(1.0, 0.0, 0.0, 1.0);
-    // frag_color = texture(u_texture, v_uv);
+    frag_color = texture(u_texture, v_uv);
 }
