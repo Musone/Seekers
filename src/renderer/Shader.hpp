@@ -109,6 +109,30 @@ public:
         GL_Call(glUniform4f(_get_uniform_location(name), vector.x, vector.y, vector.z, vector.w));
     }
 
+    void set_uniform_3f_array(const std::string& name, const glm::vec3& vec3s, const unsigned int& count) {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
+        }
+        bind();
+        GL_Call(glUniform3fv(
+            _get_uniform_location(name), 
+            static_cast<GLsizei>(count), 
+            &vec3s[0]
+        ));
+    }
+
+    void set_uniform_1f_array(const std::string& name, const float& floatz, const unsigned int& count) {
+        if (!m_is_initialized) {
+            Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
+        }
+        bind();
+        GL_Call(glUniform1fv(
+            _get_uniform_location(name), 
+            static_cast<GLsizei>(count), 
+            &floatz
+        ));
+    }
+
     void set_uniform_3f(const std::string& name, const glm::vec3& vector) {
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Shader not initialized", __FILE__, __LINE__);
