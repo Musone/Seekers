@@ -28,7 +28,11 @@ public:
 	// Inserting a component c associated to entity e
 	inline Component& insert(Entity e, Component c, bool check_for_duplicates = true) {
 		// Usually, every entity should only have one instance of each component type
-		assert(!(check_for_duplicates && has(e)) && "Entity already contained in ECS registry");
+		// map_entity_componentID.count(e);
+		if (map_entity_componentID.size() > 0) {
+			assert(!(check_for_duplicates && has(e)) && "Entity already contained in ECS registry");
+		}
+
 
 		map_entity_componentID[e] = (unsigned int)components.size();
 		components.push_back(std::move(c)); // the move enforces move instead of copy constructor

@@ -14,7 +14,14 @@ public:
     void initialize_maps() {
         if (!open_world_registry) {
             open_world_registry = std::make_unique<Registry>();
-            // Populate open world entities here TODO
+            Registry& registry = *open_world_registry;
+
+            auto player = EntityFactory::create_player(registry, glm::vec2(0.0f, 0.0f));
+            auto weapon = EntityFactory::create_weapon(registry, glm::vec2(10.0f, 5.0f), 10.0f);
+            registry.attackers.get(player).weapon = weapon;
+
+            saved_world_registry = std::make_unique<Registry>();
+            *saved_world_registry = *open_world_registry;
         }
         // if (!spire_one_registry) {
         //     spire_one_registry = std::make_unique<Registry>();
@@ -29,6 +36,18 @@ public:
         //     // Populate spire3 entities here (player should not be added, just the level)
         // }
         active_registry = open_world_registry.get();
+    }
+
+    // Called on respawns (ie. player death)
+    void restart_maps() {
+        assert(saved_world_registry && "saved_world_registry was not initialized but respawn is triggered.");
+
+        dungeon_registry.reset();
+        open_world_registry.reset();
+        open_world_registry = std::make_unique<Registry>();
+        *open_world_registry = *saved_world_registry;
+        active_registry = open_world_registry.get();
+        Globals::restart_renderer = true;
     }
 
     void load_maps() {
@@ -80,14 +99,16 @@ private:
         active_registry = dungeon_registry.get();
         move_player_comps(*open_world_registry, *dungeon_registry);
         ProceduralGenerationSystem::generate_dungeon(*dungeon_registry, MAP_WIDTH, MAP_HEIGHT, dungeon_registry->motions.get(dungeon_registry->player));
+        Globals::restart_renderer = true;
     }
 
     void return_to_world() {
         active_registry = open_world_registry.get();
-        Motion& player_motion_copy = open_world_registry->motions.get(open_world_registry->player);
+        Motion player_motion_copy = open_world_registry->motions.get(open_world_registry->player);
         move_player_comps(*dungeon_registry, *open_world_registry);
         open_world_registry->motions.get(open_world_registry->player) = player_motion_copy;
         dungeon_registry.reset();
+        Globals::restart_renderer = true;
     }
 
     void move_player_comps(Registry& from, Registry& to) {
@@ -137,5 +158,6 @@ private:
     // std::unique_ptr<Registry> spire_one_registry;     // Spire1 registry for future use
     // std::unique_ptr<Registry> spire_two_registry;     // Spire2 registry for future use
     // std::unique_ptr<Registry> spire_three_registry;   // Spire3 registry for future use
+    std::unique_ptr<Registry> saved_world_registry;   // Instance of last saved checkpoint (only open_world has save ability)
     Registry* active_registry = nullptr;              // Points to the currently active registry
 };

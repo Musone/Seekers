@@ -26,40 +26,42 @@ World::~World() = default;
 void World::restart_game() {
     std::cout << "Restarting game..." << std::endl;
 
-    Registry& registry = MapManager::get_instance().get_active_registry();
-    
-    // Store the models before clearing
-    StaticModel* arrow_model = nullptr;
-    StaticModel* melee_model = nullptr;
-    if (!registry.projectile_models.entities.empty()) {
-        arrow_model = registry.projectile_models.components[0].arrow_model;
-        melee_model = registry.projectile_models.components[0].melee_model;
-    }
+    MapManager::get_instance().restart_maps();
 
-    registry.clear_all_components();
-
-    // Restore the models after clearing
-    auto& models = registry.projectile_models.emplace(Entity());
-    models.arrow_model = arrow_model;
-    models.melee_model = melee_model;
-
-    // Create Player
-    auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
-    auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f);
-    registry.attackers.get(player).weapon = weapon;
-
-    ProceduralGenerationSystem::GenerateDungeon(MAP_WIDTH, MAP_HEIGHT, registry.motions.get(player));
-
-    // create grid map entities
-    registry.grid_map = GridMap();
-    for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
-        registry.grid_map.grid_boxes.push_back(std::vector<GridMap::GridBox>());
-        for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
-            registry.grid_map.grid_boxes[i].push_back(GridMap::GridBox());
-        }
-    }
-
-    Globals::restart_renderer = true;
+    // Registry& registry = MapManager::get_instance().get_active_registry();
+    //
+    // // Store the models before clearing
+    // StaticModel* arrow_model = nullptr;
+    // StaticModel* melee_model = nullptr;
+    // if (!registry.projectile_models.entities.empty()) {
+    //     arrow_model = registry.projectile_models.components[0].arrow_model;
+    //     melee_model = registry.projectile_models.components[0].melee_model;
+    // }
+    //
+    // registry.clear_all_components();
+    //
+    // // Restore the models after clearing
+    // auto& models = registry.projectile_models.emplace(Entity());
+    // models.arrow_model = arrow_model;
+    // models.melee_model = melee_model;
+    //
+    // // Create Player
+    // auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));
+    // auto weapon = EntityFactory::create_weapon(glm::vec2(10.0f, 5.0f), 10.0f);
+    // registry.attackers.get(player).weapon = weapon;
+    //
+    // ProceduralGenerationSystem::GenerateDungeon(MAP_WIDTH, MAP_HEIGHT, registry.motions.get(player));
+    //
+    // // create grid map entities
+    // registry.grid_map = GridMap();
+    // for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
+    //     registry.grid_map.grid_boxes.push_back(std::vector<GridMap::GridBox>());
+    //     for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
+    //         registry.grid_map.grid_boxes[i].push_back(GridMap::GridBox());
+    //     }
+    // }
+    //
+    // Globals::restart_renderer = true;
 }
 
 
@@ -69,7 +71,9 @@ void World::demo_init() {
     m_audioSystem.load_all_sound();
     m_audioSystem.start_music();
 
-    restart_game();
+    // restart_game();
+
+    MapManager::get_instance().initialize_maps();
 
     // // Create Player
     // auto player = EntityFactory::create_player(glm::vec2(0.0f, 0.0f));

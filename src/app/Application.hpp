@@ -145,10 +145,10 @@ public:
         m_health_shader = new Shader("MapDemoHealth");
         m_hud_health_shader = new Shader("TexturedHealthBar");
 
-        Registry& registry = MapManager::get_instance().get_active_registry();
-        auto& models = registry.projectile_models.emplace(Entity());
-        models.arrow_model = m_arrow;
-        models.melee_model = m_banana;
+        // Registry& registry = MapManager::get_instance().get_active_registry();
+        // auto& models = registry.projectile_models.emplace(Entity());
+        // models.arrow_model = m_arrow;
+        // models.melee_model = m_banana;
     }
 
     ~Application() {
@@ -274,7 +274,11 @@ public:
 
         World world;
         world.demo_init();
-        Registry& reg = MapManager::get_instance().get_active_registry();
+
+        Registry& regie = MapManager::get_instance().get_active_registry();
+        auto& models = regie.projectile_models.emplace(Entity());
+        models.arrow_model = m_arrow;
+        models.melee_model = m_banana;
 
         AnimatedModel* player_model;
 
@@ -293,6 +297,8 @@ public:
             float delta_time_s = delta_time * 0.000001f;
             m_renderer->set_title(m_window_name + " | FPS: " + std::to_string(1.0f / delta_time_s));
             time_of_last_frame = float(timer.GetTime());
+
+            Registry& reg = MapManager::get_instance().get_active_registry();
 
             // Game restart
             if (Globals::restart_renderer) {
