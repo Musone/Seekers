@@ -354,7 +354,41 @@ private:
         }
         entities["motions"] = motions;
 
-        // TODO: Add other components...
+        // TODO: Combat Components
+        // TODO: Serialize Attacker (aim, weapon)
+        // TODO: Serialize Weapon (type, damage, range, etc)
+        // TODO: Serialize Projectile (damage, range_remaining, etc)
+        // TODO: Serialize AttackCooldown (timer)
+        // TODO: Serialize StaggerCooldown (timer)
+        // TODO: Serialize DeathCooldown (timer)
+        // TODO: Serialize EnergyNoRegenCooldown (timer)
+        // TODO: Serialize Team (team_id)
+
+        // TODO: Gameplay Components
+        // TODO: Serialize LocomotionStats (health, energy, etc)
+        // TODO: Serialize Buff (remaining_time, effects, etc)
+        // TODO: Serialize InDodge (source, destination, etc)
+        // TODO: Serialize NearPlayer
+        // TODO: Serialize NearCamera
+
+        // TODO: Physics Components
+        // TODO: Serialize CollisionBounds (type and specific collider data)
+        // TODO: Serialize Collision (other entity)
+        // TODO: Serialize MoveWith (following_entity_id)
+        // TODO: Serialize RotateWith (following_entity_id)
+
+        // TODO: AI Components
+        // TODO: Serialize AIComponent (current_state, target_position, etc)
+        // TODO: Serialize VisionToPlayer (timer)
+
+        // TODO: Entity Identifier Components
+        // TODO: Serialize Wall (type)
+        // TODO: Serialize Enemy (type)
+        // TODO: Serialize StaticObject (type)
+
+        // TODO: Render Components
+        // TODO: Serialize TextureName (name)
+        // TODO: Serialize ProjectileModels (model pointers - needs special handling)
         
         data["entities"] = entities;
         return data;
@@ -362,12 +396,46 @@ private:
 
     void deserialize_registry(Registry& registry, const json& data) {
         // TODO: Clear existing registry
-        // TODO: Deserialize ALL components
         // TODO: Restore registry.player
         // TODO: Restore registry.input_state
         // TODO: Restore registry.camera_pos
         
-        // TODO: Implement full registry deserialization
+        // TODO: Combat Components
+        // TODO: Deserialize Attacker
+        // TODO: Deserialize Weapon
+        // TODO: Deserialize Projectile
+        // TODO: Deserialize AttackCooldown
+        // TODO: Deserialize StaggerCooldown
+        // TODO: Deserialize DeathCooldown
+        // TODO: Deserialize EnergyNoRegenCooldown
+        // TODO: Deserialize Team
+
+        // TODO: Gameplay Components
+        // TODO: Deserialize LocomotionStats
+        // TODO: Deserialize Buff
+        // TODO: Deserialize InDodge
+        // TODO: Deserialize NearPlayer
+        // TODO: Deserialize NearCamera
+
+        // TODO: Physics Components
+        // TODO: Deserialize CollisionBounds
+        // TODO: Deserialize Collision
+        // TODO: Deserialize MoveWith
+        // TODO: Deserialize RotateWith
+
+        // TODO: AI Components
+        // TODO: Deserialize AIComponent
+        // TODO: Deserialize VisionToPlayer
+
+        // TODO: Entity Identifier Components
+        // TODO: Deserialize Wall
+        // TODO: Deserialize Enemy
+        // TODO: Deserialize StaticObject
+
+        // TODO: Render Components
+        // TODO: Deserialize TextureName
+        // TODO: Deserialize ProjectileModels
+        
         // For now, use existing player deserialization
         deserialize_player_state(registry, data["player"]);
     }
