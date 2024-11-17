@@ -4,12 +4,12 @@
 #include <fstream>
 #include <string>
 #include <ctime>
-#include <boost/filesystem.hpp>
+#include <sys/stat.h>
+#include <system_error>
 #include "app/MapManager.hpp"
 #include "components/Components.hpp"
 
 using json = nlohmann::json;
-namespace fs = boost::filesystem;
 
 class SaveLoadManager {
 public:
@@ -33,7 +33,12 @@ public:
             auto& registry = map_manager.get_active_registry();
             save_data["player"] = serialize_player_state(registry);
             
-            fs::create_directories("saves");
+            #ifdef _WIN32
+                _mkdir("saves");
+            #else
+                mkdir("saves", 0777);
+            #endif
+            
             std::ofstream file("saves/" + save_name + ".json");
             file << std::setw(4) << save_data << std::endl;
             
