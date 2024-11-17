@@ -103,6 +103,12 @@ if (IS_OS_LINUX OR IS_OS_MAC)
         find_library(COCOA_LIBRARY Cocoa)
         find_library(CF_LIBRARY CoreFoundation)
         target_link_libraries(${PROJECT_NAME} PUBLIC ${COCOA_LIBRARY} ${CF_LIBRARY})
+
+        if (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)|(ARM)")
+            # Link Assimp to the project
+            target_compile_options(assimp PRIVATE -Wno-deprecated-declarations)
+            target_link_libraries(${PROJECT_NAME} PUBLIC assimp)
+        endif()
     endif()
 
     # Increase warning level
