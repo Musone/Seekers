@@ -4,12 +4,21 @@
 #include <fstream>
 #include <string>
 #include <ctime>
-#include <boost/filesystem.hpp>
+#include <vector>
+#include <sys/stat.h>
+#include <system_error>
 #include "app/MapManager.hpp"
 #include "components/Components.hpp"
 
 using json = nlohmann::json;
-namespace fs = boost::filesystem;
+
+struct SaveSlot {
+    int id;                     // Unique incremental ID
+    std::string name;           // User-given name
+    std::string filename;       // Actual file name on disk
+    std::time_t timestamp;      // When save was created
+    std::string version;        // Game version
+};
 
 class SaveLoadManager {
 public:
@@ -18,6 +27,7 @@ public:
         return instance;
     }
 
+    // Leaving this in for now until we implement the rest of the save/load system
     bool save_game(const std::string& save_name) {
         try {
             auto& map_manager = MapManager::get_instance();
@@ -45,6 +55,7 @@ public:
         }
     }
 
+    // Leaving this in for now until we implement the rest of the save/load system
     bool load_game(const std::string& save_name) {
         try {
             std::ifstream file("saves/" + save_name + ".json");
@@ -69,9 +80,53 @@ public:
         }
     }
 
+    // Lists all available save slots
+    std::vector<SaveSlot> list_save_slots() {
+        // TODO: Read saves/index.json
+        // TODO: Return vector of SaveSlot structs
+        return {};
+    }
+
+    // Creates a new game save slot
+    bool create_new_game(const std::string& save_name) {
+        // TODO: Create new save slot
+        // TODO: Initialize fresh game state
+        // TODO: Save to slot
+        // TODO: Update index.json
+        return false;
+    }
+
+    // Save to specific slot
+    bool save_game_to_slot(const SaveSlot& slot) {
+        // TODO: Validate we're in open world
+        // TODO: Serialize full registry
+        // TODO: Save to slot's filename
+        // TODO: Update slot metadata (timestamp etc)
+        // TODO: Update index.json
+        return false;
+    }
+
+    // Load from specific slot
+    bool load_game_from_slot(const SaveSlot& slot) {
+        // TODO: Validate save file exists
+        // TODO: Load and deserialize full registry
+        // TODO: Handle any errors
+        return false;
+    }
+
+    // Delete a save slot
+    void delete_save_slot(const SaveSlot& slot) {
+        // TODO: Remove save file
+        // TODO: Update index.json
+        // TODO: Handle errors
+    }
+
 private:
     SaveLoadManager() = default;
+    std::vector<SaveSlot> save_slots;
+    int next_slot_id = 0;
 
+    // Leaving this in for now until we implement the rest of the save/load system
     json serialize_player_state(Registry& registry) {
         json player_data;
         
@@ -109,6 +164,7 @@ private:
         return player_data;
     }
 
+    // Leaving this in for now until we implement the rest of the save/load system
     void deserialize_player_state(Registry& registry, const json& data) {
         if (!registry.player) return;
         
@@ -140,5 +196,39 @@ private:
             stats.agility = stats_data["agility"];
             stats.movement_speed = stats_data["movement_speed"];
         }
+    }
+
+    // TODO: Move current serialize/deserialize to these more comprehensive versions
+    json serialize_registry(Registry& registry) {
+        // TODO: Serialize ALL components from registry
+        // TODO: Serialize registry.player
+        // TODO: Serialize registry.input_state
+        // TODO: Serialize registry.camera_pos
+        return json{};
+    }
+
+    void deserialize_registry(Registry& registry, const json& data) {
+        // TODO: Clear existing registry
+        // TODO: Deserialize ALL components
+        // TODO: Restore registry.player
+        // TODO: Restore registry.input_state
+        // TODO: Restore registry.camera_pos
+    }
+
+    // Helper methods
+    SaveSlot create_new_slot(const std::string& name) {
+        // TODO: Generate unique ID
+        // TODO: Create slot metadata
+        // TODO: Generate unique filename
+        return SaveSlot{};
+    }
+
+    void save_index_file() {
+        // TODO: Save slots metadata to saves/index.json
+    }
+
+    void load_index_file() {
+        // TODO: Load slots metadata from saves/index.json
+        // TODO: Initialize next_slot_id
     }
 }; 

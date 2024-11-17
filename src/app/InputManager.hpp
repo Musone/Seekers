@@ -107,6 +107,10 @@ namespace InputManager {
                     std::cout << "===============\n" << std::endl;
                 }
             }
+            if (key == GLFW_KEY_F9) {
+                // TODO: Show new game confirmation dialog
+                // SaveLoadManager::get_instance().create_new_game("New Game");
+            }
         }
         if (action == GLFW_RELEASE) {
             if (key == GLFW_KEY_W) {
