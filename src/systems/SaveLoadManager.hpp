@@ -101,20 +101,60 @@ public:
 
     // Save to specific slot
     bool save_game_to_slot(const SaveSlot& slot) {
-        // TODO: Validate we're in open world
-        // TODO: Serialize full registry
-        // TODO: Save to slot's filename
-        // TODO: Update slot metadata (timestamp etc)
-        // TODO: Update index.json
-        return false;
+        try {
+            auto& map_manager = MapManager::get_instance();
+            if (map_manager.get_current_map_type() != MapType::OPEN_WORLD) {
+                std::cerr << "Can only save in open world" << std::endl;
+                return false;
+            }
+
+            json save_data;
+            save_data["version"] = slot.version;
+            save_data["timestamp"] = slot.timestamp;
+            
+            auto& registry = map_manager.get_active_registry();
+            save_data["registry"] = serialize_registry(registry);
+            
+            #ifdef _WIN32
+                _mkdir("saves");
+            #else
+                mkdir("saves", 0777);
+            #endif
+            
+            std::ofstream file("saves/" + slot.filename);
+            file << std::setw(4) << save_data << std::endl;
+            
+            std::cout << "Game saved successfully to slot: " << slot.name << std::endl;
+            return true;
+        } catch (const std::exception& e) {
+            std::cerr << "Save failed: " << e.what() << std::endl;
+            return false;
+        }
     }
 
     // Load from specific slot
     bool load_game_from_slot(const SaveSlot& slot) {
-        // TODO: Validate save file exists
-        // TODO: Load and deserialize full registry
-        // TODO: Handle any errors
-        return false;
+        try {
+            std::ifstream file("saves/" + slot.filename);
+            if (!file.is_open()) {
+                std::cerr << "Save file not found: " << slot.filename << std::endl;
+                return false;
+            }
+
+            json save_data = json::parse(file);
+            
+            auto& map_manager = MapManager::get_instance();
+            map_manager.restart_maps();  // Reset to initial state
+            
+            auto& registry = map_manager.get_active_registry();
+            deserialize_registry(registry, save_data["registry"]);
+            
+            std::cout << "Game loaded successfully from slot: " << slot.name << std::endl;
+            return true;
+        } catch (const std::exception& e) {
+            std::cerr << "Load failed: " << e.what() << std::endl;
+            return false;
+        }
     }
 
     // Delete a save slot
@@ -271,13 +311,18 @@ private:
         }
     }
 
-    // TODO: Move current serialize/deserialize to these more comprehensive versions
     json serialize_registry(Registry& registry) {
         // TODO: Serialize ALL components from registry
         // TODO: Serialize registry.player
         // TODO: Serialize registry.input_state
         // TODO: Serialize registry.camera_pos
-        return json{};
+        json data;
+        
+        // TODO: Implement full registry serialization
+        // For now, use existing player serialization
+        data["player"] = serialize_player_state(registry);
+        
+        return data;
     }
 
     void deserialize_registry(Registry& registry, const json& data) {
@@ -286,5 +331,9 @@ private:
         // TODO: Restore registry.player
         // TODO: Restore registry.input_state
         // TODO: Restore registry.camera_pos
+        
+        // TODO: Implement full registry deserialization
+        // For now, use existing player deserialization
+        deserialize_player_state(registry, data["player"]);
     }
 }; 
