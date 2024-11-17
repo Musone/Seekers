@@ -311,16 +311,77 @@ private:
         }
     }
 
+    // Helper functions for serialization
+    json serialize_combat_components(Registry& registry) {
+        json combat;
+        // TODO: Implement all combat component serialization
+        // TODO: Serialize Attacker (aim, weapon)
+        // TODO: Serialize Weapon (type, damage, range, etc)
+        // TODO: Serialize Projectile (damage, range_remaining, etc)
+        // TODO: Serialize AttackCooldown (timer)
+        // TODO: Serialize StaggerCooldown (timer)
+        // TODO: Serialize DeathCooldown (timer)
+        // TODO: Serialize EnergyNoRegenCooldown (timer)
+        // TODO: Serialize Team (team_id)
+        return combat;
+    }
+
+    json serialize_gameplay_components(Registry& registry) {
+        json gameplay;
+        // TODO: Implement all gameplay component serialization
+        // TODO: Serialize LocomotionStats (health, energy, etc)
+        // TODO: Serialize Buff (remaining_time, effects, etc)
+        // TODO: Serialize InDodge (source, destination, etc)
+        // TODO: Serialize NearPlayer
+        // TODO: Serialize NearCamera
+        return gameplay;
+    }
+
+    json serialize_physics_components(Registry& registry) {
+        json physics;
+        // TODO: Implement all physics component serialization
+        // TODO: Serialize CollisionBounds (type and specific collider data)
+        // TODO: Serialize Collision (other entity)
+        // TODO: Serialize MoveWith (following_entity_id)
+        // TODO: Serialize RotateWith (following_entity_id)
+        return physics;
+    }
+
+    json serialize_ai_components(Registry& registry) {
+        json ai;
+        // TODO: Implement all AI component serialization
+        // TODO: Serialize AIComponent (current_state, target_position, etc)
+        // TODO: Serialize VisionToPlayer (timer)
+        return ai;
+    }
+
+    json serialize_identifier_components(Registry& registry) {
+        json identifiers;
+        // TODO: Implement all identifier component serialization
+        // TODO: Serialize Wall (type)
+        // TODO: Serialize Enemy (type)
+        // TODO: Serialize StaticObject (type)
+        return identifiers;
+    }
+
+    json serialize_render_components(Registry& registry) {
+        json render;
+        // TODO: Implement all render component serialization
+        // TODO: Serialize TextureName (name)
+        // TODO: Serialize ProjectileModels (model pointers - needs special handling)
+        return render;
+    }
+
+    // Main serialization function becomes cleaner
     json serialize_registry(Registry& registry) {
         json data;
         
+        // Registry-level data
         data["player"] = static_cast<unsigned int>(registry.player);
-        
         data["camera_pos"] = {
             {"x", registry.camera_pos.x},
             {"y", registry.camera_pos.y}
         };
-        
         data["input_state"] = {
             {"w_down", registry.input_state.w_down},
             {"a_down", registry.input_state.a_down},
@@ -332,75 +393,20 @@ private:
             }}
         };
 
-        // Save all entities and their components
-        json entities;
+        // Components by category
+        data["combat"] = serialize_combat_components(registry);
+        data["gameplay"] = serialize_gameplay_components(registry);
+        data["physics"] = serialize_physics_components(registry);
+        data["ai"] = serialize_ai_components(registry);
+        data["identifiers"] = serialize_identifier_components(registry);
+        data["render"] = serialize_render_components(registry);
         
-        json motions = json::array();
-        for (size_t i = 0; i < registry.motions.entities.size(); i++) {
-            json motion_data;
-            Entity entity = registry.motions.entities[i];
-            const auto& motion = registry.motions.components[i];
-            
-            motion_data["entity"] = static_cast<unsigned int>(entity);
-            motion_data["position"] = {motion.position.x, motion.position.y};
-            motion_data["angle"] = motion.angle;
-            motion_data["scale"] = {motion.scale.x, motion.scale.y};
-            motion_data["velocity"] = {motion.velocity.x, motion.velocity.y};
-            motion_data["rotation_velocity"] = motion.rotation_velocity;
-            motion_data["acceleration"] = {motion.acceleration.x, motion.acceleration.y};
-            motion_data["drag"] = motion.drag;
-            
-            motions.push_back(motion_data);
-        }
-        entities["motions"] = motions;
-
-        // TODO: Combat Components
-        // TODO: Serialize Attacker (aim, weapon)
-        // TODO: Serialize Weapon (type, damage, range, etc)
-        // TODO: Serialize Projectile (damage, range_remaining, etc)
-        // TODO: Serialize AttackCooldown (timer)
-        // TODO: Serialize StaggerCooldown (timer)
-        // TODO: Serialize DeathCooldown (timer)
-        // TODO: Serialize EnergyNoRegenCooldown (timer)
-        // TODO: Serialize Team (team_id)
-
-        // TODO: Gameplay Components
-        // TODO: Serialize LocomotionStats (health, energy, etc)
-        // TODO: Serialize Buff (remaining_time, effects, etc)
-        // TODO: Serialize InDodge (source, destination, etc)
-        // TODO: Serialize NearPlayer
-        // TODO: Serialize NearCamera
-
-        // TODO: Physics Components
-        // TODO: Serialize CollisionBounds (type and specific collider data)
-        // TODO: Serialize Collision (other entity)
-        // TODO: Serialize MoveWith (following_entity_id)
-        // TODO: Serialize RotateWith (following_entity_id)
-
-        // TODO: AI Components
-        // TODO: Serialize AIComponent (current_state, target_position, etc)
-        // TODO: Serialize VisionToPlayer (timer)
-
-        // TODO: Entity Identifier Components
-        // TODO: Serialize Wall (type)
-        // TODO: Serialize Enemy (type)
-        // TODO: Serialize StaticObject (type)
-
-        // TODO: Render Components
-        // TODO: Serialize TextureName (name)
-        // TODO: Serialize ProjectileModels (model pointers - needs special handling)
-        
-        data["entities"] = entities;
         return data;
     }
 
-    void deserialize_registry(Registry& registry, const json& data) {
-        // TODO: Clear existing registry
-        // TODO: Restore registry.player
-        // TODO: Restore registry.input_state
-        // TODO: Restore registry.camera_pos
-        
-        // TODO: Combat Components
+    // Helper functions for deserialization
+    void deserialize_combat_components(Registry& registry, const json& data) {
+        // TODO: Implement all combat component deserialization
         // TODO: Deserialize Attacker
         // TODO: Deserialize Weapon
         // TODO: Deserialize Projectile
@@ -409,32 +415,57 @@ private:
         // TODO: Deserialize DeathCooldown
         // TODO: Deserialize EnergyNoRegenCooldown
         // TODO: Deserialize Team
+    }
 
-        // TODO: Gameplay Components
+    void deserialize_gameplay_components(Registry& registry, const json& data) {
+        // TODO: Implement all gameplay component deserialization
         // TODO: Deserialize LocomotionStats
         // TODO: Deserialize Buff
         // TODO: Deserialize InDodge
         // TODO: Deserialize NearPlayer
         // TODO: Deserialize NearCamera
+    }
 
-        // TODO: Physics Components
+    void deserialize_physics_components(Registry& registry, const json& data) {
+        // TODO: Implement all physics component deserialization
         // TODO: Deserialize CollisionBounds
         // TODO: Deserialize Collision
         // TODO: Deserialize MoveWith
         // TODO: Deserialize RotateWith
+    }
 
-        // TODO: AI Components
+    void deserialize_ai_components(Registry& registry, const json& data) {
+        // TODO: Implement all AI component deserialization
         // TODO: Deserialize AIComponent
         // TODO: Deserialize VisionToPlayer
+    }
 
-        // TODO: Entity Identifier Components
+    void deserialize_identifier_components(Registry& registry, const json& data) {
+        // TODO: Implement all identifier component deserialization
         // TODO: Deserialize Wall
         // TODO: Deserialize Enemy
         // TODO: Deserialize StaticObject
+    }
 
-        // TODO: Render Components
+    void deserialize_render_components(Registry& registry, const json& data) {
+        // TODO: Implement all render component deserialization
         // TODO: Deserialize TextureName
         // TODO: Deserialize ProjectileModels
+    }
+
+    void deserialize_registry(Registry& registry, const json& data) {
+        // TODO: Clear existing registry
+        // TODO: Restore registry.player
+        // TODO: Restore registry.input_state
+        // TODO: Restore registry.camera_pos
+        
+        // Components by category
+        deserialize_combat_components(registry, data);
+        deserialize_gameplay_components(registry, data);
+        deserialize_physics_components(registry, data);
+        deserialize_ai_components(registry, data);
+        deserialize_identifier_components(registry, data);
+        deserialize_render_components(registry, data);
         
         // For now, use existing player deserialization
         deserialize_player_state(registry, data["player"]);
