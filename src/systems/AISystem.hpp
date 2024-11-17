@@ -2,6 +2,7 @@
 
 #include <random>
 
+#include "app/MapManager.hpp"
 #include "GameplaySystem.hpp"
 #include "../ecs/Entity.hpp"
 #include "../components/Components.hpp"
@@ -12,7 +13,7 @@
 namespace AISystem
 {
     inline void update_player_vision(float elapsed_ms) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         for (Entity& e : registry.ais.entities) {
             if (!registry.near_players.has(e)) {
@@ -63,7 +64,7 @@ namespace AISystem
     }
 //    I didn't know where to put this, so I put it here for now
     inline bool is_gonna_collide(Entity& nearby_entity, Entity& ai_entity, glm::vec2 next_position) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         if (!registry.motions.has(nearby_entity)) {
             return false;
         }
@@ -108,7 +109,7 @@ namespace AISystem
 
 // This function should be refactored. It doesn't work properly right now, it needs a better algorithm.
     inline glm::vec2 get_ai_motion_velocity(Entity& e, AIComponent& ai) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         Motion& motion = registry.motions.get(e);
         glm::vec2 dir = Common::normalize(ai.target_position - motion.position);
         glm::vec2 velocity = registry.locomotion_stats.get(e).movement_speed * dir;
@@ -146,13 +147,13 @@ namespace AISystem
     }
 
     inline void update_chasing_target_position(AIComponent& ai) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         glm::vec2 player_position = registry.motions.get(registry.player).position;
         ai.target_position = player_position;
     }
 
     inline void AI_patrol_step(Entity& e) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         Motion& motion = registry.motions.get(e);
         AIComponent& ai = registry.ais.get(e);
 
@@ -164,7 +165,7 @@ namespace AISystem
     }
 
     inline void AI_chase_step(Entity& e) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         Motion& motion = registry.motions.get(e);
         AIComponent& ai = registry.ais.get(e);
         update_chasing_target_position(ai);
@@ -202,7 +203,7 @@ namespace AISystem
             return;
         }
 
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         Motion& motion = registry.motions.get(e);
         Attacker& attacker = registry.attackers.get(e);
 
@@ -217,7 +218,7 @@ namespace AISystem
     }
 
     inline void AI_change_state(Entity& e) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         Motion& motion = registry.motions.get(e);
         AIComponent& ai = registry.ais.get(e);
         glm::vec2 player_position = registry.motions.get(registry.player).position;
@@ -231,7 +232,7 @@ namespace AISystem
     }
 
     inline void AI_step() {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         for (Entity& e : registry.near_players.entities) {
             if (registry.ais.has(e) && !registry.death_cooldowns.has(e) && !registry.stagger_cooldowns.has(e)) {

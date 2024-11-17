@@ -8,7 +8,7 @@
 namespace PhysicsSystem
 {
     inline void step(float elapsed_ms) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         for (Entity& entity : registry.near_players.entities) {
             if (registry.motions.has(entity) && !registry.death_cooldowns.has(entity)) {
@@ -43,7 +43,7 @@ namespace PhysicsSystem
     }
 
     inline void update_interpolations() {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         for (Entity& entity : registry.in_dodges.entities) {
             InDodge& indodge = registry.in_dodges.get(entity);

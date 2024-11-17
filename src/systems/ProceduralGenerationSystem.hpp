@@ -295,7 +295,7 @@ namespace ProceduralGenerationSystem {
         }
     }
 
-    inline void create_walls(const std::vector<std::vector<char>>& map) {
+    inline void create_walls(Registry& registry, const std::vector<std::vector<char>>& map) {
         std::vector<WallPosLen> walls;
         int height = map.size();
         int width = map[0].size();
@@ -363,10 +363,10 @@ namespace ProceduralGenerationSystem {
 
             if (wall.horizontal) {
                 x += wall.length/2;
-                EntityFactory::create_wall({x, y}, 0, glm::vec2(wall.length, 1.0f));
+                EntityFactory::create_wall(registry, {x, y}, 0, glm::vec2(wall.length, 1.0f));
             } else {
                 y -= wall.length/2;
-                EntityFactory::create_wall({x, y}, PI / 2.0f, glm::vec2(wall.length, 1.0f));
+                EntityFactory::create_wall(registry, {x, y}, PI / 2.0f, glm::vec2(wall.length, 1.0f));
             }
         }
     }
@@ -389,7 +389,7 @@ namespace ProceduralGenerationSystem {
         return false;
     }
 
-    inline void create_enemies_and_objects(const std::vector<Room>& rooms, const Room& spawn_room) {
+    inline void create_enemies_and_objects(Registry& registry, const std::vector<Room>& rooms, const Room& spawn_room) {
         for (const Room& room : rooms) {
             if (room == spawn_room) {continue;}
 
@@ -411,7 +411,7 @@ namespace ProceduralGenerationSystem {
                     x = pos_x_dist(gen);
                     y = pos_y_dist(gen);
                 }
-                EntityFactory::create_enemy({x, y}, (ENEMY_TYPE)enemy_type_dist(gen));
+                EntityFactory::create_enemy(registry, {x, y}, (ENEMY_TYPE)enemy_type_dist(gen));
                 enemies_and_objects_pos.push_back({x, y});
             }
             int object_num = object_num_dist(gen);
@@ -422,13 +422,13 @@ namespace ProceduralGenerationSystem {
                     x = pos_x_dist(gen);
                     y = pos_y_dist(gen);
                 }
-                EntityFactory::create_tree({x, y});
+                EntityFactory::create_tree(registry, {x, y});
                 enemies_and_objects_pos.push_back({x, y});
             }
         }
     }
 
-    inline void GenerateDungeon(int map_width, int map_height, Motion& player_motion) {
+    inline void generate_dungeon(Registry& registry, int map_width, int map_height, Motion& player_motion) {
         std::vector<std::vector<char>> map(map_height, std::vector<char>(map_width, '.'));
 
         std::vector<Room> rooms;
@@ -438,9 +438,9 @@ namespace ProceduralGenerationSystem {
         std::vector<Hallway> hallways = generate_hallways(rooms);
         connect_rooms(rooms, hallways, map, map_width, map_height);
         place_walls_on_map(map);
-        create_walls(map);
+        create_walls(registry, map);
 
-        create_enemies_and_objects(rooms, spawn_room);
+        create_enemies_and_objects(registry, rooms, spawn_room);
 
         // print map
         for (const auto& row : map) {

@@ -7,7 +7,7 @@
 
 namespace GameplaySystem {
     inline void update_cooldowns(float elapsed_ms) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         std::vector<Entity> to_be_removed;
 
@@ -68,7 +68,7 @@ namespace GameplaySystem {
     }
 
     inline void update_regen_stats(float elapsed_ms) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         for (Entity& e : registry.near_players.entities) {
             if (registry.locomotion_stats.has(e)) {
@@ -85,7 +85,7 @@ namespace GameplaySystem {
     }
 
     inline void update_projectile_range(float elapsed_ms) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         std::vector<Entity> to_be_removed;
 
@@ -103,7 +103,7 @@ namespace GameplaySystem {
     }
 
     inline void update_near_player_camera() {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         registry.near_players.clear();
         registry.near_cameras.clear();
@@ -125,7 +125,7 @@ namespace GameplaySystem {
     }
 
     inline void deplete_energy(const Entity& e, const float amount) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
 
         LocomotionStats& locomotion = registry.locomotion_stats.get(e);
         locomotion.energy -= amount;
@@ -140,7 +140,7 @@ namespace GameplaySystem {
     }
 
     inline void attack(Entity& e) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         AudioSystem& audio = AudioSystem::get_instance();
 
         LocomotionStats& locomotion = registry.locomotion_stats.get(e);
@@ -149,9 +149,9 @@ namespace GameplaySystem {
 
         Motion& motion = registry.motions.get(e);
         Attacker& attacker = registry.attackers.get(e);
-        Weapon& weapon = registry.weapons.get(attacker.weapon_id);
+        Weapon& weapon = registry.weapons.get(attacker.weapon);
 
-        EntityFactory::create_projectile(motion, attacker, weapon, registry.teams.get(e).team_id);
+        EntityFactory::create_projectile(registry, motion, attacker, weapon, registry.teams.get(e).team_id);
         registry.attack_cooldowns.emplace(e, weapon.attack_cooldown);
         deplete_energy(e, weapon.attack_energy_cost);
 
@@ -164,7 +164,7 @@ namespace GameplaySystem {
     }
 
     inline void dodge(Entity& e) {
-        Registry& registry = Registry::get_instance();
+        Registry& registry = MapManager::get_instance().get_active_registry();
         AudioSystem& audio = AudioSystem::get_instance();
 
         LocomotionStats& locomotion = registry.locomotion_stats.get(e);
