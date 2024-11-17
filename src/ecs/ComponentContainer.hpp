@@ -25,6 +25,19 @@ public:
 	ComponentContainer() {
 	}
 
+	IComponentContainer& operator=(const IComponentContainer& other) override {
+        if (this != &other) {
+            const auto* derived = dynamic_cast<const ComponentContainer<Component>*>(&other);
+            if (derived) {
+                map_entity_componentID = derived->map_entity_componentID;
+                registered = derived->registered;
+                components = derived->components;
+                entities = derived->entities;
+            }
+        }
+        return *this;
+    }
+
 	// Inserting a component c associated to entity e
 	inline Component& insert(Entity e, Component c, bool check_for_duplicates = true) {
 		// Usually, every entity should only have one instance of each component type

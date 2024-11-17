@@ -16,6 +16,7 @@ struct IComponentContainer
 	virtual size_t size() = 0;
 	virtual void remove(Entity e) = 0;
 	virtual bool has(Entity entity) = 0;
+	virtual IComponentContainer& operator=(const IComponentContainer& other) = 0;
 };
 
 
