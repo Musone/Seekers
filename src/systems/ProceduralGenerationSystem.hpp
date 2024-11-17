@@ -371,6 +371,15 @@ namespace ProceduralGenerationSystem {
         }
     }
 
+    inline void place_light_sources(Registry& registry, const std::vector<Room>& rooms) {
+        for (const auto& room : rooms) {
+            Entity e = Entity();
+            LightSource& light_source = registry.light_sources.emplace(e);
+            light_source.pos = glm::vec3(room.position, 5.0f);
+            light_source.brightness = 10.0f;
+        }
+    }
+
     inline Room create_spawn_room(std::vector<Room>& rooms, int map_width, int map_height) {
         Room room;
         room.size = glm::vec2(20, 20);
@@ -439,6 +448,7 @@ namespace ProceduralGenerationSystem {
         connect_rooms(rooms, hallways, map, map_width, map_height);
         place_walls_on_map(map);
         create_walls(registry, map);
+        place_light_sources(registry, rooms);
 
         create_enemies_and_objects(registry, rooms, spawn_room);
 
