@@ -69,6 +69,9 @@ endif()
 set(glm_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/glm/cmake/glm) # if necessary
 find_package(glm REQUIRED)
 
+find_package(freetype REQUIRED)
+set(FREETYPE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ext/freetype/include")
+
 # GLFW, SDL2 could be precompiled (on windows) or installed by a package manager (on OSX and Linux)
 if (IS_OS_LINUX OR IS_OS_MAC)
     # Try to find packages rather than to use the precompiled ones
@@ -93,10 +96,6 @@ if (IS_OS_LINUX OR IS_OS_MAC)
     # Increase warning level
     target_compile_options(${PROJECT_NAME} PUBLIC "-Wall")
 elseif (IS_OS_WINDOWS)
-    # Setting up freetype for windows. I don't know about mac :/
-    find_package(freetype REQUIRED)
-    set(FREETYPE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ext/freetype/include")
-
     # https://stackoverflow.com/questions/17126860/cmake-link-precompiled-library-depending-on-os-and-architecture
     set(GLFW_FOUND TRUE)
     set(SDL2_FOUND TRUE)

@@ -26,7 +26,7 @@ int main(void) {
         Log::log_error_and_terminate(message, __FILE__, __LINE__);
     }
 
-    return 0; 
+    return 0;
 }
 
 // int main() {
@@ -35,29 +35,29 @@ int main(void) {
 //         std::cerr << "ERROR::FREETYTPE: Could not init FreeType Library" << std::endl;
 //         return 1;
 //     }
-
+//
 //     // Load a font face
 //     FT_Face face;
 //     if (FT_New_Face(ft, "fonts/Cano-VGMwz.ttf", 0, &face)) {
 //         std::cerr << "ERROR::FREETYTPE: Could not open font" << std::endl;
 //         return 1;
 //     }
-
+//
 //     //  Once we've loaded the face, we should define the pixel font size we'd like to extract from this face:
-//     FT_Set_Pixel_Sizes(face, 0, 48);  
-
-//     // A FreeType face hosts a collection of glyphs. We can set one of those glyphs as the active glyph by calling FT_Load_Char. Here we choose to load the character glyph 'X': 
+//     FT_Set_Pixel_Sizes(face, 0, 48);
+//
+//     // A FreeType face hosts a collection of glyphs. We can set one of those glyphs as the active glyph by calling FT_Load_Char. Here we choose to load the character glyph 'X':
 //     if (FT_Load_Char(face, 'X', FT_LOAD_RENDER)) {
-//         std::cerr << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;  
+//         std::cerr << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
 //         return -1;
 //     }
-
+//
 //     face->glyph->bitmap;
-
+//
 //     // Clean up
 //     FT_Done_Face(face);
 //     FT_Done_FreeType(ft);
-
+//
 //     std::cout << "FreeType initialized successfully!" << std::endl;
 //     return 0;
 // }
