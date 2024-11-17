@@ -46,6 +46,7 @@ public:
 	ComponentContainer<EnergyNoRegenCooldown> energy_no_regen_cooldowns;
 	ComponentContainer<VisionToPlayer> vision_to_players;
 	ComponentContainer<ProjectileModels> projectile_models;
+	ComponentContainer<LightSource> light_sources;
 	GridMap grid_map;
 	Entity player;
 	InputState input_state;
@@ -77,6 +78,7 @@ public:
 		m_registry_list.push_back(&energy_no_regen_cooldowns);
 		m_registry_list.push_back(&vision_to_players);
 		m_registry_list.push_back(&projectile_models);
+		m_registry_list.push_back(&light_sources);
 
 		// create grid map entities
 		grid_map = GridMap();

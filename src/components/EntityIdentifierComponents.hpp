@@ -40,3 +40,13 @@ const int static_object_type_count = (int)STATIC_OBJECT_TYPE::STATIC_OBJECT_TYPE
 struct StaticObject {
     STATIC_OBJECT_TYPE type = STATIC_OBJECT_TYPE::STATIC_OBJECT_TYPE_COUNT;
 };
+
+enum class LIGHT_SOURCE_TYPE {
+    MAGIC_ORB = 1,
+    LIGHT_SOURCE_TYPE_COUNT = MAGIC_ORB + 1
+};
+
+struct LightSource {
+    float brightness;
+    glm::vec3 pos;
+};
