@@ -122,6 +122,14 @@ namespace GameplaySystem {
                 registry.near_cameras.emplace(e);
             }
         }
+
+        for (Entity& e : registry.light_sources.entities) {
+            auto& light_pos = registry.light_sources.get(e).pos;
+            float distance_camera = glm::distance(registry.camera_pos, glm::vec2(light_pos.x, light_pos.y));
+            if (distance_camera < Globals::static_render_distance) {
+                registry.near_cameras.emplace(e);
+            }
+        }
     }
 
     inline void deplete_energy(const Entity& e, const float amount) {
