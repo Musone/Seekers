@@ -87,9 +87,7 @@ public:
 
     // Lists all available save slots
     std::vector<SaveSlot> list_save_slots() {
-        // TODO: Read saves/index.json
-        // TODO: Return vector of SaveSlot structs
-        return {};
+        return save_slots;
     }
 
     // Creates a new game save slot
@@ -126,8 +124,78 @@ public:
         // TODO: Handle errors
     }
 
+    // Creates a new save slot
+    SaveSlot create_new_slot(const std::string& name) {
+        SaveSlot slot;
+        slot.id = next_slot_id++;
+        slot.name = name;
+        slot.filename = "save_" + std::to_string(slot.id) + ".json";
+        slot.timestamp = std::time(nullptr);
+        slot.version = "0.1.0"; // TODO: Get from game version
+        save_slots.push_back(slot); // Add this line to track the new slot
+        save_index_file(); // Add this line to persist changes
+        return slot;
+    }
+
 private:
-    SaveLoadManager() = default;
+    SaveLoadManager() {
+        load_index_file(); // Load existing slots on startup
+    }
+    
+    void save_index_file() {
+        try {
+            json index;
+            index["next_slot_id"] = next_slot_id;
+            
+            std::vector<json> slots_data;
+            for (const auto& slot : save_slots) {
+                slots_data.push_back({
+                    {"id", slot.id},
+                    {"name", slot.name},
+                    {"filename", slot.filename},
+                    {"timestamp", slot.timestamp},
+                    {"version", slot.version}
+                });
+            }
+            index["slots"] = slots_data;
+            
+            std::ofstream file("saves/index.json");
+            file << std::setw(4) << index << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to save index file: " << e.what() << std::endl;
+        }
+    }
+
+    void load_index_file() {
+        try {
+            std::ifstream file("saves/index.json");
+            if (!file.is_open()) {
+                next_slot_id = 0;
+                save_slots.clear();
+                return;
+            }
+
+            json index = json::parse(file);
+            next_slot_id = index["next_slot_id"];
+            save_slots.clear();
+            
+            for (const auto& slot_data : index["slots"]) {
+                SaveSlot slot{
+                    slot_data["id"],
+                    slot_data["name"],
+                    slot_data["filename"],
+                    slot_data["timestamp"],
+                    slot_data["version"]
+                };
+                save_slots.push_back(slot);
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to load index file: " << e.what() << std::endl;
+            next_slot_id = 0;
+            save_slots.clear();
+        }
+    }
+
     std::vector<SaveSlot> save_slots;
     int next_slot_id = 0;
 
@@ -218,22 +286,5 @@ private:
         // TODO: Restore registry.player
         // TODO: Restore registry.input_state
         // TODO: Restore registry.camera_pos
-    }
-
-    // Helper methods
-    SaveSlot create_new_slot(const std::string& name) {
-        // TODO: Generate unique ID
-        // TODO: Create slot metadata
-        // TODO: Generate unique filename
-        return SaveSlot{};
-    }
-
-    void save_index_file() {
-        // TODO: Save slots metadata to saves/index.json
-    }
-
-    void load_index_file() {
-        // TODO: Load slots metadata from saves/index.json
-        // TODO: Initialize next_slot_id
     }
 }; 

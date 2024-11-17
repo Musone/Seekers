@@ -58,16 +58,40 @@ namespace InputManager {
             }
 
             if (key == GLFW_KEY_F5) {
-                // TODO: Show save game dialog (for now just use quicksave)
-                SaveLoadManager::get_instance().save_game("quicksave");
+                SaveLoadManager& save_manager = SaveLoadManager::get_instance();
+                
+                // Debug: List all current save slots
+                auto slots = save_manager.list_save_slots();
+                std::cout << "Current save slots:" << std::endl;
+                for (const auto& slot : slots) {
+                    std::cout << "Slot " << slot.id << ": " << slot.name 
+                             << " (saved at: " << std::ctime(&slot.timestamp) << ")" << std::endl;
+                }
+                
+                // Create a new slot with timestamp in name for testing
+                auto time_str = std::to_string(std::time(nullptr));
+                SaveSlot new_slot = save_manager.create_new_slot("Save_" + time_str);
+                save_manager.save_game_to_slot(new_slot);
             }
             if (key == GLFW_KEY_F6) {
-                // TODO: Show load game dialog (for now just use quicksave)
-                SaveLoadManager::get_instance().load_game("quicksave");
+                SaveLoadManager& save_manager = SaveLoadManager::get_instance();
+                auto slots = save_manager.list_save_slots();
+                
+                if (!slots.empty()) {
+                    // Try to load the most recent save
+                    std::cout << "Loading most recent save: " << slots.back().name << std::endl;
+                    save_manager.load_game_from_slot(slots.back());
+                } else {
+                    std::cout << "No save slots available" << std::endl;
+                }
             }
             if (key == GLFW_KEY_F9) {
-                // TODO: Show new game confirmation dialog
-                // SaveLoadManager::get_instance().create_new_game("New Game");
+                SaveLoadManager& save_manager = SaveLoadManager::get_instance();
+                // Create a new game slot
+                SaveSlot new_slot = save_manager.create_new_slot("New Game");
+                if (save_manager.create_new_game("New Game")) {
+                    std::cout << "Created new game in slot: " << new_slot.name << std::endl;
+                }
             }
         }
         if (action == GLFW_RELEASE) {
