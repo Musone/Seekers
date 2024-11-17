@@ -32,20 +32,35 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 
 # external libraries will be installed into /usr/local/include and /usr/local/lib but that folder is not automatically included in the search on MACs
 if (IS_OS_MAC)
-  include_directories(/usr/local/include)
-  link_directories(/usr/local/lib)
-  # 2024-09-24 - added for M-series Mac's
-  include_directories(/opt/homebrew/include)
-  link_directories(/opt/homebrew/lib)
-
-  # Fetch Assimp
-  include(FetchContent)
-  FetchContent_Declare(
-          assimp
-          GIT_REPOSITORY https://github.com/assimp/assimp.git
-          GIT_TAG v5.2.5 # specify version if necessary
-  )
-  FetchContent_MakeAvailable(assimp)
+    # Check processor architecture
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+        # Intel Mac paths
+        include_directories(/usr/local/include)
+        link_directories(/usr/local/lib)
+        
+        # Find system Assimp
+        find_package(assimp REQUIRED)
+        
+        if(NOT assimp_FOUND)
+            message(FATAL_ERROR "Assimp not found. Please install it with: brew install assimp")
+        endif()
+        
+        # Set Assimp variables using the exact Homebrew paths
+        set(ASSIMP_INCLUDE_DIRS "/usr/local/include")
+        set(ASSIMP_LIBRARIES "/usr/local/lib/libassimp.dylib")
+    else()
+        # M1/M2 Mac paths
+        include_directories(/opt/homebrew/include)
+        link_directories(/opt/homebrew/lib)
+        
+        include(FetchContent)
+        FetchContent_Declare(
+            assimp
+            GIT_REPOSITORY https://github.com/assimp/assimp.git
+            GIT_TAG v5.2.5
+        )
+        FetchContent_MakeAvailable(assimp)
+    endif()
 endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
@@ -85,12 +100,9 @@ if (IS_OS_LINUX OR IS_OS_MAC)
 
     # Link Frameworks on OSX
     if (IS_OS_MAC)
-       find_library(COCOA_LIBRARY Cocoa)
-       find_library(CF_LIBRARY CoreFoundation)
-       target_link_libraries(${PROJECT_NAME} PUBLIC ${COCOA_LIBRARY} ${CF_LIBRARY})
-       # Link Assimp to the project
-       target_compile_options(assimp PRIVATE -Wno-deprecated-declarations)
-       target_link_libraries(${PROJECT_NAME} PUBLIC assimp)
+        find_library(COCOA_LIBRARY Cocoa)
+        find_library(CF_LIBRARY CoreFoundation)
+        target_link_libraries(${PROJECT_NAME} PUBLIC ${COCOA_LIBRARY} ${CF_LIBRARY})
     endif()
 
     # Increase warning level
