@@ -28,6 +28,8 @@
 #include <vector>
 #include <unordered_map>
 
+#define MAX_LIGHTS 25
+
 class Application {
     Renderer* m_renderer = nullptr;
     Camera m_camera;
@@ -60,6 +62,8 @@ class Application {
     glm::vec3 m_light_colour;
 
     std::vector<int> m_to_be_updated_and_drawn;
+    std::vector<glm::vec3> m_light_positions;
+    std::vector<float> m_light_brightnesses;
 
     std::string m_window_name = "Seekers";
 
@@ -402,21 +406,45 @@ public:
             world.step(delta_time * 0.001f);
             // _handle_free_camera_inputs();
             m_light_pos = m_camera.get_position();
+
+            // Temporarily permanent code that handles the multiple light source update
+            {
+                m_light_positions.clear();
+                m_light_brightnesses.clear();
+                m_light_positions.reserve(MAX_LIGHTS);
+                m_light_brightnesses.reserve(MAX_LIGHTS);
+                m_light_positions.push_back(m_light_pos);
+                m_light_brightnesses.push_back(1.0f);
+                int counter = 1;
+                for (const auto& light_source : reg.light_sources.components) {
+                    if (counter > MAX_LIGHTS) { break; }
+                    m_light_positions.push_back(light_source.pos);
+                    m_light_brightnesses.push_back(light_source.brightness);
+                }
+            }
             
             animated_shader.set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
             animated_shader.set_uniform_3f("u_view_pos", m_camera.get_position());
-            animated_shader.set_uniform_3f("u_light_pos", m_light_pos);
+            // animated_shader.set_uniform_3f("u_light_pos", m_light_pos);
             animated_shader.set_uniform_3f("u_light_color", m_light_colour);
             animated_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
+            
+            animated_shader.set_uniform_1i("u_num_lights", m_light_positions.size());
+            animated_shader.set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
+            animated_shader.set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
 
             static_shader.set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
-            static_shader.set_uniform_3f("u_view_pos", m_camera.get_position());
-            static_shader.set_uniform_3f("u_light_pos", m_light_pos);
-            static_shader.set_uniform_3f("u_light_color", m_light_colour);
             static_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });   
             static_shader.set_uniform_1i("u_use_repeating_pattern", false);
             static_shader.set_uniform_1i("u_has_texture", true);
             static_shader.set_uniform_1i("u_has_vertex_colors", false);
+
+            static_shader.set_uniform_3f("u_view_pos", m_camera.get_position());
+            // static_shader.set_uniform_3f("u_light_pos", m_light_pos);
+            static_shader.set_uniform_3f("u_light_color", m_light_colour);
+            static_shader.set_uniform_1i("u_num_lights", m_light_positions.size());
+            static_shader.set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
+            static_shader.set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
 
             m_to_be_updated_and_drawn.assign(reg.near_cameras.size(), -1);
             int i = 0;
@@ -994,9 +1022,6 @@ private:
 
 
         m_floor_shader->set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
-        m_floor_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
-        m_floor_shader->set_uniform_3f("u_light_pos", m_light_pos);
-        m_floor_shader->set_uniform_3f("u_light_color", m_light_colour);
         m_floor_shader->set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
         m_floor_shader->set_uniform_mat4f(
             "u_view_project", 
@@ -1012,14 +1037,18 @@ private:
         m_floor_shader->set_uniform_1i("u_has_texture", true);
         m_floor_shader->set_uniform_1i("u_has_vertex_colors", false);
 
+        m_floor_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
+        // m_floor_shader->set_uniform_3f("u_light_pos", m_light_pos);
+        m_floor_shader->set_uniform_3f("u_light_color", m_light_colour);
+        m_floor_shader->set_uniform_1i("u_num_lights", m_light_positions.size());
+        m_floor_shader->set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
+        m_floor_shader->set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
+
         m_renderer->draw(m_square_mesh, *m_floor_shader);
     }
 
     void _draw_walls() {
         m_wall_shader->set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
-        m_wall_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
-        m_wall_shader->set_uniform_3f("u_light_pos", m_light_pos);
-        m_wall_shader->set_uniform_3f("u_light_color", m_light_colour);
         m_wall_shader->set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
         m_wall_shader->set_uniform_1i("u_use_repeating_pattern", true);
         m_wall_shader->set_uniform_1i("u_has_texture", true);
@@ -1029,6 +1058,13 @@ private:
             "u_view_project", 
             m_camera.get_view_project_matrix()
         );
+
+        m_wall_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
+        // m_wall_shader->set_uniform_3f("u_light_pos", m_light_pos);
+        m_wall_shader->set_uniform_3f("u_light_color", m_light_colour);
+        m_wall_shader->set_uniform_1i("u_num_lights", m_light_positions.size());
+        m_wall_shader->set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
+        m_wall_shader->set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
 
         auto& reg = MapManager::get_instance().get_active_registry();
         for (auto& entity : reg.walls.entities) {
