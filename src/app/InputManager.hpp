@@ -9,6 +9,7 @@
 #include "ecs/Registry.hpp"
 #include "globals/Globals.h"
 #include "utils/Common.hpp"
+#include "systems/SaveLoadManager.hpp"
 
 namespace InputManager {
     inline void on_key_pressed(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -54,6 +55,13 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_R) {
                 MapManager::get_instance().return_open_world_flag = true;
+            }
+
+            if (key == GLFW_KEY_F5) {
+                SaveLoadManager::get_instance().save_game("quicksave");
+            }
+            if (key == GLFW_KEY_F6) {
+                SaveLoadManager::get_instance().load_game("quicksave");
             }
         }
         if (action == GLFW_RELEASE) {

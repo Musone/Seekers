@@ -245,3 +245,13 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/fonts"
     COMMENT "Copying FONTS files to the executable's directory"
 )
+
+# Add json library
+include(FetchContent)
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
+# Update your target_link_libraries to include nlohmann_json::nlohmann_json
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    nlohmann_json::nlohmann_json
+)
