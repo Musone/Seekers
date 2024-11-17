@@ -108,8 +108,12 @@ namespace InputManager {
                 }
             }
             if (key == GLFW_KEY_F9) {
-                // TODO: Show new game confirmation dialog
-                // SaveLoadManager::get_instance().create_new_game("New Game");
+                SaveLoadManager& save_manager = SaveLoadManager::get_instance();
+                // Create a new game slot
+                SaveSlot new_slot = save_manager.create_new_slot("New Game");
+                if (save_manager.create_new_game("New Game")) {
+                    std::cout << "Created new game in slot: " << new_slot.name << std::endl;
+                }
             }
         }
         if (action == GLFW_RELEASE) {
