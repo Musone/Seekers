@@ -99,6 +99,7 @@ private:
         active_registry = dungeon_registry.get();
         move_player_comps(*open_world_registry, *dungeon_registry);
         ProceduralGenerationSystem::generate_dungeon(*dungeon_registry, MAP_WIDTH, MAP_HEIGHT, dungeon_registry->motions.get(dungeon_registry->player));
+        dungeon_registry->projectile_models = open_world_registry->projectile_models;
         Globals::restart_renderer = true;
     }
 
