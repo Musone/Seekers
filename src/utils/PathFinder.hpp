@@ -55,7 +55,7 @@ glm::vec2 get_next_point_of_path_to_player(
 }
 
 glm::vec2 get_grid_map_coordinates(Motion& motion) {
-    Registry& registry = Registry::get_instance();
+    Registry& registry = MapManager::get_instance().get_active_registry();
     Motion& player_motion = registry.motions.get(registry.player);
     glm::vec2 distance = motion.position - player_motion.position;
     int grid_i = int(Globals::update_distance) - int(std::floor(distance.y));
@@ -64,7 +64,7 @@ glm::vec2 get_grid_map_coordinates(Motion& motion) {
 }
 
 glm::vec2 get_position_from_grid_map_coordinates(int i, int j) {
-    Registry& registry = Registry::get_instance();
+    Registry& registry = MapManager::get_instance().get_active_registry();
     Motion& player_motion = registry.motions.get(registry.player);
     glm::vec2 position = player_motion.position;
     position.x += j - int(Globals::update_distance);

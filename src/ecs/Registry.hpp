@@ -77,14 +77,32 @@ public:
 		m_registry_list.push_back(&energy_no_regen_cooldowns);
 		m_registry_list.push_back(&vision_to_players);
 		m_registry_list.push_back(&projectile_models);
+
+		// create grid map entities
+		grid_map = GridMap();
+		for (int i = 0; i < int(Globals::update_distance) * 2; i++) {
+			grid_map.grid_boxes.push_back(std::vector<GridMap::GridBox>());
+			for (int j = 0; j < int(Globals::update_distance) * 2; j++) {
+				grid_map.grid_boxes[i].push_back(GridMap::GridBox());
+			}
+		}
 	}
 
-	Registry(Registry const&) = delete;
-	void operator=(Registry const&) = delete;
+	Registry& operator=(const Registry& other) {
+		if (this != &other) {
+			counter = other.counter;
 
-	static Registry& get_instance() {
-		static Registry instance;
-		return instance;
+			for (size_t i = 0; i < m_registry_list.size(); ++i) {
+				*m_registry_list[i] = *other.m_registry_list[i];
+			}
+
+			grid_map = other.grid_map;
+			player = other.player;
+			input_state = other.input_state;
+			camera_pos = other.camera_pos;
+
+		}
+		return *this;
 	}
 
 	void hello() {

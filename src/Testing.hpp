@@ -185,6 +185,7 @@ namespace Testing {
         hero.set_rotation(PI / 2, 0, 0);
 
         StaticModel tree("models/Lowpoly_tree_sample.dae", &static_shader);
+        tree.m_has_texture = false;
         tree.set_scale(20, 20, 20);
         tree.set_rotation(PI / 2, 0, 0);
         tree.set_position(500, 500, 0);
@@ -222,23 +223,32 @@ namespace Testing {
         Timer timer;
         float time_of_last_frame = 0;
 
-        hero.load_animation_from_file("models/dying.dae");
-        if (hero.get_animation_count() > 0) {
-            hero.play_animation("models/dying.dae");
-        }
+        // hero.load_animation_from_file("models/dying.dae");
+        // if (hero.get_animation_count() > 0) {
+        //     hero.play_animation("models/dying.dae");
+        // }
 
 
-        AnimatedModel guy("models/Sword_and_Shield_Pack/Ch43_nonPBR.dae", &animated_shader);
+        // AnimatedModel guy("models/Sword_and_Shield_Pack/Ch43_nonPBR.dae", &animated_shader);
         // AnimatedModel guy("models/dying.dae", &animated_shader);
         // guy.set_scale(50, 50, 50);
-        guy.set_position(-500, 500, 0);
-        guy.set_rotation(PI / 2, 0, 0);
-        guy.load_animation_from_file("models/dying.dae");
+        // guy.set_position(-500, 500, 0);
+        // guy.set_rotation(PI / 2, 0, 0);
+        // guy.load_animation_from_file("models/dying.dae");
         // guy.load_animation_from_file("models/Sword_and_Shield_Pack/sheath sword 2.dae");
         // guy.load_animation_from_file("models/Sword_and_Shield_Pack/sword and shield 180 turn.dae");
-        if (guy.get_animation_count() > 0) {
-            guy.play_animation(1);
-        }
+        // if (guy.get_animation_count() > 0) {
+        //     guy.play_animation(1);
+        // }
+
+        StaticModel* m_spooky_tree = new StaticModel("models/Spooky Tree/Spooky Tree.obj", &static_shader);
+        m_spooky_tree->m_has_texture = true;
+        m_spooky_tree->texture_list.push_back(std::make_shared<Texture2D>("Spooky Tree.jpg"));
+        m_spooky_tree->mesh_list.back()->set_texture(m_spooky_tree->texture_list.back());
+        m_spooky_tree->set_pre_transform(
+            Transform::create_scaling_matrix(glm::vec3(0.15f, 0.15f, 0.35f))
+        );
+        m_spooky_tree->set_position({-50, -50, 0});
 
         AnimatedModel wolf("models/griffin_animated/griffin_animated.gltf", &animated_shader);
         wolf.set_scale(50, 50, 50);
@@ -248,8 +258,25 @@ namespace Testing {
         }
 
         hero.print_animations();
-        guy.print_animations();
+        // guy.print_animations();
         wolf.print_animations();
+
+        // StaticModel campfire("models/Campfire.stl", &static_shader);
+        StaticModel campfire("models/Campfire.obj", &static_shader);
+        // StaticModel campfire("models/Campfire.fbx", &static_shader);
+        // AnimatedModel campfire("models/Campfire.fbx", &animated_shader);
+        // AnimatedModel campfire("models/Campfire_anim.fbx", &animated_shader);
+        campfire.m_has_texture = true;
+        campfire.texture_list.push_back(std::make_shared<Texture2D>("Campfire_MAT_BaseColor_00.jpg"));
+        // campfire.texture_list.push_back(std::make_shared<Texture2D>("Campfire_MAT_BaseColor_01.jpg"));
+        campfire.mesh_list.back()->set_texture(campfire.texture_list.back());
+        campfire.set_scale(glm::vec3(1));
+        campfire.set_position({50, 50, 0}); 
+        // campfire.load_animation_from_file("models/Campfire_anim.fbx");
+        // campfire.print_animations();
+        // campfire.play_animation("default0");
+        // campfire.play_animation("Campfire_anim.fbx");
+
 
         const float FRAME_TIME_60FPS = 1000000.0f / 60.0f;  // microseconds per frame at 60 FPS
         while (!renderer.is_terminated()) {
@@ -264,7 +291,8 @@ namespace Testing {
             
             hero.update();
             wolf.update();
-            guy.update();
+            // campfire.update();
+            // guy.update();
 
             renderer.begin_draw();
             glm::vec3 light_pos = cam.get_position();
@@ -282,7 +310,9 @@ namespace Testing {
             static_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
 
             hero.draw();
-            // tree.draw();
+            tree.draw();
+            campfire.draw(); 
+            m_spooky_tree->draw();
             // bow.draw();
             // wolf.draw();
             // guy.draw();

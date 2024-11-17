@@ -8,9 +8,7 @@
 #include <glm/glm.hpp>
 
 namespace EntityFactory {
-    inline Entity create_player(glm::vec2 position) {
-        Registry& registry = Registry::get_instance();
-
+    inline Entity create_player(Registry& registry, glm::vec2 position) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
@@ -35,12 +33,12 @@ namespace EntityFactory {
         registry.collision_bounds.emplace(entity,
             CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
+        registry.player = entity;
+
         return entity;
     }
 
-    inline Entity create_weapon(glm::vec2 position, float damage, float attack_cooldown = 0.5f, WEAPON_TYPE weapon_type = WEAPON_TYPE::SWORD) {
-        Registry& registry = Registry::get_instance();
-
+    inline Entity create_weapon(Registry& registry, glm::vec2 position, float damage, float attack_cooldown = 0.5f, WEAPON_TYPE weapon_type = WEAPON_TYPE::SWORD) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
@@ -72,8 +70,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_enemy(glm::vec2 position, ENEMY_TYPE enemy_type = ENEMY_TYPE::WARRIOR) {
-        Registry& registry = Registry::get_instance();
+    inline Entity create_enemy(Registry& registry, glm::vec2 position, ENEMY_TYPE enemy_type = ENEMY_TYPE::WARRIOR) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
@@ -105,13 +102,13 @@ namespace EntityFactory {
 
         Entity enemy_weapon;
         if (enemy_type == ENEMY_TYPE::ZOMBIE) {
-            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.5f, WEAPON_TYPE::PUNCH);
+            enemy_weapon = EntityFactory::create_weapon(registry, position, 5.0f, 0.5f, WEAPON_TYPE::PUNCH);
         } else if (enemy_type == ENEMY_TYPE::ARCHER) {
-            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.5f, WEAPON_TYPE::BOW);
+            enemy_weapon = EntityFactory::create_weapon(registry, position, 5.0f, 0.5f, WEAPON_TYPE::BOW);
         } else {
-            enemy_weapon = EntityFactory::create_weapon(position, 5.0f, 0.5f, WEAPON_TYPE::SWORD);
+            enemy_weapon = EntityFactory::create_weapon(registry, position, 5.0f, 0.5f, WEAPON_TYPE::SWORD);
         }
-        attacker.weapon_id = enemy_weapon;
+        attacker.weapon = enemy_weapon;
 
         // Use circle collider for enemy
         registry.collision_bounds.emplace(entity,
@@ -120,8 +117,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_projectile(Motion& attacker_motion, Attacker& attacker, Weapon& weapon, TEAM_ID team_id) {
-        Registry& registry = Registry::get_instance();
+    inline Entity create_projectile(Registry& registry, Motion& attacker_motion, Attacker& attacker, Weapon& weapon, TEAM_ID team_id) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
@@ -276,8 +272,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
-        Registry& registry = Registry::get_instance();
+    inline Entity create_wall(Registry& registry, glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
@@ -302,8 +297,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_no_collision_wall(glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
-        Registry& registry = Registry::get_instance();
+    inline Entity create_no_collision_wall(Registry& registry, glm::vec2 position, float angle, glm::vec2 scale = glm::vec2(2.0f, 2.0f)) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
@@ -320,8 +314,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_tree(glm::vec2 position) {
-        Registry& registry = Registry::get_instance();
+    inline Entity create_tree(Registry& registry, glm::vec2 position) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);

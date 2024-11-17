@@ -39,6 +39,9 @@ You MUST
 
 // Here, I am defining what a Vertex is. This struct is used to tell OpenGL what Attributes
 // it should expect when reading in a Vertex. Using this method helps prevent hardcoding magic numbers.
+//
+// Ammendment: This is deprecated. I am only keeping it so earlier demos
+//             still work.
 struct Vertex {
     glm::vec2 position = { 0.0f, 0.0f };
     glm::vec3 colour = { 0.0f, 0.0f, 0.0f };

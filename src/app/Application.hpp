@@ -145,10 +145,10 @@ public:
         m_health_shader = new Shader("MapDemoHealth");
         m_hud_health_shader = new Shader("TexturedHealthBar");
 
-        Registry& registry = Registry::get_instance();
-        auto& models = registry.projectile_models.emplace(Entity());
-        models.arrow_model = m_arrow;
-        models.melee_model = m_banana;
+        // Registry& registry = MapManager::get_instance().get_active_registry();
+        // auto& models = registry.projectile_models.emplace(Entity());
+        // models.arrow_model = m_arrow;
+        // models.melee_model = m_banana;
     }
 
     ~Application() {
@@ -274,7 +274,11 @@ public:
 
         World world;
         world.demo_init();
-        Registry& reg = Registry::get_instance();
+
+        Registry& regie = MapManager::get_instance().get_active_registry();
+        auto& models = regie.projectile_models.emplace(Entity());
+        models.arrow_model = m_arrow;
+        models.melee_model = m_banana;
 
         AnimatedModel* player_model;
 
@@ -293,6 +297,8 @@ public:
             float delta_time_s = delta_time * 0.000001f;
             m_renderer->set_title(m_window_name + " | FPS: " + std::to_string(1.0f / delta_time_s));
             time_of_last_frame = float(timer.GetTime());
+
+            Registry& reg = MapManager::get_instance().get_active_registry();
 
             // Game restart
             if (Globals::restart_renderer) {
@@ -557,7 +563,7 @@ public:
 
         World world;
         world.demo_init();
-        Registry& reg = Registry::get_instance();
+        Registry& reg = MapManager::get_instance().get_active_registry();
         
         Timer timer;
         float time_of_last_frame = float(timer.GetTime());
@@ -683,7 +689,7 @@ public:
                         z_index += 0.1;
                         // Gonna put the weapon above entities.
                         for (const auto& attacker_entity : reg.attackers.entities) {
-                            if (reg.attackers.get(attacker_entity).weapon_id == textured_entity.get_id()) {
+                            if (reg.attackers.get(attacker_entity).weapon == textured_entity.get_id()) {
                                 // Move the weapon to the attacker position in 3d mode... We should really be using
                                 // child components and a Scene Graph for this...
                                 if (!reg.motions.has(attacker_entity)) { 
@@ -1024,7 +1030,7 @@ private:
             m_camera.get_view_project_matrix()
         );
 
-        auto& reg = Registry::get_instance();
+        auto& reg = MapManager::get_instance().get_active_registry();
         for (auto& entity : reg.walls.entities) {
             if (!reg.motions.has(entity)) { continue; }
             auto& motion = reg.motions.get(entity);
@@ -1054,7 +1060,7 @@ private:
     }
 
     void _draw_projectiles() {
-        auto& reg = Registry::get_instance();
+        auto& reg = MapManager::get_instance().get_active_registry();
 
         for (const auto& entity : reg.projectiles.entities) {
             if (!reg.motions.has(entity)) { continue; }
@@ -1081,7 +1087,7 @@ private:
 
     void _draw_health_bars() {
         // Render Health Bars
-        auto& reg = Registry::get_instance();
+        auto& reg = MapManager::get_instance().get_active_registry();
         auto& player_motion = reg.motions.get(reg.player);
 
         for (const auto& loco_entity : reg.locomotion_stats.entities) {
@@ -1141,12 +1147,12 @@ private:
     }
 
     void _draw_aim() {
-        auto& reg = Registry::get_instance();
+        auto& reg = MapManager::get_instance().get_active_registry();
         if (!reg.motions.has(reg.player) || !reg.attackers.has(reg.player)) {return;}
         auto& attacker = reg.attackers.get(reg.player);
-        if (!reg.weapons.has(reinterpret_cast<Entity&>(attacker.weapon_id))) { return; }
+        if (!reg.weapons.has(attacker.weapon)) { return; }
         const auto& motion = reg.motions.get(reg.player);
-        const auto& weapon = reg.weapons.get(attacker.weapon_id);
+        const auto& weapon = reg.weapons.get(attacker.weapon);
         auto player_dir = glm::vec3(Transform::create_rotation_matrix({ 0, 0, motion.angle }) * glm::vec4(1, 0, 0, 0));
         m_health_shader->set_uniform_3f("u_colour", { 1, 0, 0 }); // red croshair
         glm::vec3 crosshair_pos = { motion.position.x, motion.position.y, 2.5f };
@@ -1232,7 +1238,7 @@ private:
     }
 
     void _draw_hud() {
-        auto& reg = Registry::get_instance();
+        auto& reg = MapManager::get_instance().get_active_registry();
         auto& player_loco = reg.locomotion_stats.get(reg.player);
         float health_percentage = player_loco.health / player_loco.max_health;
         float energy_percentage = player_loco.energy / player_loco.max_energy;
@@ -1270,7 +1276,7 @@ private:
     }
 
     void _update_models() {
-        auto& reg = Registry::get_instance();
+        auto& reg = MapManager::get_instance().get_active_registry();
         for (auto& id : m_to_be_updated_and_drawn) {
             if (id < 0) { continue; }
             auto& model = m_models[id];
