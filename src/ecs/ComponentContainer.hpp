@@ -38,16 +38,6 @@ public:
         return *this;
     }
 
-	ComponentContainer& operator=(const ComponentContainer& other) {
-		if (this != &other) {
-			map_entity_componentID = other.map_entity_componentID;
-			registered = other.registered;
-			components = other.components;
-			entities = other.entities;
-		}
-		return *this;
-	}
-
 	// Inserting a component c associated to entity e
 	inline Component& insert(Entity e, Component c, bool check_for_duplicates = true) {
 		// Usually, every entity should only have one instance of each component type

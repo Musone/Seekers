@@ -10,8 +10,8 @@ in vec2 v_uv;
 // Light arrays
 uniform vec3 u_light_positions[MAX_LIGHTS];
 uniform float u_light_strengths[MAX_LIGHTS];
-// uniform vec3 u_light_colors[MAX_LIGHTS];
-uniform vec3 u_light_color;
+uniform vec3 u_light_colours[MAX_LIGHTS];
+// uniform vec3 u_light_color;
 uniform int u_num_lights;
 
 uniform vec3 u_view_pos;
@@ -48,7 +48,7 @@ void main() {
     vec3 result = vec3(0.0);
     float ambient_strength = 0.005;
     // Ambient
-    vec3 ambient = ambient_strength * u_light_color;
+    vec3 ambient = ambient_strength * vec3(1.0);
     result += ambient;
 
     for(int i = 0; i < u_num_lights; i++) {
@@ -58,18 +58,21 @@ void main() {
         float max_light_range = u_light_strengths[i];
         float dist_from_light = distance(v_frag_pos, u_light_positions[i]);
 
+        if (dist_from_light > 30.0 * max_light_range) {
+            continue;
+        }
 
         float light_strength = max_light_range / dist_from_light;
         light_strength = min(light_strength, 1.0);
         
         // Diffuse
         float diff = max(dot(norm, light_dir), 0.0) * light_strength;
-        vec3 diffuse = diff * u_light_color;
+        vec3 diffuse = diff * u_light_colours[i];
 
         // Specular
         float specular_strength = 0.5 * light_strength;
         float spec = pow(max(dot(norm, halfway_dir), 0.0), 8.0);
-        vec3 specular = specular_strength * spec * u_light_color;
+        vec3 specular = specular_strength * spec * u_light_colours[i];
 
         result += (diffuse + specular);
     }
