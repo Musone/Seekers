@@ -2,6 +2,7 @@
 
 #include "ecs/Registry.hpp"
 #include "systems/ProceduralGenerationSystem.hpp"
+#include "systems/OpenWorldMapCreatorSystem.hpp"
 
 class MapManager {
 public:
@@ -19,6 +20,8 @@ public:
             auto player = EntityFactory::create_player(registry, glm::vec2(0.0f, 0.0f));
             auto weapon = EntityFactory::create_weapon(registry, glm::vec2(10.0f, 5.0f), 10.0f);
             registry.attackers.get(player).weapon = weapon;
+
+            OpenWorldMapCreatorSystem::populate_open_world_map(registry);
 
             saved_world_registry = std::make_unique<Registry>();
             *saved_world_registry = *open_world_registry;
