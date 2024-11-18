@@ -44,6 +44,7 @@ class Application {
     Shader* m_wall_shader;
 
     StaticModel* m_spooky_tree;
+    StaticModel* m_light_orb;
     StaticModel* m_sword;
     StaticModel* m_bow;
     StaticModel* m_arrow;
@@ -130,6 +131,11 @@ public:
             Transform::create_scaling_matrix(glm::vec3(0.15f, 0.15f, 0.35f))
         );
 
+        m_light_orb = new StaticModel("models/Orb_low.obj", m_wall_shader);
+        m_light_orb->m_has_texture = true;
+        m_light_orb->texture_list.push_back(std::make_shared<Texture2D>("Orb_low_piedra.001_Emissive.png"));
+        m_light_orb->mesh_list.back()->set_texture(m_light_orb->texture_list.back());
+
         m_bow = new StaticModel("models/Bow.obj", m_wall_shader);
         m_sword = new StaticModel("models/Sword.obj", m_wall_shader);
 
@@ -144,7 +150,7 @@ public:
             Transform::create_scaling_matrix(glm::vec3(0.03, 0.03, 0.05))
         );
 
-        m_light_colour = glm::vec3(1.0f);
+        m_light_colour = glm::vec3(0.8f, 0.8f, 1.0f);
 
         m_health_shader = new Shader("MapDemoHealth");
         m_hud_health_shader = new Shader("TexturedHealthBar");
@@ -466,6 +472,7 @@ public:
             _draw_walls();
             _draw_health_bars();
             _draw_projectiles();
+            _draw_light_orbs();
             
             for (auto& id : m_to_be_updated_and_drawn) {
                 auto kv = m_models.find(id);
@@ -1009,6 +1016,15 @@ private:
         0, 1, 2,
         0, 2, 3
     };
+
+    void _draw_light_orbs() {
+        // Always skip the camera light :/
+        for (unsigned int i = 1; i < m_light_positions.size(); ++i) {
+            m_light_orb->set_position(m_light_positions[i]);
+            m_light_orb->set_position_z(m_light_positions[i].z + 2);
+            m_light_orb->draw();
+        }
+    }
 
     void _draw_map_and_skybox() {
         // Render skybox.
