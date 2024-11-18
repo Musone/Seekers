@@ -96,6 +96,7 @@ public:
         m_map_texture = new Texture2D("jungle_tile_1.jpg");
         // m_wall_texture = new Texture2D("tileset_1.png"); // bricks
         m_wall_texture = new Texture2D("jungle_tile_1.jpg");
+        
         m_wall_shader = new Shader("StaticBlinnPhong");
         m_floor_shader = new Shader("StaticBlinnPhong");
 
@@ -1056,7 +1057,13 @@ private:
 
     void _update_theme() {
         const auto& map_manager = MapManager::get_instance();
-        // TODO :/
+        delete m_skybox_texture;
+        delete m_wall_texture;
+        delete m_map_texture;
+
+        m_skybox_texture = new SkyboxTexture(map_manager.sky_texture_name);
+        m_wall_texture = new Texture2D(map_manager.floor_texture_name);
+        m_map_texture = new Texture2D(map_manager.floor_texture_name);
     }
 
     void _draw_light_orbs() {
