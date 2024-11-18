@@ -262,20 +262,40 @@ namespace Testing {
         wolf.print_animations();
 
         // StaticModel campfire("models/Campfire.stl", &static_shader);
-        StaticModel campfire("models/Campfire.obj", &static_shader);
         // StaticModel campfire("models/Campfire.fbx", &static_shader);
         // AnimatedModel campfire("models/Campfire.fbx", &animated_shader);
         // AnimatedModel campfire("models/Campfire_anim.fbx", &animated_shader);
+        // campfire.texture_list.push_back(std::make_shared<Texture2D>("Campfire_MAT_BaseColor_00.jpg"));
+        StaticModel campfire("models/Campfire.obj", &static_shader);
         campfire.m_has_texture = true;
-        campfire.texture_list.push_back(std::make_shared<Texture2D>("Campfire_MAT_BaseColor_00.jpg"));
-        // campfire.texture_list.push_back(std::make_shared<Texture2D>("Campfire_MAT_BaseColor_01.jpg"));
+        campfire.texture_list.push_back(std::make_shared<Texture2D>("Campfire_MAT_BaseColor_01.jpg"));
         campfire.mesh_list.back()->set_texture(campfire.texture_list.back());
         campfire.set_scale(glm::vec3(1));
         campfire.set_position({50, 50, 0}); 
+        campfire.set_pre_transform(Transform::create_rotation_matrix({PI / 2.0f, 0, 0}));
         // campfire.load_animation_from_file("models/Campfire_anim.fbx");
         // campfire.print_animations();
         // campfire.play_animation("default0");
         // campfire.play_animation("Campfire_anim.fbx");
+
+        std::vector<glm::vec3> light_positions;
+        light_positions.emplace_back(0);
+        light_positions.emplace_back(20);
+        light_positions.emplace_back(40);
+        light_positions.emplace_back(-20);
+        light_positions.emplace_back(-40);
+        std::vector<float> light_strengths;
+        light_strengths.emplace_back(50);
+        light_strengths.emplace_back(50);
+        light_strengths.emplace_back(50);
+        light_strengths.emplace_back(50);
+        light_strengths.emplace_back(50);
+        std::vector<glm::vec3> light_colours;
+        light_colours.emplace_back(1);
+        light_colours.emplace_back(1);
+        light_colours.emplace_back(1);
+        light_colours.emplace_back(1);
+        light_colours.emplace_back(1);
 
 
         const float FRAME_TIME_60FPS = 1000000.0f / 60.0f;  // microseconds per frame at 60 FPS
@@ -302,14 +322,20 @@ namespace Testing {
             animated_shader.set_uniform_3f("u_light_pos", light_pos);
             animated_shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
             animated_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
+            animated_shader.set_uniform_1i("u_num_lights", light_positions.size());
+            animated_shader.set_uniform_3f_array("u_light_positions", *light_positions.data(), light_positions.size());
+            animated_shader.set_uniform_3f_array("u_light_colours", *light_colours.data(), light_colours.size());
+            animated_shader.set_uniform_1f_array("u_light_strengths", *light_strengths.data(), light_strengths.size());
 
             static_shader.set_uniform_mat4f("u_view_project", cam.get_view_project_matrix());
             static_shader.set_uniform_3f("u_view_pos", cam.get_position());
-            static_shader.set_uniform_3f("u_light_pos", light_pos);
-            static_shader.set_uniform_3f("u_light_color", { 1, 1, 1 });
+            static_shader.set_uniform_1i("u_num_lights", light_positions.size());
+            static_shader.set_uniform_3f_array("u_light_positions", *light_positions.data(), light_positions.size());
+            static_shader.set_uniform_3f_array("u_light_colours", *light_colours.data(), light_colours.size());
+            static_shader.set_uniform_1f_array("u_light_strengths", *light_strengths.data(), light_strengths.size());
             static_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
 
-            hero.draw();
+            // hero.draw();
             tree.draw();
             campfire.draw(); 
             m_spooky_tree->draw();
