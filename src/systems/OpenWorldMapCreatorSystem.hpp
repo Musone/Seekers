@@ -53,5 +53,6 @@ namespace OpenWorldMapCreatorSystem {
         create_forest(registry, glm::vec2(160.f, 160.f));
         create_forest(registry, glm::vec2(-20.f, 160.f));
         create_forest(registry, glm::vec2(-180.f, 160.f), 150);
+        EntityFactory::create_rock(registry, {50, 50});
     }
 };

@@ -149,6 +149,7 @@ public:
             rock->texture_list.push_back(std::make_shared<Texture2D>("CaveRockOld_Diffuse.png"));
             rock->mesh_list.back()->set_texture(rock->texture_list.back());
         }
+        m_rocks[1]->set_pre_transform(Transform::create_translation_matrix({2.0f, 2.5f, 0})); // Stinky hardcode compensation for model and bounding box not aligning.
 
         m_bow = new StaticModel("models/Bow.obj", m_wall_shader);
         m_sword = new StaticModel("models/Sword.obj", m_wall_shader);
@@ -451,6 +452,10 @@ public:
                 //     m_light_brightnesses.push_back(20);
                 //     x += 50;
                 // }
+                m_light_positions.push_back({0,0,100});
+                m_light_brightnesses.push_back(150);
+                m_light_colours.push_back(glm::vec3(1.0f, 1.0f, 0.8f));
+                counter++;
 
                 for (const auto& entity : reg.light_sources.entities) {
                     if (counter > MAX_LIGHTS) { break; }
@@ -1128,8 +1133,6 @@ private:
         );
 
         m_wall_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
-        // m_wall_shader->set_uniform_3f("u_light_pos", m_light_pos);
-        // m_wall_shader->set_uniform_3f("u_light_color", m_light_colour);
         m_wall_shader->set_uniform_1i("u_num_lights", m_light_positions.size());
         m_wall_shader->set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
         m_wall_shader->set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
@@ -1160,9 +1163,11 @@ private:
             auto& static_object = reg.static_objects.get(entity);
             if (static_object.type == STATIC_OBJECT_TYPE::TREE) { 
                 m_spooky_tree->set_position(glm::vec3(motion.position, -0.3f));
+                m_spooky_tree->set_rotation_z(motion.angle);
                 m_spooky_tree->draw();
             } else if (static_object.type == STATIC_OBJECT_TYPE::ROCK) {
                 m_rocks[1]->set_position(glm::vec3(motion.position, 0.0f));
+                m_rocks[1]->set_rotation_z(motion.angle);
                 m_rocks[1]->draw();
             }
         }

@@ -339,7 +339,7 @@ namespace EntityFactory {
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
-        motion.scale = glm::vec2(4.0f, 4.0f);
+        motion.scale = glm::vec2(13.0f);
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;
