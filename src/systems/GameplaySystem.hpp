@@ -193,39 +193,4 @@ namespace GameplaySystem {
         float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
         audio.play_dodge(distance_from_camera);
     }
-
-    inline void update_near_interactable() {
-        Registry& registry = MapManager::get_instance().get_active_registry();
-        Motion& player_motion = registry.motions.get(registry.player);
-
-        std::vector<Entity> in_range_interactables;
-        for (Entity& e : registry.near_players.entities) {
-            if (registry.interactables.has(e)) {
-                if (!registry.motions.has(e)) continue;
-                glm::vec2 pos = registry.motions.get(e).position;
-                if (glm::distance(player_motion.position, pos) < registry.interactables.get(e).range) {
-                    if (Common::get_angle_between_item_and_player_view(pos, player_motion.position, player_motion.angle) < Globals::interactable_angle) {
-                        in_range_interactables.push_back(e);
-                    }
-                }
-            }
-        }
-
-        if (in_range_interactables.size() == 0) {
-            registry.near_interactable.is_active = false;
-            return;
-        }
-        registry.near_interactable.is_active = true;
-
-        // pick the best in range interactable (add priority and other thing here. for now it's just whichever closer)
-        float min_distance = std::numeric_limits<float>::max();
-        for (Entity& e : in_range_interactables) {
-            glm::vec2 pos = registry.motions.get(e).position;
-            float distance = glm::distance(pos, player_motion.position);
-            if (distance < min_distance) {
-                registry.near_interactable.interactable = e;
-                min_distance = distance;
-            }
-        }
-    }
 };
