@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <utils/Transform.hpp>
 #include <systems/GameplaySystem.hpp>
+#include <systems/InteractionSystem.hpp>
 #include <systems/TutorialSystem.hpp>
 
 #include "MapManager.hpp"
@@ -48,6 +49,9 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_P) {
                 TutorialSystem::skip_tutorial();
+            }
+            if (key == GLFW_KEY_F) {
+                InteractionSystem::interact();
             }
 
             if (key == GLFW_KEY_G) {
