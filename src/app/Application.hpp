@@ -91,11 +91,10 @@ public:
         m_hud_health_texture_bacground = new Texture2D("sphere_background.png");
 
         m_skybox_shader = new Shader("Skybox");
-        // m_skybox_texture = new SkyboxTexture("random_skybox.png");
-        // m_skybox_texture = new SkyboxTexture("epic_skybox_corrupted_jungle.png");
+        // m_skybox_texture = new SkyboxTexture("random_skybox.png"); // The red lava skybox
         m_skybox_texture = new SkyboxTexture("Blue sky.png");
         m_map_texture = new Texture2D("jungle_tile_1.jpg");
-        // m_wall_texture = new Texture2D("tileset_1.png");
+        // m_wall_texture = new Texture2D("tileset_1.png"); // bricks
         m_wall_texture = new Texture2D("jungle_tile_1.jpg");
         m_wall_shader = new Shader("StaticBlinnPhong");
         m_floor_shader = new Shader("StaticBlinnPhong");
@@ -125,7 +124,6 @@ public:
             m_square_indices.size(), 
             square_layout
         );
-        m_skybox_shader->set_uniform_1i("u_skybox", m_skybox_texture->bind(31));
 
         m_spooky_tree = new StaticModel("models/Spooky Tree/Spooky Tree.obj", m_wall_shader);
         m_spooky_tree->m_has_texture = true;
@@ -368,6 +366,7 @@ public:
                 player_model = m_models[reg.player.get_id()];
                 // delta_time = delta_time_s = 0.00000000001f;
                 time_of_last_frame = float(timer.GetTime());
+                _update_theme();
             }
 
             // Camera stuff
@@ -1055,6 +1054,11 @@ private:
         0, 2, 3
     };
 
+    void _update_theme() {
+        const auto& map_manager = MapManager::get_instance();
+        // TODO :/
+    }
+
     void _draw_light_orbs() {
         // Always skip the camera light :/
         m_light_orb->set_rotation_z(m_light_orb->get_rotation_z() + 0.05);
@@ -1070,6 +1074,7 @@ private:
         float size = Common::max_of(MAP_WIDTH, MAP_HEIGHT);
         size += 500;
         GL_Call(glDepthFunc(GL_LEQUAL));
+        m_skybox_shader->set_uniform_1i("u_skybox", m_skybox_texture->bind(31));
         m_skybox_shader->set_uniform_mat4f(
             "u_view_project", 
             m_camera.get_view_project_matrix() 
@@ -1077,7 +1082,6 @@ private:
         );
         m_renderer->draw(m_cube_mesh, *m_skybox_shader);
         GL_Call(glDepthFunc(GL_LESS));
-
 
         m_floor_shader->set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
         m_floor_shader->set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
@@ -1096,8 +1100,6 @@ private:
         m_floor_shader->set_uniform_1i("u_has_vertex_colors", false);
 
         m_floor_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
-        // m_floor_shader->set_uniform_3f("u_light_pos", m_light_pos);
-        // m_floor_shader->set_uniform_3f("u_light_color", m_light_colour);
         m_floor_shader->set_uniform_1i("u_num_lights", m_light_positions.size());
         m_floor_shader->set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
         m_floor_shader->set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
