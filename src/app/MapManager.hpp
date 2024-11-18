@@ -25,6 +25,8 @@ public:
 
             saved_world_registry = std::make_unique<Registry>();
             *saved_world_registry = *open_world_registry;
+
+            set_theme("OpenWorld");
         }
         // if (!spire_one_registry) {
         //     spire_one_registry = std::make_unique<Registry>();
@@ -50,6 +52,7 @@ public:
         open_world_registry = std::make_unique<Registry>();
         *open_world_registry = *saved_world_registry;
         active_registry = open_world_registry.get();
+        set_theme("OpenWorld");
         Globals::restart_renderer = true;
     }
 
@@ -92,17 +95,34 @@ public:
     // bool enter_spire_two_flag = false;
     // bool enter_spire_three_flag = false;
 
+    std::string sky_name;
+    std::string wall_texture_name;
+    std::string floor_texture_name;
+
 private:
     MapManager() = default;
     MapManager(const MapManager&) = delete;
     void operator=(const MapManager&) = delete;
+
+    void set_theme(std::string theme) {
+        if (theme == "OpenWorld") {
+            sky_name = "Blue sky.png";
+            wall_texture_name = "jungle_tile_1.jpg";
+            floor_texture_name = "jungle_tile_1.jpg";
+        } else if (theme == "Dungeon") {
+            sky_name = "random_skybox.png";
+            wall_texture_name = "jungle_tile_1.png";
+            floor_texture_name = "jungle_tile_1.png";
+        }
+    }
 
     void enter_dungeon() {
         dungeon_registry = std::make_unique<Registry>();
         active_registry = dungeon_registry.get();
         move_player_comps(*open_world_registry, *dungeon_registry);
         ProceduralGenerationSystem::generate_dungeon(*dungeon_registry, MAP_WIDTH, MAP_HEIGHT, dungeon_registry->motions.get(dungeon_registry->player));
-        // dungeon_registry->projectile_models = open_world_registry->projectile_models;
+        dungeon_registry->projectile_models = open_world_registry->projectile_models;
+        set_theme("Dungeon");
         Globals::restart_renderer = true;
     }
 
@@ -112,6 +132,7 @@ private:
         move_player_comps(*dungeon_registry, *open_world_registry);
         open_world_registry->motions.get(open_world_registry->player) = player_motion_copy;
         dungeon_registry.reset();
+        set_theme("OpenWorld");
         Globals::restart_renderer = true;
     }
 
