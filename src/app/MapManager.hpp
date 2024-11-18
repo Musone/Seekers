@@ -95,7 +95,7 @@ public:
     // bool enter_spire_two_flag = false;
     // bool enter_spire_three_flag = false;
 
-    std::string sky_name;
+    std::string sky_texture_name;
     std::string wall_texture_name;
     std::string floor_texture_name;
 
@@ -106,13 +106,13 @@ private:
 
     void set_theme(std::string theme) {
         if (theme == "OpenWorld") {
-            sky_name = "Blue sky.png";
+            sky_texture_name = "Blue sky.png";
             wall_texture_name = "jungle_tile_1.jpg";
             floor_texture_name = "jungle_tile_1.jpg";
         } else if (theme == "Dungeon") {
-            sky_name = "random_skybox.png";
-            wall_texture_name = "jungle_tile_1.png";
-            floor_texture_name = "jungle_tile_1.png";
+            sky_texture_name = "random_skybox.png";
+            wall_texture_name = "jungle_tile_1.jpg";
+            floor_texture_name = "jungle_tile_1.jpg";
         }
     }
 
