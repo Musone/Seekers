@@ -46,8 +46,7 @@ struct StaticObject {
 enum class LIGHT_SOURCE_TYPE {
     MAGIC_ORB = 0,
     SUN = MAGIC_ORB + 1,
-    BONFIRE = SUN + 1,
-    LIGHT_SOURCE_TYPE_COUNT = BONFIRE + 1
+    LIGHT_SOURCE_TYPE_COUNT = SUN + 1
 };
 
 struct LightSource {
