@@ -53,6 +53,6 @@ enum class LIGHT_SOURCE_TYPE {
 struct LightSource {
     float brightness;
     glm::vec3 pos;
-    glm::vec3 color;
+    glm::vec3 colour;
     LIGHT_SOURCE_TYPE type = LIGHT_SOURCE_TYPE::LIGHT_SOURCE_TYPE_COUNT;
 };

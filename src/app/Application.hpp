@@ -49,6 +49,7 @@ class Application {
     StaticModel* m_bow;
     StaticModel* m_arrow;
     StaticModel* m_banana;
+    std::vector<StaticModel*> m_rocks;
 
     Texture2D* m_map_texture;
     Shader* m_floor_shader;
@@ -64,6 +65,7 @@ class Application {
 
     std::vector<int> m_to_be_updated_and_drawn;
     std::vector<glm::vec3> m_light_positions;
+    std::vector<glm::vec3> m_light_colours;
     std::vector<float> m_light_brightnesses;
 
     std::string m_window_name = "Seekers";
@@ -89,7 +91,9 @@ public:
         m_hud_health_texture_bacground = new Texture2D("sphere_background.png");
 
         m_skybox_shader = new Shader("Skybox");
-        m_skybox_texture = new SkyboxTexture("random_skybox.png");
+        // m_skybox_texture = new SkyboxTexture("random_skybox.png");
+        // m_skybox_texture = new SkyboxTexture("epic_skybox_corrupted_jungle.png");
+        m_skybox_texture = new SkyboxTexture("Blue sky.png");
         m_map_texture = new Texture2D("jungle_tile_1.jpg");
         // m_wall_texture = new Texture2D("tileset_1.png");
         m_wall_texture = new Texture2D("jungle_tile_1.jpg");
@@ -136,6 +140,17 @@ public:
         m_light_orb->texture_list.push_back(std::make_shared<Texture2D>("Orb_low_piedra.001_Emissive.png"));
         m_light_orb->mesh_list.back()->set_texture(m_light_orb->texture_list.back());
 
+        m_rocks.push_back(new StaticModel("models/rocks/CaveRock01_A.dae", m_wall_shader));
+        m_rocks.push_back(new StaticModel("models/rocks/CaveRock01_B.dae", m_wall_shader));
+        m_rocks.push_back(new StaticModel("models/rocks/CaveRock01_C.dae", m_wall_shader));
+        m_rocks.push_back(new StaticModel("models/rocks/CaveRock01_D.dae", m_wall_shader));
+        m_rocks.push_back(new StaticModel("models/rocks/CaveRock01_E.dae", m_wall_shader));
+        for (auto& rock : m_rocks) {
+            rock->m_has_texture = true;
+            rock->texture_list.push_back(std::make_shared<Texture2D>("CaveRockOld_Diffuse.png"));
+            rock->mesh_list.back()->set_texture(rock->texture_list.back());
+        }
+
         m_bow = new StaticModel("models/Bow.obj", m_wall_shader);
         m_sword = new StaticModel("models/Sword.obj", m_wall_shader);
 
@@ -150,7 +165,7 @@ public:
             Transform::create_scaling_matrix(glm::vec3(0.03, 0.03, 0.05))
         );
 
-        m_light_colour = glm::vec3(0.8f, 0.8f, 1.0f);
+        m_light_colour = glm::vec3(1.0f);
 
         m_health_shader = new Shader("MapDemoHealth");
         m_hud_health_shader = new Shader("TexturedHealthBar");
@@ -308,6 +323,7 @@ public:
             m_renderer->set_title(m_window_name + " | FPS: " + std::to_string(1.0f / delta_time_s));
             time_of_last_frame = float(timer.GetTime());
 
+            world.step(delta_time * 0.001f);
             Registry& reg = MapManager::get_instance().get_active_registry();
 
             // Game restart
@@ -409,7 +425,6 @@ public:
             }
 
             reg.camera_pos = m_camera.get_position();
-            world.step(delta_time * 0.001f);
             // _handle_free_camera_inputs();
             m_light_pos = m_camera.get_position();
 
@@ -417,11 +432,26 @@ public:
             {
                 m_light_positions.clear();
                 m_light_brightnesses.clear();
+                m_light_colours.clear();
+                
                 m_light_positions.reserve(MAX_LIGHTS);
                 m_light_brightnesses.reserve(MAX_LIGHTS);
+                m_light_colours.reserve(MAX_LIGHTS);
+                
                 m_light_positions.push_back(m_light_pos);
                 m_light_brightnesses.push_back(1.0f);
+                m_light_colours.push_back(m_light_colour);
                 int counter = 1;
+
+                // int x = 0; // ROCKS DELETE THIS
+                // for (auto& fjdiso : m_rocks) {
+                //     ++counter;
+                //     m_light_positions.push_back({x, 0, 20});
+                //     m_light_colours.push_back({1,1,1});
+                //     m_light_brightnesses.push_back(20);
+                //     x += 50;
+                // }
+
                 for (const auto& entity : reg.light_sources.entities) {
                     if (counter > MAX_LIGHTS) { break; }
                     if (!reg.near_cameras.has(entity)) { continue; }
@@ -429,18 +459,20 @@ public:
                     ++counter;
                     m_light_positions.push_back(light_source.pos);
                     m_light_brightnesses.push_back(light_source.brightness);
+                    m_light_colours.push_back(light_source.colour);
                 }
             }
             
             animated_shader.set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
             animated_shader.set_uniform_3f("u_view_pos", m_camera.get_position());
             // animated_shader.set_uniform_3f("u_light_pos", m_light_pos);
-            animated_shader.set_uniform_3f("u_light_color", m_light_colour);
+            // animated_shader.set_uniform_3f("u_light_color", m_light_colour);
             animated_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
             
             animated_shader.set_uniform_1i("u_num_lights", m_light_positions.size());
             animated_shader.set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
             animated_shader.set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
+            animated_shader.set_uniform_3f_array("u_light_colours", *m_light_colours.data(), m_light_colours.size());
 
             static_shader.set_uniform_mat4f("u_view_project", m_camera.get_view_project_matrix());
             static_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });   
@@ -450,20 +482,26 @@ public:
 
             static_shader.set_uniform_3f("u_view_pos", m_camera.get_position());
             // static_shader.set_uniform_3f("u_light_pos", m_light_pos);
-            static_shader.set_uniform_3f("u_light_color", m_light_colour);
+            // static_shader.set_uniform_3f("u_light_color", m_light_colour);
             static_shader.set_uniform_1i("u_num_lights", m_light_positions.size());
             static_shader.set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
             static_shader.set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
+            static_shader.set_uniform_3f_array("u_light_colours", *m_light_colours.data(), m_light_colours.size());
 
-            m_to_be_updated_and_drawn.assign(reg.near_cameras.size(), -1);
-            int i = 0;
-            for (const auto& entity : reg.near_cameras.entities) {   
-                if (
-                    entity.get_id() == reg.player.get_id() || 
-                    (reg.locomotion_stats.has(entity) && reg.motions.has(entity))
-                ) {
-                    m_to_be_updated_and_drawn[i++] = entity.get_id();
+            if (reg.near_cameras.size() > 0) {
+                m_to_be_updated_and_drawn.assign(reg.near_cameras.size(), -1);
+                int i = 0;
+                for (const auto& entity : reg.near_cameras.entities) {   
+                    if (
+                        entity.get_id() == reg.player.get_id() || 
+                        (reg.locomotion_stats.has(entity) && reg.motions.has(entity))
+                    ) {
+                        m_to_be_updated_and_drawn[i++] = entity.get_id();
+                    }
                 }
+            } else {
+                m_to_be_updated_and_drawn.clear();
+                m_to_be_updated_and_drawn.push_back(-1);
             }
             _update_models();
 
@@ -1019,6 +1057,7 @@ private:
 
     void _draw_light_orbs() {
         // Always skip the camera light :/
+        m_light_orb->set_rotation_z(m_light_orb->get_rotation_z() + 0.05);
         for (unsigned int i = 1; i < m_light_positions.size(); ++i) {
             m_light_orb->set_position(m_light_positions[i]);
             m_light_orb->set_position_z(m_light_positions[i].z + 2);
@@ -1058,10 +1097,11 @@ private:
 
         m_floor_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
         // m_floor_shader->set_uniform_3f("u_light_pos", m_light_pos);
-        m_floor_shader->set_uniform_3f("u_light_color", m_light_colour);
+        // m_floor_shader->set_uniform_3f("u_light_color", m_light_colour);
         m_floor_shader->set_uniform_1i("u_num_lights", m_light_positions.size());
         m_floor_shader->set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
         m_floor_shader->set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
+        m_floor_shader->set_uniform_3f_array("u_light_colours", *m_light_colours.data(), m_light_colours.size());
 
         m_renderer->draw(m_square_mesh, *m_floor_shader);
     }
@@ -1080,10 +1120,11 @@ private:
 
         m_wall_shader->set_uniform_3f("u_view_pos", m_camera.get_position());
         // m_wall_shader->set_uniform_3f("u_light_pos", m_light_pos);
-        m_wall_shader->set_uniform_3f("u_light_color", m_light_colour);
+        // m_wall_shader->set_uniform_3f("u_light_color", m_light_colour);
         m_wall_shader->set_uniform_1i("u_num_lights", m_light_positions.size());
         m_wall_shader->set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
         m_wall_shader->set_uniform_1f_array("u_light_strengths", *m_light_brightnesses.data(), m_light_brightnesses.size());
+        m_wall_shader->set_uniform_3f_array("u_light_colours", *m_light_colours.data(), m_light_colours.size());
 
         auto& reg = MapManager::get_instance().get_active_registry();
         for (auto& entity : reg.walls.entities) {
@@ -1108,10 +1149,21 @@ private:
             auto& motion = reg.motions.get(entity);
             if (glm::distance(motion.position, glm::vec2(m_camera.get_position())) > Globals::static_render_distance) { continue; }
             auto& static_object = reg.static_objects.get(entity);
-            if (static_object.type != STATIC_OBJECT_TYPE::TREE) { continue; }
-            m_spooky_tree->set_position(glm::vec3(motion.position, -0.3f));
-            m_spooky_tree->draw();
+            if (static_object.type == STATIC_OBJECT_TYPE::TREE) { 
+                m_spooky_tree->set_position(glm::vec3(motion.position, -0.3f));
+                m_spooky_tree->draw();
+            } else if (static_object.type == STATIC_OBJECT_TYPE::ROCK) {
+                m_rocks[1]->set_position(glm::vec3(motion.position, 0.0f));
+                m_rocks[1]->draw();
+            }
         }
+    
+        // int x = 0;
+        // for (auto& rock : m_rocks) {
+        //     rock->set_position_x(x);
+        //     rock->draw();
+        //     x += 50;
+        // }
     }
 
     void _draw_projectiles() {
