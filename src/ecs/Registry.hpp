@@ -15,6 +15,11 @@ struct InputState {
 	glm::vec2 mouse_pos = {0.f, 0.f};
 };
 
+struct NearInteractable {
+	bool is_active = false;
+	Entity interactable;
+};
+
 class Registry {
 	std::vector<IComponentContainer*> m_registry_list;
 
@@ -47,8 +52,10 @@ public:
 	ComponentContainer<VisionToPlayer> vision_to_players;
 	ComponentContainer<ProjectileModels> projectile_models;
 	ComponentContainer<LightSource> light_sources;
+	ComponentContainer<Interactable> interactables;
 	GridMap grid_map;
 	Entity player;
+	NearInteractable near_interactable;
 	InputState input_state;
 	glm::vec2 camera_pos;
 
@@ -79,6 +86,7 @@ public:
 		m_registry_list.push_back(&vision_to_players);
 		m_registry_list.push_back(&projectile_models);
 		m_registry_list.push_back(&light_sources);
+		m_registry_list.push_back(&interactables);
 
 		// create grid map entities
 		grid_map = GridMap();
@@ -100,6 +108,7 @@ public:
 
 			grid_map = other.grid_map;
 			player = other.player;
+			near_interactable = other.near_interactable;
 			input_state = other.input_state;
 			camera_pos = other.camera_pos;
 

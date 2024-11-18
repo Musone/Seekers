@@ -33,7 +33,9 @@ enum class STATIC_OBJECT_TYPE
     TREE = 0,
     ROCK = TREE + 1,
     STATUE = ROCK + 1,
-    STATIC_OBJECT_TYPE_COUNT = STATUE + 1
+    BONFIRE = STATUE + 1,
+    PORTAL = BONFIRE + 1,
+    STATIC_OBJECT_TYPE_COUNT = PORTAL + 1
 };
 const int static_object_type_count = (int)STATIC_OBJECT_TYPE::STATIC_OBJECT_TYPE_COUNT;
 
