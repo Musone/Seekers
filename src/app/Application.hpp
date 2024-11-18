@@ -45,6 +45,8 @@ class Application {
 
     StaticModel* m_spooky_tree;
     StaticModel* m_light_orb;
+    StaticModel* m_campfire;
+    StaticModel* m_dungeon_entrance;
     StaticModel* m_sword;
     StaticModel* m_bow;
     StaticModel* m_arrow;
@@ -59,6 +61,7 @@ class Application {
     Texture2D* m_hud_health_texture_fill;
     Texture2D* m_hud_health_texture_border;
     Texture2D* m_hud_health_texture_bacground;
+    Texture2D* m_redbull;
 
     glm::vec3 m_light_pos;
     glm::vec3 m_light_colour;
@@ -72,7 +75,6 @@ class Application {
 
     std::unordered_map<unsigned int, AnimatedModel*> m_models;
 public:
-
     Application() : m_light_pos(1.0f, 1.0f, 2.0f) {
         // Setup
         m_renderer = &Renderer::get_instance();
@@ -89,6 +91,7 @@ public:
         m_hud_health_texture_fill = new Texture2D("sphere_fill.png");
         m_hud_health_texture_border = new Texture2D("sphere_border.png");
         m_hud_health_texture_bacground = new Texture2D("sphere_background.png");
+        m_redbull = new Texture2D("Redbull.png");
 
         m_skybox_shader = new Shader("Skybox");
         // m_skybox_texture = new SkyboxTexture("random_skybox.png"); // The red lava skybox
@@ -138,6 +141,24 @@ public:
         m_light_orb->m_has_texture = true;
         m_light_orb->texture_list.push_back(std::make_shared<Texture2D>("Orb_low_piedra.001_Emissive.png"));
         m_light_orb->mesh_list.back()->set_texture(m_light_orb->texture_list.back());
+
+        m_campfire = new StaticModel("models/Campfire.obj", m_wall_shader);
+        m_campfire->m_has_texture = true;
+        m_campfire->texture_list.push_back(std::make_shared<Texture2D>("Campfire_MAT_BaseColor_01.jpg"));
+        m_campfire->mesh_list.back()->set_texture(m_campfire->texture_list.back());
+        m_campfire->set_scale(glm::vec3(0.0375f));
+        m_campfire->set_pre_transform(Transform::create_rotation_matrix({PI / 2.0f, 0, 0}));
+
+        m_dungeon_entrance = new StaticModel("models/drenn_entrance_b.stl", m_wall_shader);
+        m_dungeon_entrance->set_pre_transform(
+            Transform::create_model_matrix(
+                {0, 0, -6},
+                {0, 0, 0},
+                glm::vec3(0.5f)
+            )
+        );
+        // m_dungeon_entrance = ;
+        // m_dungeon_entrance
 
         m_rocks.push_back(new StaticModel("models/rocks/CaveRock01_A.dae", m_wall_shader));
         m_rocks.push_back(new StaticModel("models/rocks/CaveRock01_B.dae", m_wall_shader));
@@ -1169,6 +1190,17 @@ private:
                 m_rocks[1]->set_position(glm::vec3(motion.position, 0.0f));
                 m_rocks[1]->set_rotation_z(motion.angle);
                 m_rocks[1]->draw();
+            } else if (static_object.type == STATIC_OBJECT_TYPE::BONFIRE) {
+                m_campfire->set_position(glm::vec3(motion.position, 0.0f));
+                m_campfire->set_rotation_z(motion.angle);
+                m_campfire->draw();
+            } else if (static_object.type == STATIC_OBJECT_TYPE::PORTAL) {
+                m_wall_shader->set_uniform_3f("u_object_color", { 86.0f/ 255.0f, 86.0f / 255.0f, 86.0f / 255.0f });
+                m_dungeon_entrance->set_position(glm::vec3(motion.position, 0.0f));
+                m_dungeon_entrance->set_rotation_z(motion.angle);
+                m_dungeon_entrance->draw();
+                // change colour back lol
+                m_wall_shader->set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
             }
         }
     
@@ -1380,6 +1412,23 @@ private:
             energy_percentage,
             {0, 0.33, 0}
         );
+
+        reg.inventory.estus.size();
+        m_hud_health_shader->set_uniform_3f("u_colour", glm::vec3(1.0f));
+        m_hud_health_shader->set_uniform_1i("u_texture", m_redbull->bind(28));
+        m_hud_health_shader->set_uniform_1f("u_health_percentage", 1.0f);
+        float i = 0;
+        for (const auto& estus_shit : reg.inventory.estus) {
+            m_hud_health_shader->set_uniform_mat4f("u_model", 
+                Transform::create_model_matrix(
+                    {-1 + 1 * size / 2, -1 + i++ * 0.275f + 3 * size / 2, 0.0f},
+                    {0, 0, 0},
+                    {0.125f, 0.25f, 1}
+                )
+            );
+            m_renderer->draw(m_square_mesh, *m_hud_health_shader);
+        }
+
         
         _draw_tutorial();
 

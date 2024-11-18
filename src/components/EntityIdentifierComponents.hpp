@@ -28,8 +28,7 @@ struct Enemy {
     ENEMY_TYPE type = ENEMY_TYPE::ENEMY_TYPE_COUNT;
 };
 
-enum class STATIC_OBJECT_TYPE
-{
+enum class STATIC_OBJECT_TYPE {
     TREE = 0,
     ROCK = TREE + 1,
     STATUE = ROCK + 1,

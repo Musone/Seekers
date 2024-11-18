@@ -28,12 +28,12 @@ public:
             }
 
             // add dungeon entrance and bonfire here (rock and tree are place holders for now)
-            Entity bon = EntityFactory::create_rock(registry, glm::vec2(10.0f, 10.0f));
+            Entity bon = EntityFactory::create_bonerfire(registry, glm::vec2(10.0f, 10.0f));
             auto& boni = registry.interactables.emplace(bon);
             boni.entity = bon;
             boni.range = 10.0f;
             boni.type = INTERACTABLE_TYPE::BONFIRE;
-            Entity don = EntityFactory::create_tree(registry, glm::vec2(-10.0f, -10.0f));
+            Entity don = EntityFactory::create_dungeon_entrance(registry, glm::vec2(-10.0f, -10.0f));
             auto& doni = registry.interactables.emplace(don);
             doni.entity = don;
             doni.range = 10.0f;

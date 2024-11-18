@@ -354,4 +354,45 @@ namespace EntityFactory {
 
         return entity;
     }
+
+    inline Entity create_bonerfire(Registry& registry, glm::vec2 position) {
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.scale = glm::vec2(1.5f);
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& tree = registry.static_objects.emplace(entity);
+        tree.type = STATIC_OBJECT_TYPE::BONFIRE;
+
+        // Use circle collider for tree
+        registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+
+        return entity;
+    }
+
+    // needs new static type
+    inline Entity create_dungeon_entrance(Registry& registry, glm::vec2 position) {
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.scale = glm::vec2(1.5f);
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& tree = registry.static_objects.emplace(entity);
+        tree.type = STATIC_OBJECT_TYPE::PORTAL;
+
+        // Use circle collider for tree
+        registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+
+        return entity;
+    }
 };
