@@ -44,11 +44,15 @@ struct StaticObject {
 };
 
 enum class LIGHT_SOURCE_TYPE {
-    MAGIC_ORB = 1,
-    LIGHT_SOURCE_TYPE_COUNT = MAGIC_ORB + 1
+    MAGIC_ORB = 0,
+    SUN = MAGIC_ORB + 1,
+    BONFIRE = SUN + 1,
+    LIGHT_SOURCE_TYPE_COUNT = BONFIRE + 1
 };
 
 struct LightSource {
     float brightness;
     glm::vec3 pos;
+    glm::vec3 color;
+    LIGHT_SOURCE_TYPE type = LIGHT_SOURCE_TYPE::LIGHT_SOURCE_TYPE_COUNT;
 };
