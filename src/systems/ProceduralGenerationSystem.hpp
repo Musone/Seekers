@@ -375,8 +375,8 @@ namespace ProceduralGenerationSystem {
         for (const auto& room : rooms) {
             Entity e = Entity();
             LightSource& light_source = registry.light_sources.emplace(e);
-            light_source.pos = glm::vec3(room.position, 1.0f);
-            light_source.brightness = 7.0f;
+            light_source.pos = glm::vec3(room.position, 6.0f);
+            light_source.brightness = 4.0f;
         }
     }
 

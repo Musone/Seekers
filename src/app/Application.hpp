@@ -416,8 +416,11 @@ public:
                 m_light_positions.push_back(m_light_pos);
                 m_light_brightnesses.push_back(1.0f);
                 int counter = 1;
-                for (const auto& light_source : reg.light_sources.components) {
+                for (const auto& entity : reg.light_sources.entities) {
                     if (counter > MAX_LIGHTS) { break; }
+                    if (!reg.near_cameras.has(entity)) { continue; }
+                    const LightSource& light_source = reg.light_sources.get(entity);
+                    ++counter;
                     m_light_positions.push_back(light_source.pos);
                     m_light_brightnesses.push_back(light_source.brightness);
                 }
