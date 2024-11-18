@@ -27,6 +27,19 @@ public:
                 estus.heal_amount = 120.0f;
             }
 
+            // add dungeon entrance and bonfire
+            Entity bon = EntityFactory::create_rock(registry, glm::vec2(10.0f, 10.0f));
+            auto& boni = registry.interactables.emplace(bon);
+            boni.entity = bon;
+            boni.range = 10.0f;
+            boni.type = INTERACTABLE_TYPE::BONFIRE;
+
+            Entity don = EntityFactory::create_tree(registry, glm::vec2(-10.0f, -10.0f));
+            auto& doni = registry.interactables.emplace(don);
+            doni.entity = don;
+            doni.range = 10.0f;
+            doni.type = INTERACTABLE_TYPE::DUNGEON_ENTRANCE;
+
             OpenWorldMapCreatorSystem::populate_open_world_map(registry);
 
             saved_world_registry = std::make_unique<Registry>();
