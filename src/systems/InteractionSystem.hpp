@@ -48,8 +48,8 @@ namespace InteractionSystem {
         } else if (comp.type == INTERACTABLE_TYPE::DUNGEON_EXIT) {
             MapManager::get_instance().return_open_world_flag = true;
         } else if (comp.type == INTERACTABLE_TYPE::BONFIRE) {
-            // health and stuff
-            // save the game
+            GameplaySystem::rest();
+            // save the game here or inside rest function
         }
     }
 };

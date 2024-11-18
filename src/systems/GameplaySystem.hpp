@@ -221,6 +221,6 @@ namespace GameplaySystem {
         }
 
         // maybe respawn enemies here
-        // save here
+        // save here or in interaction
     }
 };
