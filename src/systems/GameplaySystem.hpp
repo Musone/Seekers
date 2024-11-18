@@ -193,4 +193,34 @@ namespace GameplaySystem {
         float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
         audio.play_dodge(distance_from_camera);
     }
+
+    inline void consume_estus() {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+        std::vector<Entity>& esti = registry.inventory.estus;
+
+        if (esti.size() <= 0 || registry.attack_cooldowns.has(registry.player) || registry.stagger_cooldowns.has(registry.player) || registry.death_cooldowns.has(registry.player)) return;
+
+        LocomotionStats& loco =  registry.locomotion_stats.get(registry.player);
+        loco.health = fmin(loco.health + registry.estus.get(esti[0]).heal_amount, loco.max_health);
+        registry.remove_all_components_of(esti[0]);
+        esti.erase(esti.begin());
+    }
+
+    inline void rest() {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+
+        LocomotionStats& loco = registry.locomotion_stats.get(registry.player);
+        loco.health = loco.max_health;
+        loco.energy = loco.max_energy;
+        loco.poise = loco.max_poise;
+        while (registry.inventory.estus.size() < 3) {
+            Entity e = Entity();
+            registry.inventory.estus.push_back(e);
+            auto& estus = registry.estus.emplace(e);
+            estus.heal_amount = 120.0f;
+        }
+
+        // maybe respawn enemies here
+        // save here
+    }
 };

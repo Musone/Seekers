@@ -18,6 +18,7 @@ struct InputState {
 struct NearInteractable {
 	bool is_active = false;
 	Entity interactable;
+	std::string message;
 };
 
 class Registry {
@@ -53,8 +54,10 @@ public:
 	ComponentContainer<ProjectileModels> projectile_models;
 	ComponentContainer<LightSource> light_sources;
 	ComponentContainer<Interactable> interactables;
+	ComponentContainer<Estus> estus;
 	GridMap grid_map;
 	Entity player;
+	Inventory inventory;
 	NearInteractable near_interactable;
 	InputState input_state;
 	glm::vec2 camera_pos;
@@ -87,6 +90,7 @@ public:
 		m_registry_list.push_back(&projectile_models);
 		m_registry_list.push_back(&light_sources);
 		m_registry_list.push_back(&interactables);
+		m_registry_list.push_back(&estus);
 
 		// create grid map entities
 		grid_map = GridMap();
@@ -108,6 +112,7 @@ public:
 
 			grid_map = other.grid_map;
 			player = other.player;
+			inventory = other.inventory;
 			near_interactable = other.near_interactable;
 			input_state = other.input_state;
 			camera_pos = other.camera_pos;
