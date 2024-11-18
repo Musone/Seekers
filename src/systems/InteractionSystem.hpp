@@ -34,6 +34,23 @@ namespace InteractionSystem {
                 min_distance = distance;
             }
         }
+        Entity& near_inter = registry.near_interactable.interactable;
+        Interactable& inter_comp = registry.interactables.get(near_inter);
+        if (inter_comp.type == INTERACTABLE_TYPE::ITEM_PICKUP) {
+            registry.near_interactable.message = std::string("Press F to Pickup");
+        } else if (inter_comp.type == INTERACTABLE_TYPE::DUNGEON_ENTRANCE) {
+            registry.near_interactable.message = std::string("Press F to Enter Dungeon");
+        } else if (inter_comp.type == INTERACTABLE_TYPE::DUNGEON_EXIT) {
+            registry.near_interactable.message = std::string("Press F to Exit Dungeon");
+        } else if (inter_comp.type == INTERACTABLE_TYPE::BONFIRE) {
+            registry.near_interactable.message = std::string("Press F to Rest");
+        } else if (inter_comp.type == INTERACTABLE_TYPE::SPIRE_ENTRANCE) {
+            registry.near_interactable.message = std::string("Press F to Enter Spire");
+        } else if (inter_comp.type == INTERACTABLE_TYPE::SPIRE_EXIT) {
+            registry.near_interactable.message = std::string("Press F to Exit Spire");
+        } else if (inter_comp.type == INTERACTABLE_TYPE::NPC) {
+            registry.near_interactable.message = std::string("Press F to Talk");
+        }
     }
 
     inline void interact() {
