@@ -53,6 +53,9 @@ namespace InputManager {
             if (key == GLFW_KEY_F) {
                 InteractionSystem::interact();
             }
+            if (key == GLFW_KEY_1) {
+                GameplaySystem::consume_estus();
+            }
 
             if (key == GLFW_KEY_G) {
                 MapManager::get_instance().enter_dungeon_flag = true;

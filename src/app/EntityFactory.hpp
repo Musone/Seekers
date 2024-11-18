@@ -314,12 +314,13 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_tree(Registry& registry, glm::vec2 position) {
+    inline Entity create_tree(Registry& registry, glm::vec2 position, float angle = 0.0f) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
         motion.scale = glm::vec2(4.0f, 4.0f);
+        motion.angle = angle;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;

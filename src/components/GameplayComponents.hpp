@@ -39,16 +39,10 @@ struct Buff
 };
 
 // Added for future milestones
-struct InventoryItem
-{
-    unsigned int item_id;
-    unsigned int count;
-};
-
-// Added for future milestones
 struct Inventory
 {
-    std::vector<InventoryItem> items;
+    std::vector<Entity> estus;
+    std::vector<Entity> weapons;
     unsigned int capacity;
 };
 
@@ -115,4 +109,8 @@ struct NearPlayer {
 
 struct NearCamera {
 
+};
+
+struct Estus {
+    float heal_amount;
 };
