@@ -6,6 +6,7 @@
 #include <ostream>
 #include <glm/glm.hpp>
 
+#include "Transform.hpp"
 #include "../ext/project_path.hpp"
 inline std::string data_path() { return std::string(PROJECT_SOURCE_DIR) + "src"; };
 inline std::string audio_path(const std::string& name) { return data_path() + "/audio/" + std::string(name); };
@@ -92,4 +93,21 @@ namespace Common {
        size_t end = str.find_last_not_of(whitespace);
        return str.substr(start, end - start + 1);
    }
+
+
+    inline float get_angle_between_item_and_player_view(glm::vec2 item_pos, glm::vec2 player_pos, float player_angle) {
+        // Go ask Jakob how this shit works
+        auto angle = std::fmod(player_angle, 2 * PI);
+        if (angle < 0) {
+            angle += 2 * PI;
+        }
+        auto cos_angle_between_item_and_player = glm::dot(
+            glm::normalize(
+                glm::vec2(Transform::create_rotation_matrix({0, 0, angle}) * glm::vec4(1, 0, 0, 0))
+            ),
+            glm::normalize(item_pos - player_pos)
+        );
+        cos_angle_between_item_and_player = glm::clamp(cos_angle_between_item_and_player, -0.9999999f, 0.9999999f);
+        return std::acos(cos_angle_between_item_and_player);
+    }
 }

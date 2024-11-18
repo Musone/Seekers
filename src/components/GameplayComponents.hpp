@@ -84,7 +84,8 @@ enum class INTERACTABLE_TYPE
 {
     ITEM_PICKUP = 0,
     DUNGEON_ENTRANCE = ITEM_PICKUP + 1,
-    SPIRE_ENTRANCE = DUNGEON_ENTRANCE + 1,
+    DUNGEON_EXIT = DUNGEON_ENTRANCE + 1,
+    SPIRE_ENTRANCE = DUNGEON_EXIT + 1,
     NPC = SPIRE_ENTRANCE + 1,
     INTERACTABLE_TYPE_COUNT = NPC + 1
 };
@@ -95,7 +96,8 @@ const int interactable_type_count = (int)INTERACTABLE_TYPE::INTERACTABLE_TYPE_CO
 struct Interactable
 {
     INTERACTABLE_TYPE type;
-    unsigned int associated_id; // For items, dungeons, or NPCs
+    Entity entity;
+    float range;
 };
 
 struct InDodge {
