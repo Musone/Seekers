@@ -245,4 +245,26 @@ namespace GameplaySystem {
             registry.locked_target.is_active = false;
         }
     }
+
+    inline void switch_target(float delta_mouse_x) {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+
+        if (!registry.locked_target.is_active) return;
+
+        float min_angle = std::numeric_limits<float>::max();
+        auto& player_motion = registry.motions.get(registry.player);
+        for (Entity& e : registry.near_players.entities) {
+            if (!registry.enemies.has(e)) continue;
+            auto& motion = registry.motions.get(e);
+            if (glm::distance(player_motion.position, motion.position) > Globals::lock_target_range || registry.death_cooldowns.has(e)) continue;
+            float angle = Common::get_angle_between_item_and_player_view(motion.position, player_motion.position, player_motion.angle - delta_mouse_x);
+            if (angle < min_angle) {
+                registry.locked_target.target = e;
+                min_angle = angle;
+            }
+        }
+        if (min_angle == std::numeric_limits<float>::max()) { // no target was found to lock on
+            registry.locked_target.is_active = false;
+        }
+    }
 };
