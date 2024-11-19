@@ -108,11 +108,11 @@ namespace InputManager {
                 }
             }
             if (key == GLFW_KEY_F9) {
-                SaveLoadManager& save_manager = SaveLoadManager::get_instance();
-                // Create a new game slot
-                SaveSlot new_slot = save_manager.create_new_slot("New Game");
-                if (save_manager.create_new_game("New Game")) {
-                    std::cout << "Created new game in slot: " << new_slot.name << std::endl;
+                // Create new game
+                if (SaveLoadSystem::load_game(registry, "new_game_template")) {
+                    std::cout << "Started new game" << std::endl;
+                } else {
+                    std::cerr << "Failed to start new game" << std::endl;
                 }
             }
         }
