@@ -48,6 +48,7 @@ class Application {
     StaticModel* m_light_orb;
     StaticModel* m_campfire;
     StaticModel* m_dungeon_entrance;
+    StaticModel* m_portal;
     StaticModel* m_sword;
     StaticModel* m_bow;
     StaticModel* m_arrow;
@@ -150,13 +151,21 @@ public:
         m_campfire->set_scale(glm::vec3(0.0375f));
         m_campfire->set_pre_transform(Transform::create_rotation_matrix({PI / 2.0f, 0, 0}));
 
-        // m_dungeon_entrance = new StaticModel("models/drenn_entrance_b.stl", m_wall_shader);
-        m_dungeon_entrance = new StaticModel("models/Portal/scene.gltf", m_wall_shader);
+        m_dungeon_entrance = new StaticModel("models/drenn_entrance_b.stl", m_wall_shader);
+        m_dungeon_entrance->set_scale(glm::vec3(2));
         m_dungeon_entrance->set_pre_transform(
             Transform::create_model_matrix(
                 {0, 0, -6},
                 {0, 0, 0},
                 glm::vec3(0.5f)
+            )
+        );
+        m_portal = new StaticModel("models/Portal/portal.obj", m_wall_shader);
+        m_portal->set_pre_transform(
+            Transform::create_model_matrix(
+                {0, 0, -1.0},
+                {PI / 2.0f, 0, 0},
+                glm::vec3(1.0f)
             )
         );
         // m_dungeon_entrance = ;
@@ -1209,6 +1218,13 @@ private:
                 m_campfire->set_rotation_z(motion.angle);
                 m_campfire->draw();
             } else if (static_object.type == STATIC_OBJECT_TYPE::PORTAL) {
+                m_wall_shader->set_uniform_3f("u_object_color", { 56.0f/ 255.0f, 52.0f / 255.0f, 98.0f / 255.0f });
+                m_portal->set_position(glm::vec3(motion.position, 0.0f));
+                m_portal->set_rotation_z(motion.angle);
+                m_portal->draw();
+                // change colour back lol
+                m_wall_shader->set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
+            } else if (static_object.type == STATIC_OBJECT_TYPE::DUNGEON_ENTRANCE) {
                 m_wall_shader->set_uniform_3f("u_object_color", { 86.0f/ 255.0f, 86.0f / 255.0f, 86.0f / 255.0f });
                 m_dungeon_entrance->set_position(glm::vec3(motion.position, 0.0f));
                 m_dungeon_entrance->set_rotation_z(motion.angle);
