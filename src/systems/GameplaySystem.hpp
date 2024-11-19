@@ -209,6 +209,12 @@ namespace GameplaySystem {
     inline void rest() {
         Registry& registry = MapManager::get_instance().get_active_registry();
 
+        if (registry.in_rests.has(registry.player)) {
+            registry.in_rests.remove(registry.player);
+            Globals::is_getting_up = true;
+            return;
+        }
+
         LocomotionStats& loco = registry.locomotion_stats.get(registry.player);
         loco.health = loco.max_health;
         loco.energy = loco.max_energy;
@@ -220,6 +226,12 @@ namespace GameplaySystem {
             estus.heal_amount = 120.0f;
         }
 
+        registry.input_state.w_down = false;
+        registry.input_state.a_down = false;
+        registry.input_state.s_down = false;
+        registry.input_state.d_down = false;
+
+        registry.in_rests.emplace(registry.player);
         // maybe respawn enemies here
         // save here or in interaction
     }
