@@ -217,13 +217,17 @@ public:
             }
             
             if (entity_data.contains("move_with")) {
-                auto& move_with = registry.move_withs.emplace(new_entity);
-                ComponentSerializer::deserialize_move_with(move_with, entity_data["move_with"]);
+                const auto& move_with_data = entity_data["move_with"];
+                auto& move_with = registry.move_withs.emplace(new_entity, 
+                    move_with_data["following_entity_id"].get<unsigned int>());
+                ComponentSerializer::deserialize_move_with(move_with, move_with_data);
             }
             
             if (entity_data.contains("rotate_with")) {
-                auto& rotate_with = registry.rotate_withs.emplace(new_entity);
-                ComponentSerializer::deserialize_rotate_with(rotate_with, entity_data["rotate_with"]);
+                const auto& rotate_with_data = entity_data["rotate_with"];
+                auto& rotate_with = registry.rotate_withs.emplace(new_entity,
+                    rotate_with_data["following_entity_id"].get<unsigned int>());
+                ComponentSerializer::deserialize_rotate_with(rotate_with, rotate_with_data);
             }
         }
         
