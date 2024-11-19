@@ -1432,12 +1432,12 @@ private:
             m_renderer->draw(m_square_mesh, *m_hud_health_shader);
         }
 
+        _draw_tutorial();
+        
         if (reg.near_interactable.is_active) {
             FontStuff& font_monkey = FontStuff::get_instance();
-            font_monkey.render_text(reg.near_interactable.message.c_str(), m_renderer->get_window_width() / 2.0f, m_renderer->get_window_height() / 2.0f, 1, {1, 0, 0});
+            font_monkey.render_text(reg.near_interactable.message.c_str(), m_renderer->get_window_width() / 2.0f, m_renderer->get_window_height() / 2.0f, 1, {0.5, 0, 0});
         }
-        
-        _draw_tutorial();
 
         m_renderer->enable_depth_test();
         
