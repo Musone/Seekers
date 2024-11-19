@@ -192,7 +192,7 @@ private:
 
         GL_Call(int location = glGetUniformLocation(m_id, name.c_str()));
         if (location == -1) {
-            // Log::log_warning("Uniform '" + name + "' does not exist or is never used in " + m_vs_path + " nor " + m_fs_path, __FILE__, __LINE__);
+            Log::log_warning("Uniform '" + name + "' does not exist or is never used in " + m_vs_path + " nor " + m_fs_path, __FILE__, __LINE__);
         } else {
             m_location_cache[name] = location;
         }

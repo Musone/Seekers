@@ -12,6 +12,7 @@
 #include <renderer/ModelBase.hpp>
 #include <renderer/AnimatedModel.hpp>
 #include <renderer/StaticModel.hpp>
+#include <renderer/FontStuff.hpp>
 #include <ecs/Registry.hpp>
 #include <app/World.h>
 #include <app/InputManager.hpp>
@@ -328,6 +329,9 @@ public:
 
         AnimatedModel* player_model;
 
+        FontStuff& font_monkey = FontStuff::get_instance();
+        font_monkey.font_init("fonts/Cano-VGMwz.ttf", 42, m_renderer->get_window_width(), m_renderer->get_window_height());
+
         Timer timer;
         float time_of_last_frame = 0;
         const float FRAME_TIME_60FPS = 1000000.0f / 60.0f;
@@ -493,7 +497,7 @@ public:
             animated_shader.set_uniform_3f("u_view_pos", m_camera.get_position());
             // animated_shader.set_uniform_3f("u_light_pos", m_light_pos);
             // animated_shader.set_uniform_3f("u_light_color", m_light_colour);
-            animated_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
+            // animated_shader.set_uniform_3f("u_object_color", { 0.5, 0.2, 1 });
             
             animated_shader.set_uniform_1i("u_num_lights", m_light_positions.size());
             animated_shader.set_uniform_3f_array("u_light_positions", *m_light_positions.data(), m_light_positions.size());
@@ -532,6 +536,7 @@ public:
             _update_models();
 
             m_renderer->begin_draw();
+            
             _draw_map_and_skybox();
             _draw_walls();
             _draw_health_bars();
@@ -948,8 +953,6 @@ public:
                 );
                 renderer.draw(square_vao, square_ibo, health_shader);
             }
-
-            
 
             renderer.end_draw();
             time_of_last_frame = float(timer.GetTime());
@@ -1429,6 +1432,10 @@ private:
             m_renderer->draw(m_square_mesh, *m_hud_health_shader);
         }
 
+        if (reg.near_interactable.is_active) {
+            FontStuff& font_monkey = FontStuff::get_instance();
+            font_monkey.render_text(reg.near_interactable.message.c_str(), m_renderer->get_window_width() / 2.0f, m_renderer->get_window_height() / 2.0f, 1, {1, 0, 0});
+        }
         
         _draw_tutorial();
 
