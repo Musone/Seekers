@@ -32,4 +32,5 @@ namespace Globals {
     extern float static_render_distance;
     extern bool restart_renderer;
     extern float interactable_angle;
+    extern float lock_target_range;
 }

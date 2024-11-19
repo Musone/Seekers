@@ -21,6 +21,11 @@ struct NearInteractable {
 	std::string message;
 };
 
+struct LockedTarget {
+	bool is_active = false;
+	Entity target;
+};
+
 class Registry {
 	std::vector<IComponentContainer*> m_registry_list;
 
@@ -59,6 +64,7 @@ public:
 	Entity player;
 	Inventory inventory;
 	NearInteractable near_interactable;
+	LockedTarget locked_target;
 	InputState input_state;
 	glm::vec2 camera_pos;
 
