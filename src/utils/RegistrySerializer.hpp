@@ -96,6 +96,21 @@ private:
                 registry.rotate_withs.get(entity));
         }
 
+        // TODO: Add serialization methods for other components:
+        // - [ ] Collisions
+        // - [ ] Buffs
+        // - [ ] Projectiles
+        // - [ ] AttackCooldown
+        // - [ ] TextureName
+        // - [ ] InDodge
+        // - [ ] NearPlayer
+        // - [ ] NearCamera
+        // - [ ] StaggerCooldown
+        // - [ ] DeathCooldown
+        // - [ ] EnergyNoRegenCooldown
+        // - [ ] VisionToPlayer
+        // - [ ] ProjectileModels
+
         return entity_data;
     }
 
@@ -124,6 +139,21 @@ public:
         collect_entities(registry.ais);
         collect_entities(registry.move_withs);
         collect_entities(registry.rotate_withs);
+
+        // TODO: Collect other component containers:
+        // - [ ] Collisions
+        // - [ ] Buffs
+        // - [ ] Projectiles
+        // - [ ] AttackCooldown
+        // - [ ] TextureName
+        // - [ ] InDodge
+        // - [ ] NearPlayer
+        // - [ ] NearCamera
+        // - [ ] StaggerCooldown
+        // - [ ] DeathCooldown
+        // - [ ] EnergyNoRegenCooldown
+        // - [ ] VisionToPlayer
+        // - [ ] ProjectileModels
         
         // Store global registry state
         registry_data["counter"] = registry.counter;
@@ -229,6 +259,22 @@ public:
                     rotate_with_data["following_entity_id"].get<unsigned int>());
                 ComponentSerializer::deserialize_rotate_with(rotate_with, rotate_with_data);
             }
+
+            // TODO: Add deserialization methods for other components:
+            // - [ ] Collisions
+            // - [ ] Buffs
+            // - [ ] Projectiles
+            // - [ ] AttackCooldown
+            // - [ ] TextureName
+            // - [ ] InDodge
+            // - [ ] NearPlayer
+            // - [ ] NearCamera
+            // - [ ] StaggerCooldown
+            // - [ ] DeathCooldown
+            // - [ ] EnergyNoRegenCooldown
+            // - [ ] VisionToPlayer
+            // - [ ] ProjectileModels
+            
         }
         
         // Second pass: Deserialize components with entity references

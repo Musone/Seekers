@@ -332,4 +332,19 @@ namespace ComponentSerializer {
         }
         rotate_with.following_entity_id = j["following_entity_id"];
     }
+
+    // TODO: Add serialization methods for other components:
+    // - [ ] Collisions
+    // - [ ] Buffs
+    // - [ ] Projectiles
+    // - [ ] AttackCooldown
+    // - [ ] TextureName
+    // - [ ] InDodge
+    // - [ ] NearPlayer
+    // - [ ] NearCamera
+    // - [ ] StaggerCooldown
+    // - [ ] DeathCooldown
+    // - [ ] EnergyNoRegenCooldown
+    // - [ ] VisionToPlayer
+    // - [ ] ProjectileModels
 }
