@@ -33,4 +33,5 @@ namespace Globals {
     extern bool restart_renderer;
     extern float interactable_angle;
     extern float lock_target_range;
+    extern bool is_getting_up;
 }

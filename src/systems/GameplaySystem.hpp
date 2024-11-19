@@ -209,6 +209,12 @@ namespace GameplaySystem {
     inline void rest() {
         Registry& registry = MapManager::get_instance().get_active_registry();
 
+        if (registry.in_rests.has(registry.player)) {
+            registry.in_rests.remove(registry.player);
+            Globals::is_getting_up = true;
+            return;
+        }
+
         LocomotionStats& loco = registry.locomotion_stats.get(registry.player);
         loco.health = loco.max_health;
         loco.energy = loco.max_energy;
@@ -220,6 +226,12 @@ namespace GameplaySystem {
             estus.heal_amount = 120.0f;
         }
 
+        registry.input_state.w_down = false;
+        registry.input_state.a_down = false;
+        registry.input_state.s_down = false;
+        registry.input_state.d_down = false;
+
+        registry.in_rests.emplace(registry.player);
         // maybe respawn enemies here
         // save here or in interaction
     }
@@ -236,6 +248,28 @@ namespace GameplaySystem {
             auto& motion = registry.motions.get(e);
             if (glm::distance(player_motion.position, motion.position) > Globals::lock_target_range || registry.death_cooldowns.has(e)) continue;
             float angle = Common::get_angle_between_item_and_player_view(motion.position, player_motion.position, player_motion.angle);
+            if (angle < min_angle) {
+                registry.locked_target.target = e;
+                min_angle = angle;
+            }
+        }
+        if (min_angle == std::numeric_limits<float>::max()) { // no target was found to lock on
+            registry.locked_target.is_active = false;
+        }
+    }
+
+    inline void switch_target(float delta_mouse_x) {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+
+        if (!registry.locked_target.is_active) return;
+
+        float min_angle = std::numeric_limits<float>::max();
+        auto& player_motion = registry.motions.get(registry.player);
+        for (Entity& e : registry.near_players.entities) {
+            if (!registry.enemies.has(e)) continue;
+            auto& motion = registry.motions.get(e);
+            if (glm::distance(player_motion.position, motion.position) > Globals::lock_target_range || registry.death_cooldowns.has(e)) continue;
+            float angle = Common::get_angle_between_item_and_player_view(motion.position, player_motion.position, player_motion.angle - delta_mouse_x);
             if (angle < min_angle) {
                 registry.locked_target.target = e;
                 min_angle = angle;

@@ -16,6 +16,14 @@ namespace InputManager {
         Registry& registry = MapManager::get_instance().get_active_registry();
         Motion& player_motion = registry.motions.get(registry.player);
 
+        if (Globals::is_getting_up) return;
+
+        if (action == GLFW_PRESS && key == GLFW_KEY_F) {
+            InteractionSystem::interact();
+        }
+
+        if (Globals::is_getting_up || registry.in_rests.has(registry.player)) return;
+
         if (action == GLFW_PRESS) {
             if (key == GLFW_KEY_Z) {
                 Globals::is_3d_mode = !Globals::is_3d_mode;
@@ -36,21 +44,18 @@ namespace InputManager {
                 registry.input_state.d_down = true;
                 TutorialSystem::pass_movements();
             }
-            if (key == GLFW_KEY_Q) {
-                player_motion.rotation_velocity += Globals::cameraRotationSpeed;
-            }
-            if (key == GLFW_KEY_E) {
-                player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
-            }
+            // if (key == GLFW_KEY_Q) {
+            //     player_motion.rotation_velocity += Globals::cameraRotationSpeed;
+            // }
+            // if (key == GLFW_KEY_E) {
+            //     player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
+            // }
             if (key == GLFW_KEY_SPACE) {
                 GameplaySystem::dodge(registry.player);
                 TutorialSystem::pass_dodge();
             }
             if (key == GLFW_KEY_P) {
                 TutorialSystem::skip_tutorial();
-            }
-            if (key == GLFW_KEY_F) {
-                InteractionSystem::interact();
             }
             if (key == GLFW_KEY_1) {
                 GameplaySystem::consume_estus();
@@ -76,17 +81,20 @@ namespace InputManager {
             if (key == GLFW_KEY_D) {
                 registry.input_state.d_down = false;
             }
-            if (key == GLFW_KEY_Q) {
-                player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
-            }
-            if (key == GLFW_KEY_E) {
-                player_motion.rotation_velocity += Globals::cameraRotationSpeed;
-            }
+            // if (key == GLFW_KEY_Q) {
+            //     player_motion.rotation_velocity -= Globals::cameraRotationSpeed;
+            // }
+            // if (key == GLFW_KEY_E) {
+            //     player_motion.rotation_velocity += Globals::cameraRotationSpeed;
+            // }
         }
     }
 
     inline void on_mouse_button_pressed(GLFWwindow* window, int button, int action, int mods) {
         Registry& registry = MapManager::get_instance().get_active_registry();
+
+        if (Globals::is_getting_up || registry.in_rests.has(registry.player)) return;
+
         Attacker& player_attacker = registry.attackers.get(registry.player);
         Weapon& weapon_stats = registry.weapons.get(player_attacker.weapon);
 
@@ -104,12 +112,17 @@ namespace InputManager {
 
     inline void on_mouse_move(GLFWwindow* window, double x, double y) {
         Registry& registry = MapManager::get_instance().get_active_registry();
+
+        if (Globals::is_getting_up || registry.in_rests.has(registry.player)) return;
+
         if (Globals::is_3d_mode) {
-            if (!registry.death_cooldowns.has(registry.player) && !registry.locked_target.is_active) {
-                auto& player_motion = registry.motions.get(registry.player);
-                player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
-                // left neg
-                // right positive
+            if (!registry.death_cooldowns.has(registry.player)) {
+                if (!registry.locked_target.is_active) {
+                    auto& player_motion = registry.motions.get(registry.player);
+                    player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
+                } else {
+                    GameplaySystem::switch_target(x - registry.input_state.mouse_pos.x);
+                }
             }
         }
         registry.input_state.mouse_pos = glm::vec2(x, WINDOW_HEIGHT - y);
