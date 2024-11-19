@@ -146,10 +146,15 @@ private:
                 registry.vision_to_players.get(entity));
         }
 
-        // TODO: Add serialization methods for other components:
-        // - [ ] Collisions
-        // - [ ] TextureName
-        // - [ ] ProjectileModels
+        if (registry.textures.has(entity)) {
+            entity_data["texture"] = ComponentSerializer::serialize_texture_name(
+                registry.textures.get(entity));
+        }
+
+        if (registry.projectile_models.has(entity)) {
+            entity_data["projectile_models"] = ComponentSerializer::serialize_projectile_models(
+                registry.projectile_models.get(entity));
+        }
 
         return entity_data;
     }
@@ -189,11 +194,8 @@ public:
         collect_entities(registry.near_players);
         collect_entities(registry.near_cameras);
         collect_entities(registry.vision_to_players);
-
-        // TODO: Collect other component containers:
-        // - [ ] Collisions
-        // - [ ] TextureName
-        // - [ ] ProjectileModels
+        collect_entities(registry.textures);
+        collect_entities(registry.projectile_models);
         
         // Store global registry state
         registry_data["counter"] = registry.counter;
@@ -356,10 +358,15 @@ public:
                 registry.vision_to_players.emplace(new_entity, timer);
             }
 
-            // TODO: Add deserialization methods for other components:
-            // - [ ] Collisions
-            // - [ ] TextureName
-            // - [ ] ProjectileModels
+            if (entity_data.contains("texture")) {
+                auto& texture = registry.textures.emplace(new_entity);
+                ComponentSerializer::deserialize_texture_name(texture, entity_data["texture"]);
+            }
+
+            if (entity_data.contains("projectile_models")) {
+                auto& models = registry.projectile_models.emplace(new_entity);
+                ComponentSerializer::deserialize_projectile_models(models, entity_data["projectile_models"]);
+            }
             
         }
         

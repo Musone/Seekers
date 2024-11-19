@@ -291,7 +291,7 @@ namespace ComponentSerializer {
         }
     }
     
-    // TextureName serialization (assuming it's a string component)
+    // TextureName serialization
     inline json serialize_texture_name(const TextureName& texture) {
         return {
             {"name", texture.name}
@@ -460,6 +460,21 @@ namespace ComponentSerializer {
             throw SerializationError("Missing timer in vision data");
         }
         timer = j["timer"];
+    }
+
+    // ProjectileModels serialization - we only save if models are present
+    inline json serialize_projectile_models(const ProjectileModels& models) {
+        return {
+            {"has_arrow", models.arrow_model != nullptr},
+            {"has_melee", models.melee_model != nullptr}
+        };
+    }
+
+    inline void deserialize_projectile_models(ProjectileModels& models, const json& j) {
+        // Models should be loaded/assigned elsewhere, we just track if they existed
+        if (!j.contains("has_arrow") || !j.contains("has_melee")) {
+            throw SerializationError("Missing fields in projectile models data");
+        }
     }
 
     // TODO: Add serialization methods for other components:
