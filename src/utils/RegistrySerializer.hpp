@@ -22,14 +22,24 @@ private:
             entity_data["motion"] = ComponentSerializer::serialize_motion(
                 registry.motions.get(entity));
         }
+
+        // LocomotionStats component
+        if (registry.locomotion_stats.has(entity)) {
+            entity_data["locomotion_stats"] = ComponentSerializer::serialize_locomotion_stats(
+                registry.locomotion_stats.get(entity));
+        }
         
         // TODO: Add serialization for other components:
-        // - registry.enemies
-        // - registry.walls
-        // - registry.static_objects
-        // - registry.weapons
-        // - registry.attackers
-        // - registry.ai_components
+        // - [X] registry.motions
+        // - [X] registry.locomotion_stats
+        // - [ ] registry.weapons
+        // - [ ] registry.teams
+        // - [ ] registry.walls
+        // - [ ] registry.enemies
+        // - [ ] registry.static_objects
+        // - [ ] registry.ai_components
+        // - [ ] registry.attackers
+        // - [ ] registry.texture_names
         
         return entity_data;
     }
@@ -56,8 +66,25 @@ public:
                     serialize_entity_components(registry, entity));
             }
         }
+
+        // Serialize entities with LocomotionStats components
+        for (Entity& entity : registry.locomotion_stats.entities) {
+            if (!is_entity_serialized(entity.get_id())) {
+                registry_data["entities"].push_back(serialize_entity_components(registry, entity));
+            }
+        }
         
         // TODO: Add serialization for other component types here
+        // - [X] registry.motions.entities
+        // - [X] registry.locomotion_stats.entities
+        // - [ ] registry.weapons.entities
+        // - [ ] registry.teams.entities
+        // - [ ] registry.walls.entities
+        // - [ ] registry.enemies.entities
+        // - [ ] registry.static_objects.entities
+        // - [ ] registry.ai_components.entities
+        // - [ ] registry.attackers.entities
+        // - [ ] registry.texture_names.entities
 
         // Save player entity if it exists
         if (registry.motions.has(registry.player)) {
@@ -80,8 +107,26 @@ public:
             registry.motions.emplace(entity) = motion;
             Log::log_info("Deserialized motion component for entity ID: " + std::to_string(new_id), __FILE__, __LINE__);
         }
+
+        // Deserialize LocomotionStats component if present
+        if (entity_data.contains("locomotion_stats")) {
+            LocomotionStats stats;
+            ComponentSerializer::deserialize_locomotion_stats(stats, entity_data["locomotion_stats"]);
+            registry.locomotion_stats.emplace(entity) = stats;
+            Log::log_info("Deserialized locomotion stats component for entity ID: " + std::to_string(new_id), __FILE__, __LINE__);
+        }
         
         // TODO: Add deserialization for other components here
+        // - [X] registry.motions
+        // - [X] registry.locomotion_stats
+        // - [ ] registry.weapons
+        // - [ ] registry.teams
+        // - [ ] registry.walls
+        // - [ ] registry.enemies
+        // - [ ] registry.static_objects
+        // - [ ] registry.ai_components
+        // - [ ] registry.attackers
+        // - [ ] registry.texture_names
         
         return entity;
     }
