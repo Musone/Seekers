@@ -96,18 +96,42 @@ private:
                 registry.rotate_withs.get(entity));
         }
 
+        if (registry.buffs.has(entity)) {
+            entity_data["buff"] = ComponentSerializer::serialize_buff(
+                registry.buffs.get(entity));
+        }
+
+        if (registry.projectiles.has(entity)) {
+            entity_data["projectile"] = ComponentSerializer::serialize_projectile(
+                registry.projectiles.get(entity));
+        }
+
+        if (registry.attack_cooldowns.has(entity)) {
+            entity_data["attack_cooldown"] = ComponentSerializer::serialize_cooldown(
+                registry.attack_cooldowns.get(entity).timer);
+        }
+
+        if (registry.stagger_cooldowns.has(entity)) {
+            entity_data["stagger_cooldown"] = ComponentSerializer::serialize_cooldown(
+                registry.stagger_cooldowns.get(entity).timer);
+        }
+
+        if (registry.death_cooldowns.has(entity)) {
+            entity_data["death_cooldown"] = ComponentSerializer::serialize_cooldown(
+                registry.death_cooldowns.get(entity).timer);
+        }
+
+        if (registry.energy_no_regen_cooldowns.has(entity)) {
+            entity_data["energy_no_regen_cooldown"] = ComponentSerializer::serialize_cooldown(
+                registry.energy_no_regen_cooldowns.get(entity).timer);
+        }
+
         // TODO: Add serialization methods for other components:
         // - [ ] Collisions
-        // - [ ] Buffs
-        // - [ ] Projectiles
-        // - [ ] AttackCooldown
         // - [ ] TextureName
         // - [ ] InDodge
         // - [ ] NearPlayer
         // - [ ] NearCamera
-        // - [ ] StaggerCooldown
-        // - [ ] DeathCooldown
-        // - [ ] EnergyNoRegenCooldown
         // - [ ] VisionToPlayer
         // - [ ] ProjectileModels
 
@@ -139,19 +163,19 @@ public:
         collect_entities(registry.ais);
         collect_entities(registry.move_withs);
         collect_entities(registry.rotate_withs);
+        collect_entities(registry.buffs);
+        collect_entities(registry.projectiles);
+        collect_entities(registry.attack_cooldowns);
+        collect_entities(registry.stagger_cooldowns);
+        collect_entities(registry.death_cooldowns);
+        collect_entities(registry.energy_no_regen_cooldowns);
 
         // TODO: Collect other component containers:
         // - [ ] Collisions
-        // - [ ] Buffs
-        // - [ ] Projectiles
-        // - [ ] AttackCooldown
         // - [ ] TextureName
         // - [ ] InDodge
         // - [ ] NearPlayer
         // - [ ] NearCamera
-        // - [ ] StaggerCooldown
-        // - [ ] DeathCooldown
-        // - [ ] EnergyNoRegenCooldown
         // - [ ] VisionToPlayer
         // - [ ] ProjectileModels
         
@@ -260,18 +284,46 @@ public:
                 ComponentSerializer::deserialize_rotate_with(rotate_with, rotate_with_data);
             }
 
+            if (entity_data.contains("buff")) {
+                auto& buff = registry.buffs.emplace(new_entity);
+                ComponentSerializer::deserialize_buff(buff, entity_data["buff"]);
+            }
+
+            if (entity_data.contains("projectile")) {
+                auto& projectile = registry.projectiles.emplace(new_entity);
+                ComponentSerializer::deserialize_projectile(projectile, entity_data["projectile"]);
+            }
+
+            if (entity_data.contains("attack_cooldown")) {
+                float timer;
+                ComponentSerializer::deserialize_cooldown(timer, entity_data["attack_cooldown"]);
+                registry.attack_cooldowns.emplace(new_entity, timer);
+            }
+
+            if (entity_data.contains("stagger_cooldown")) {
+                float timer;
+                ComponentSerializer::deserialize_cooldown(timer, entity_data["stagger_cooldown"]);
+                registry.stagger_cooldowns.emplace(new_entity, timer);
+            }
+
+            if (entity_data.contains("death_cooldown")) {
+                float timer;
+                ComponentSerializer::deserialize_cooldown(timer, entity_data["death_cooldown"]);
+                registry.death_cooldowns.emplace(new_entity, timer);
+            }
+
+            if (entity_data.contains("energy_no_regen_cooldown")) {
+                float timer;
+                ComponentSerializer::deserialize_cooldown(timer, entity_data["energy_no_regen_cooldown"]);
+                registry.energy_no_regen_cooldowns.emplace(new_entity, timer);
+            }
+
             // TODO: Add deserialization methods for other components:
             // - [ ] Collisions
-            // - [ ] Buffs
-            // - [ ] Projectiles
-            // - [ ] AttackCooldown
             // - [ ] TextureName
             // - [ ] InDodge
             // - [ ] NearPlayer
             // - [ ] NearCamera
-            // - [ ] StaggerCooldown
-            // - [ ] DeathCooldown
-            // - [ ] EnergyNoRegenCooldown
             // - [ ] VisionToPlayer
             // - [ ] ProjectileModels
             

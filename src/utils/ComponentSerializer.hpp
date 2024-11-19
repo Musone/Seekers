@@ -333,18 +333,86 @@ namespace ComponentSerializer {
         rotate_with.following_entity_id = j["following_entity_id"];
     }
 
+    // Buff serialization
+    inline json serialize_buff(const Buff& buff) {
+        return {
+            {"remaining_time", buff.remaining_time},
+            {"health", buff.health},
+            {"energy", buff.energy},
+            {"defense", buff.defense},
+            {"power", buff.power},
+            {"agility", buff.agility},
+            {"movement_speed", buff.movement_speed},
+            {"effect", static_cast<int>(buff.effect)}
+        };
+    }
+    
+    inline void deserialize_buff(Buff& buff, const json& j) {
+        if (!j.contains("remaining_time") || !j.contains("health") || 
+            !j.contains("energy") || !j.contains("defense") || 
+            !j.contains("power") || !j.contains("agility") || 
+            !j.contains("movement_speed") || !j.contains("effect")) {
+            throw SerializationError("Missing required fields in buff data");
+        }
+        
+        buff.remaining_time = j["remaining_time"];
+        buff.health = j["health"];
+        buff.energy = j["energy"];
+        buff.defense = j["defense"];
+        buff.power = j["power"];
+        buff.agility = j["agility"];
+        buff.movement_speed = j["movement_speed"];
+        buff.effect = static_cast<BUFF_EFFECT>(j["effect"]);
+    }
+
+    // Cooldown components serialization
+    inline json serialize_cooldown(float timer) {
+        return {{"timer", timer}};
+    }
+    
+    inline void deserialize_cooldown(float& timer, const json& j) {
+        if (!j.contains("timer")) {
+            throw SerializationError("Missing timer in cooldown data");
+        }
+        timer = j["timer"];
+    }
+
+    // Projectile serialization
+    inline json serialize_projectile(const Projectile& proj) {
+        return {
+            {"damage", proj.damage},
+            {"range_remaining", proj.range_remaining},
+            {"stagger_duration", proj.stagger_duration},
+            {"poise_points", proj.poise_points},
+            {"hit_locos", proj.hit_locos},
+            {"projectile_type", static_cast<int>(proj.projectile_type)},
+            {"enchantment", static_cast<int>(proj.enchantment)}
+        };
+    }
+    
+    inline void deserialize_projectile(Projectile& proj, const json& j) {
+        if (!j.contains("damage") || !j.contains("range_remaining") ||
+            !j.contains("stagger_duration") || !j.contains("poise_points") ||
+            !j.contains("hit_locos") || !j.contains("projectile_type") ||
+            !j.contains("enchantment")) {
+            throw SerializationError("Missing required fields in projectile data");
+        }
+        
+        proj.damage = j["damage"];
+        proj.range_remaining = j["range_remaining"];
+        proj.stagger_duration = j["stagger_duration"];
+        proj.poise_points = j["poise_points"];
+        proj.hit_locos = j["hit_locos"].get_to(proj.hit_locos);;
+        proj.projectile_type = static_cast<PROJECTILE_TYPE>(j["projectile_type"]);
+        proj.enchantment = static_cast<ENCHANTMENT>(j["enchantment"]);
+    }
+
     // TODO: Add serialization methods for other components:
     // - [ ] Collisions
-    // - [ ] Buffs
-    // - [ ] Projectiles
-    // - [ ] AttackCooldown
     // - [ ] TextureName
     // - [ ] InDodge
     // - [ ] NearPlayer
     // - [ ] NearCamera
-    // - [ ] StaggerCooldown
-    // - [ ] DeathCooldown
-    // - [ ] EnergyNoRegenCooldown
     // - [ ] VisionToPlayer
     // - [ ] ProjectileModels
 }
