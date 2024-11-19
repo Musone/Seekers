@@ -92,10 +92,12 @@ namespace InputManager {
 
         if (action == GLFW_PRESS) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                if (!registry.attack_cooldowns.has(registry.player)) {
-                    GameplaySystem::attack(registry.player);
-                }
+                GameplaySystem::attack(registry.player);
                 TutorialSystem::pass_attack();
+            }
+            if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                registry.locked_target.is_active = !registry.locked_target.is_active;
+                GameplaySystem::lock_on_target();
             }
         }
     }
@@ -103,9 +105,11 @@ namespace InputManager {
     inline void on_mouse_move(GLFWwindow* window, double x, double y) {
         Registry& registry = MapManager::get_instance().get_active_registry();
         if (Globals::is_3d_mode) {
-            if (!registry.death_cooldowns.has(registry.player)) {
+            if (!registry.death_cooldowns.has(registry.player) && !registry.locked_target.is_active) {
                 auto& player_motion = registry.motions.get(registry.player);
                 player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
+                // left neg
+                // right positive
             }
         }
         registry.input_state.mouse_pos = glm::vec2(x, WINDOW_HEIGHT - y);
@@ -134,6 +138,12 @@ namespace InputManager {
             player_motion.velocity = { temp.x, temp.y };
         } else {
             player_motion.velocity = 0.25f * glm::vec2(temp.x, temp.y);
+        }
+
+        if (registry.locked_target.is_active) {
+            glm::vec2 pos = registry.motions.get(registry.locked_target.target).position;
+            glm::vec2 dir = pos - player_motion.position;
+            player_motion.angle = atan2(dir.y, dir.x);
         }
 
         // update aim
