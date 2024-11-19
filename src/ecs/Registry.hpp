@@ -60,6 +60,7 @@ public:
 	ComponentContainer<LightSource> light_sources;
 	ComponentContainer<Interactable> interactables;
 	ComponentContainer<Estus> estus;
+	ComponentContainer<InRest> in_rests;
 	GridMap grid_map;
 	Entity player;
 	Inventory inventory;
@@ -97,6 +98,7 @@ public:
 		m_registry_list.push_back(&light_sources);
 		m_registry_list.push_back(&interactables);
 		m_registry_list.push_back(&estus);
+		m_registry_list.push_back(&in_rests);
 
 		// create grid map entities
 		grid_map = GridMap();
