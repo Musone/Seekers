@@ -143,9 +143,14 @@ namespace InputManager {
     inline void on_mouse_move(GLFWwindow* window, double x, double y) {
         Registry& registry = MapManager::get_instance().get_active_registry();
         if (Globals::is_3d_mode) {
-            if (!registry.death_cooldowns.has(registry.player) && !registry.locked_target.is_active) {
-                auto& player_motion = registry.motions.get(registry.player);
-                player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
+            if (!registry.death_cooldowns.has(registry.player)) {
+                if (!registry.locked_target.is_active) {
+                    auto& player_motion = registry.motions.get(registry.player);
+                    player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
+                } else {
+                    GameplaySystem::switch_target(x - registry.input_state.mouse_pos.x);
+                }
+
                 // left neg
                 // right positive
             }
