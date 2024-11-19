@@ -3,12 +3,6 @@
 #include "ecs/Registry.hpp"
 #include "systems/ProceduralGenerationSystem.hpp"
 
-enum class MapType {
-    OPEN_WORLD,
-    DUNGEON,
-    NONE
-};
-
 class MapManager {
 public:
     static MapManager& get_instance() {
@@ -94,15 +88,6 @@ public:
     // bool enter_spire_one_flag = false;
     // bool enter_spire_two_flag = false;
     // bool enter_spire_three_flag = false;
-
-    MapType get_current_map_type() const {
-        if (active_registry == open_world_registry.get()) {
-            return MapType::OPEN_WORLD;
-        } else if (active_registry == dungeon_registry.get()) {
-            return MapType::DUNGEON;
-        }
-        return MapType::NONE;
-    }
 
 private:
     MapManager() = default;
