@@ -43,7 +43,11 @@ namespace InteractionSystem {
         } else if (inter_comp.type == INTERACTABLE_TYPE::DUNGEON_EXIT) {
             registry.near_interactable.message = std::string("Press F to Exit Dungeon");
         } else if (inter_comp.type == INTERACTABLE_TYPE::BONFIRE) {
-            registry.near_interactable.message = std::string("Press F to Rest");
+            if (registry.in_rests.has(registry.player)) {
+                registry.near_interactable.message = std::string("Press F to Leave");
+            } else {
+                registry.near_interactable.message = std::string("Press F to Rest");
+            }
         } else if (inter_comp.type == INTERACTABLE_TYPE::SPIRE_ENTRANCE) {
             registry.near_interactable.message = std::string("Press F to Enter Spire");
         } else if (inter_comp.type == INTERACTABLE_TYPE::SPIRE_EXIT) {
