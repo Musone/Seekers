@@ -150,7 +150,8 @@ public:
         m_campfire->set_scale(glm::vec3(0.0375f));
         m_campfire->set_pre_transform(Transform::create_rotation_matrix({PI / 2.0f, 0, 0}));
 
-        m_dungeon_entrance = new StaticModel("models/drenn_entrance_b.stl", m_wall_shader);
+        // m_dungeon_entrance = new StaticModel("models/drenn_entrance_b.stl", m_wall_shader);
+        m_dungeon_entrance = new StaticModel("models/Portal/scene.gltf", m_wall_shader);
         m_dungeon_entrance->set_pre_transform(
             Transform::create_model_matrix(
                 {0, 0, -6},
@@ -436,6 +437,16 @@ public:
                     current_camera_position
                 );
                 m_camera.set_rotation({ PI / 2, 0, _vector_to_angle(glm::vec2(dir_to_look)) - PI / 2});
+
+                // if (reg.locked_target.is_active) {
+                //     if (reg.motions.has(reg.locked_target.target)) {
+                //         dir_to_look = glm::normalize(
+                //             glm::vec3(reg.motions.get(reg.locked_target.target).position, 3.5f) - 
+                //             current_camera_position
+                //         );
+                //     }
+                // }
+
                 if (is_dodging) {
                     float portion_complete = player_model->get_portion_complete_of_curr_animation();
                     camera_speed = portion_complete * base_camera_speed * delta_time_s;
