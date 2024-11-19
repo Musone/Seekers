@@ -48,6 +48,13 @@ public:
     static json serialize_registry(Registry& registry) {
         json registry_data;
         registry_data["entities"] = json::array();
+        registry_data["counter"] = registry.counter;
+        registry_data["camera_pos"] = Serialization::serialize_vec2(registry.camera_pos);
+        
+        // Serialize player ID if it exists
+        if (registry.player) {
+            registry_data["player_id"] = registry.player.get_id();
+        }
         
         // Helper to check if entity already serialized
         auto is_entity_serialized = [&registry_data](unsigned int entity_id) {
@@ -86,11 +93,6 @@ public:
         // - [ ] registry.attackers.entities
         // - [ ] registry.texture_names.entities
 
-        // Save player entity if it exists
-        if (registry.motions.has(registry.player)) {
-            registry_data["player_id"] = registry.player.get_id();
-        }
-        
         return registry_data;
     }
     
@@ -138,32 +140,60 @@ public:
         
         registry.clear_all_components();
         
-        // Variable to store the player entity
-        Entity loaded_player;
-
-        // First pass: create all entities
+        // Restore global registry state
+        if (registry_data.contains("counter")) {
+            registry.counter = registry_data["counter"];
+        }
+        if (registry_data.contains("camera_pos")) {
+            Serialization::deserialize_vec2(registry.camera_pos, registry_data["camera_pos"]);
+        }
+        
+        // First create the player entity if it exists in save
+        if (registry_data.contains("player_id")) {
+            unsigned int player_id = registry_data["player_id"];
+            // Find the player data
+            bool found_player = false;
+            for (const auto& entity_data : registry_data["entities"]) {
+                if (entity_data["id"] == player_id) {
+                    Entity player_entity = Entity();
+                    registry.player = player_entity;
+                    
+                    // Deserialize player components
+                    if (entity_data.contains("motion")) {
+                        auto& motion = registry.motions.emplace(player_entity);
+                        ComponentSerializer::deserialize_motion(motion, entity_data["motion"]);
+                    }
+                    
+                    if (entity_data.contains("locomotion_stats")) {
+                        auto& stats = registry.locomotion_stats.emplace(player_entity);
+                        ComponentSerializer::deserialize_locomotion_stats(stats, entity_data["locomotion_stats"]);
+                    }
+                    
+                    Log::log_info("Created player entity with ID: " + std::to_string(player_entity.get_id()), __FILE__, __LINE__);
+                    found_player = true;
+                    break;
+                }
+            }
+            
+            if (!found_player) {
+                throw SerializationError("Player data not found in save file");
+            }
+        }
+        
+        // Then create all other entities
         for (const auto& entity_data : registry_data["entities"]) {
             if (!entity_data.contains("id")) {
                 throw SerializationError("Entity missing 'id' field");
             }
-            // Note: We are ignoring the saved ID since Entity auto-assigns a new one
-            Entity new_entity = deserialize_entity(registry, entity_data);
             
-            // Identify if this is the player entity
-            if (registry_data.contains("player_id") && entity_data["id"] == registry_data["player_id"]) {
-                loaded_player = new_entity;
-                Log::log_info("Identified player entity with new ID: " + std::to_string(new_entity.get_id()), __FILE__, __LINE__);
+            // Skip if this was the player entity we already created
+            if (registry_data.contains("player_id") && 
+                entity_data["id"] == registry_data["player_id"]) {
+                continue;
             }
-        }
-        
-        // Restore player entity
-        if (registry_data.contains("player_id")) {
-            if (loaded_player.get_id() != 0) { // Assuming Entity() default ID is 0
-                registry.player = loaded_player;
-                Log::log_info("Set registry.player to entity ID " + std::to_string(loaded_player.get_id()), __FILE__, __LINE__);
-            } else {
-                throw SerializationError("Player entity not found in loaded data");
-            }
+            
+            Entity new_entity = deserialize_entity(registry, entity_data);
+            Log::log_info("Created non-player entity with ID: " + std::to_string(new_entity.get_id()), __FILE__, __LINE__);
         }
     }
 };
