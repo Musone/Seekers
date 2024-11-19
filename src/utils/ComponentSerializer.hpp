@@ -70,13 +70,266 @@ namespace ComponentSerializer {
         stats.movement_speed = j["movement_speed"];
     }
 
-    // TODO: Add serialization methods for other components:
-    // - [X] Motion
-    // - [X] LocomotionStats
-    // - [ ] Weapon
-    // - [ ] Team
-    // - [ ] Wall/Enemy/StaticObject
-    // - [ ] AIComponent
-    // - [ ] Attacker
-    // - [ ] TextureName
+    // Weapon serialization
+    inline json serialize_weapon(const Weapon& weapon) {
+        return {
+            {"type", static_cast<int>(weapon.type)},
+            {"damage", weapon.damage},
+            {"range", weapon.range},
+            {"proj_speed", weapon.proj_speed},
+            {"attack_cooldown", weapon.attack_cooldown},
+            {"stagger_duration", weapon.stagger_duration},
+            {"poise_points", weapon.poise_points},
+            {"attack_energy_cost", weapon.attack_energy_cost},
+            {"projectile_type", static_cast<int>(weapon.projectile_type)},
+            {"enchantment", static_cast<int>(weapon.enchantment)}
+        };
+    }
+
+    inline void deserialize_weapon(Weapon& weapon, const json& j) {
+        weapon.type = static_cast<WEAPON_TYPE>(j["type"]);
+        weapon.damage = j["damage"];
+        weapon.range = j["range"];
+        weapon.proj_speed = j["proj_speed"];
+        weapon.attack_cooldown = j["attack_cooldown"];
+        weapon.stagger_duration = j["stagger_duration"];
+        weapon.poise_points = j["poise_points"];
+        weapon.attack_energy_cost = j["attack_energy_cost"];
+        weapon.projectile_type = static_cast<PROJECTILE_TYPE>(j["projectile_type"]);
+        weapon.enchantment = static_cast<ENCHANTMENT>(j["enchantment"]);
+    }
+
+    // Team serialization
+    inline json serialize_team(const Team& team) {
+        return {
+            {"team_id", static_cast<int>(team.team_id)}
+        };
+    }
+
+    inline void deserialize_team(Team& team, const json& j) {
+        team.team_id = static_cast<TEAM_ID>(j["team_id"]);
+    }
+
+    // Attacker serialization
+    inline json serialize_attacker(const Attacker& attacker) {
+        return {
+            {"aim", Serialization::serialize_vec2(attacker.aim)},
+            {"weapon_id", attacker.weapon.get_id()}
+        };
+    }
+
+    inline void deserialize_attacker(Registry& registry, Attacker& attacker, const json& j) {
+        Serialization::deserialize_vec2(attacker.aim, j["aim"]);
+        // Note: weapon entity needs to be handled separately during full deserialization
+    }
+
+    // CollisionBounds serialization
+    inline json serialize_collision_bounds(const CollisionBounds& bounds) {
+        json j = {
+            {"type", static_cast<int>(bounds.type)}
+        };
+
+        switch (bounds.type) {
+            case ColliderType::Circle:
+                j["radius"] = bounds.circle.radius;
+                break;
+            case ColliderType::AABB:
+                j["min"] = Serialization::serialize_vec2(bounds.aabb.min);
+                j["max"] = Serialization::serialize_vec2(bounds.aabb.max);
+                break;
+            case ColliderType::Wall:
+                {
+                    // Serialize AABB
+                    j["aabb_min"] = Serialization::serialize_vec2(bounds.wall->aabb.min);
+                    j["aabb_max"] = Serialization::serialize_vec2(bounds.wall->aabb.max);
+                    
+                    // Serialize edges
+                    json edges_array = json::array();
+                    for (const auto& edge : bounds.wall->edges) {
+                        json edge_obj = {
+                            {"start", Serialization::serialize_vec2(edge.start)},
+                            {"end", Serialization::serialize_vec2(edge.end)},
+                            {"normal", Serialization::serialize_vec2(edge.normal)}
+                        };
+                        edges_array.push_back(edge_obj);
+                    }
+                    j["edges"] = edges_array;
+                }
+                break;
+            case ColliderType::Mesh:
+                {
+                    j["bound_radius"] = bounds.mesh->bound_radius;
+                    
+                    // Serialize vertices
+                    json vertices_array = json::array();
+                    for (const auto& vertex : bounds.mesh->vertices) {
+                        vertices_array.push_back(Serialization::serialize_vec2(vertex));
+                    }
+                    j["vertices"] = vertices_array;
+                }
+                break;
+        }
+        return j;
+    }
+
+    inline void deserialize_collision_bounds(CollisionBounds& bounds, const json& j) {
+        bounds.type = static_cast<ColliderType>(j["type"]);
+        
+        switch (bounds.type) {
+            case ColliderType::Circle:
+                bounds.circle.radius = j["radius"];
+                break;
+            case ColliderType::AABB:
+                Serialization::deserialize_vec2(bounds.aabb.min, j["min"]);
+                Serialization::deserialize_vec2(bounds.aabb.max, j["max"]);
+                break;
+            case ColliderType::Wall:
+                bounds.wall = new WallCollider();
+                // Deserialize AABB
+                Serialization::deserialize_vec2(bounds.wall->aabb.min, j["aabb_min"]);
+                Serialization::deserialize_vec2(bounds.wall->aabb.max, j["aabb_max"]);
+                
+                // Deserialize edges
+                if (j.contains("edges")) {
+                    for (const auto& edge : j["edges"]) {
+                        LineSegment segment;
+                        Serialization::deserialize_vec2(segment.start, edge["start"]);
+                        Serialization::deserialize_vec2(segment.end, edge["end"]);
+                        Serialization::deserialize_vec2(segment.normal, edge["normal"]);
+                        bounds.wall->edges.push_back(segment);
+                    }
+                }
+                break;
+            case ColliderType::Mesh:
+                bounds.mesh = new MeshCollider();
+                bounds.mesh->bound_radius = j["bound_radius"];
+                
+                // Deserialize vertices
+                if (j.contains("vertices")) {
+                    for (const auto& vertex : j["vertices"]) {
+                        glm::vec2 v;
+                        Serialization::deserialize_vec2(v, vertex);
+                        bounds.mesh->vertices.push_back(v);
+                    }
+                }
+                break;
+        }
+    }
+
+    // Wall serialization
+    inline json serialize_wall(const Wall& wall) {
+        return {
+            {"type", static_cast<int>(wall.type)}
+        };
+    }
+    
+    inline void deserialize_wall(Wall& wall, const json& j) {
+        if (!j.contains("type")) {
+            throw SerializationError("Missing type in wall data");
+        }
+        wall.type = static_cast<WALL_TYPE>(j["type"]);
+    }
+    
+    // Enemy serialization
+    inline json serialize_enemy(const Enemy& enemy) {
+        return {
+            {"type", static_cast<int>(enemy.type)}
+        };
+    }
+    
+    inline void deserialize_enemy(Enemy& enemy, const json& j) {
+        if (!j.contains("type")) {
+            throw SerializationError("Missing type in enemy data");
+        }
+        enemy.type = static_cast<ENEMY_TYPE>(j["type"]);
+    }
+    
+    // StaticObject serialization
+    inline json serialize_static_object(const StaticObject& obj) {
+        return {
+            {"type", static_cast<int>(obj.type)}
+        };
+    }
+    
+    inline void deserialize_static_object(StaticObject& obj, const json& j) {
+        if (!j.contains("type")) {
+            throw SerializationError("Missing type in static object data");
+        }
+        obj.type = static_cast<STATIC_OBJECT_TYPE>(j["type"]);
+    }
+    
+    // AIComponent serialization
+    inline json serialize_ai_component(const AIComponent& ai) {
+        json patrol_points = json::array();
+        for (const auto& point : ai.patrol_points) {
+            patrol_points.push_back(Serialization::serialize_vec2(point));
+        }
+        
+        return {
+            {"current_state", static_cast<int>(ai.current_state)},
+            {"target_position", Serialization::serialize_vec2(ai.target_position)},
+            {"detection_radius", ai.detection_radius},
+            {"patrol_points", patrol_points}
+        };
+    }
+    
+    inline void deserialize_ai_component(AIComponent& ai, const json& j) {
+        if (!j.contains("current_state") || !j.contains("target_position") ||
+            !j.contains("detection_radius") || !j.contains("patrol_points")) {
+            throw SerializationError("Missing required fields in AI component data");
+        }
+        
+        ai.current_state = static_cast<AI_STATE>(j["current_state"]);
+        Serialization::deserialize_vec2(ai.target_position, j["target_position"]);
+        ai.detection_radius = j["detection_radius"];
+        
+        ai.patrol_points.clear();
+        for (const auto& point : j["patrol_points"]) {
+            glm::vec2 patrol_point;
+            Serialization::deserialize_vec2(patrol_point, point);
+            ai.patrol_points.push_back(patrol_point);
+        }
+    }
+    
+    // TextureName serialization (assuming it's a string component)
+    inline json serialize_texture_name(const TextureName& texture) {
+        return {
+            {"name", texture.name}
+        };
+    }
+    
+    inline void deserialize_texture_name(TextureName& texture, const json& j) {
+        if (!j.contains("name")) {
+            throw SerializationError("Missing name in texture data");
+        }
+        texture.name = j["name"];
+    }
+
+    // MoveWith serialization
+    inline json serialize_move_with(const MoveWith& move_with) {
+        return {
+            {"following_entity_id", move_with.following_entity_id}
+        };
+    }
+    
+    inline void deserialize_move_with(MoveWith& move_with, const json& j) {
+        if (!j.contains("following_entity_id")) {
+            throw SerializationError("Missing following_entity_id in move_with data");
+        }
+        move_with.following_entity_id = j["following_entity_id"];
+    }
+
+    // RotateWith serialization
+    inline json serialize_rotate_with(const RotateWith& rotate_with) {
+        return {
+            {"following_entity_id", rotate_with.following_entity_id}
+        };
+    }
+    
+    inline void deserialize_rotate_with(RotateWith& rotate_with, const json& j) {
+        if (!j.contains("following_entity_id")) {
+            throw SerializationError("Missing following_entity_id in rotate_with data");
+        }
+        rotate_with.following_entity_id = j["following_entity_id"];
+    }
 }

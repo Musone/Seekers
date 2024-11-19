@@ -2,6 +2,16 @@
 #include "ComponentSerializer.hpp"
 #include "ecs/Registry.hpp"
 #include <vector>
+#include <set>
+
+namespace std {
+    template<>
+    struct less<Entity> {
+        bool operator()(const Entity& lhs, const Entity& rhs) const {
+            return lhs.get_id() < rhs.get_id();
+        }
+    };
+}
 
 class RegistrySerializer {
 private:
@@ -13,124 +23,123 @@ private:
         return it != map.end() ? it->second : Entity();
     }
 
+    static bool is_valid_entity(const Entity& entity) {
+        return entity.get_id() != 0;  // Assuming 0 is invalid ID
+    }
+
     static json serialize_entity_components(Registry& registry, Entity entity) {
         json entity_data;
         entity_data["id"] = entity.get_id();
         
-        // Motion component
         if (registry.motions.has(entity)) {
             entity_data["motion"] = ComponentSerializer::serialize_motion(
                 registry.motions.get(entity));
         }
 
-        // LocomotionStats component
         if (registry.locomotion_stats.has(entity)) {
             entity_data["locomotion_stats"] = ComponentSerializer::serialize_locomotion_stats(
                 registry.locomotion_stats.get(entity));
         }
+
+        if (registry.weapons.has(entity)) {
+            entity_data["weapon"] = ComponentSerializer::serialize_weapon(
+                registry.weapons.get(entity));
+        }
+    
+        if (registry.teams.has(entity)) {
+            entity_data["team"] = ComponentSerializer::serialize_team(
+                registry.teams.get(entity));
+        }
         
-        // TODO: Add serialization for other components:
-        // - [X] registry.motions
-        // - [X] registry.locomotion_stats
-        // - [ ] registry.weapons
-        // - [ ] registry.teams
-        // - [ ] registry.walls
-        // - [ ] registry.enemies
-        // - [ ] registry.static_objects
-        // - [ ] registry.ai_components
-        // - [ ] registry.attackers
-        // - [ ] registry.texture_names
+        if (registry.attackers.has(entity)) {
+            const auto& attacker = registry.attackers.get(entity);
+            json attacker_data;
+            attacker_data["aim"] = Serialization::serialize_vec2(attacker.aim);
+            if (is_valid_entity(attacker.weapon)) {
+                attacker_data["weapon_id"] = attacker.weapon.get_id();
+            }
+            entity_data["attacker"] = attacker_data;
+        }
         
+        if (registry.collision_bounds.has(entity)) {
+            entity_data["collision_bounds"] = ComponentSerializer::serialize_collision_bounds(
+                registry.collision_bounds.get(entity));
+        }
+
+        if (registry.walls.has(entity)) {
+            entity_data["wall"] = ComponentSerializer::serialize_wall(
+                registry.walls.get(entity));
+        }
+
+        if (registry.enemies.has(entity)) {
+            entity_data["enemy"] = ComponentSerializer::serialize_enemy(
+                registry.enemies.get(entity));
+        }
+
+        if (registry.static_objects.has(entity)) {
+            entity_data["static_object"] = ComponentSerializer::serialize_static_object(
+                registry.static_objects.get(entity));
+        }
+
+        if (registry.ais.has(entity)) {
+            entity_data["ai"] = ComponentSerializer::serialize_ai_component(
+                registry.ais.get(entity));
+        }
+
+        if (registry.move_withs.has(entity)) {
+            entity_data["move_with"] = ComponentSerializer::serialize_move_with(
+                registry.move_withs.get(entity));
+        }
+
+        if (registry.rotate_withs.has(entity)) {
+            entity_data["rotate_with"] = ComponentSerializer::serialize_rotate_with(
+                registry.rotate_withs.get(entity));
+        }
+
         return entity_data;
     }
 
 public:
     static json serialize_registry(Registry& registry) {
         json registry_data;
-        registry_data["entities"] = json::array();
+        std::set<Entity> serialized_entities;
+        
+        // Collect all unique entities from component containers
+        auto collect_entities = [&serialized_entities](const auto& component_container) {
+            for (const auto& entity : component_container.entities) {
+                serialized_entities.insert(entity);
+            }
+        };
+        
+        // Collect from all component containers
+        collect_entities(registry.motions);
+        collect_entities(registry.locomotion_stats);
+        collect_entities(registry.weapons);
+        collect_entities(registry.teams);
+        collect_entities(registry.attackers);
+        collect_entities(registry.collision_bounds);
+        collect_entities(registry.walls);
+        collect_entities(registry.enemies);
+        collect_entities(registry.static_objects);
+        collect_entities(registry.ais);
+        collect_entities(registry.move_withs);
+        collect_entities(registry.rotate_withs);
+        
+        // Store global registry state
         registry_data["counter"] = registry.counter;
         registry_data["camera_pos"] = Serialization::serialize_vec2(registry.camera_pos);
         
-        // Serialize player ID if it exists
         if (registry.player) {
             registry_data["player_id"] = registry.player.get_id();
         }
         
-        // Helper to check if entity already serialized
-        auto is_entity_serialized = [&registry_data](unsigned int entity_id) {
-            for (const auto& entity_json : registry_data["entities"]) {
-                if (entity_json["id"] == entity_id) {
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        // Serialize entities with Motion components
-        for (Entity& entity : registry.motions.entities) {
-            if (!is_entity_serialized(entity.get_id())) {
-                registry_data["entities"].push_back(
-                    serialize_entity_components(registry, entity));
-            }
-        }
-
-        // Serialize entities with LocomotionStats components
-        for (Entity& entity : registry.locomotion_stats.entities) {
-            if (!is_entity_serialized(entity.get_id())) {
-                registry_data["entities"].push_back(serialize_entity_components(registry, entity));
-            }
+        // Serialize all collected entities
+        registry_data["entities"] = json::array();
+        for (Entity entity : serialized_entities) {
+            registry_data["entities"].push_back(serialize_entity_components(registry, entity));
         }
         
-        // TODO: Add serialization for other component types here
-        // - [X] registry.motions.entities
-        // - [X] registry.locomotion_stats.entities
-        // - [ ] registry.weapons.entities
-        // - [ ] registry.teams.entities
-        // - [ ] registry.walls.entities
-        // - [ ] registry.enemies.entities
-        // - [ ] registry.static_objects.entities
-        // - [ ] registry.ai_components.entities
-        // - [ ] registry.attackers.entities
-        // - [ ] registry.texture_names.entities
-
         return registry_data;
-    }
-    
-    static Entity deserialize_entity(Registry& registry, const json& entity_data) {
-        // Create a new entity (ID is auto-assigned)
-        Entity entity;
-        unsigned int new_id = entity.get_id();
-        Log::log_info("Deserialized entity with new ID: " + std::to_string(new_id), __FILE__, __LINE__);
-        
-        // Deserialize Motion component if present
-        if (entity_data.contains("motion")) {
-            Motion motion;
-            ComponentSerializer::deserialize_motion(motion, entity_data["motion"]);
-            registry.motions.emplace(entity) = motion;
-            Log::log_info("Deserialized motion component for entity ID: " + std::to_string(new_id), __FILE__, __LINE__);
-        }
-
-        // Deserialize LocomotionStats component if present
-        if (entity_data.contains("locomotion_stats")) {
-            LocomotionStats stats;
-            ComponentSerializer::deserialize_locomotion_stats(stats, entity_data["locomotion_stats"]);
-            registry.locomotion_stats.emplace(entity) = stats;
-            Log::log_info("Deserialized locomotion stats component for entity ID: " + std::to_string(new_id), __FILE__, __LINE__);
-        }
-        
-        // TODO: Add deserialization for other components here
-        // - [X] registry.motions
-        // - [X] registry.locomotion_stats
-        // - [ ] registry.weapons
-        // - [ ] registry.teams
-        // - [ ] registry.walls
-        // - [ ] registry.enemies
-        // - [ ] registry.static_objects
-        // - [ ] registry.ai_components
-        // - [ ] registry.attackers
-        // - [ ] registry.texture_names
-        
-        return entity;
     }
     
     static void deserialize_registry(Registry& registry, const json& registry_data) {
@@ -139,8 +148,8 @@ public:
         }
         
         registry.clear_all_components();
+        EntityMap entity_map;
         
-        // Restore global registry state
         if (registry_data.contains("counter")) {
             registry.counter = registry_data["counter"];
         }
@@ -148,52 +157,96 @@ public:
             Serialization::deserialize_vec2(registry.camera_pos, registry_data["camera_pos"]);
         }
         
-        // First create the player entity if it exists in save
-        if (registry_data.contains("player_id")) {
-            unsigned int player_id = registry_data["player_id"];
-            // Find the player data
-            bool found_player = false;
-            for (const auto& entity_data : registry_data["entities"]) {
-                if (entity_data["id"] == player_id) {
-                    Entity player_entity = Entity();
-                    registry.player = player_entity;
-                    
-                    // Deserialize player components
-                    if (entity_data.contains("motion")) {
-                        auto& motion = registry.motions.emplace(player_entity);
-                        ComponentSerializer::deserialize_motion(motion, entity_data["motion"]);
-                    }
-                    
-                    if (entity_data.contains("locomotion_stats")) {
-                        auto& stats = registry.locomotion_stats.emplace(player_entity);
-                        ComponentSerializer::deserialize_locomotion_stats(stats, entity_data["locomotion_stats"]);
-                    }
-                    
-                    Log::log_info("Created player entity with ID: " + std::to_string(player_entity.get_id()), __FILE__, __LINE__);
-                    found_player = true;
-                    break;
-                }
-            }
-            
-            if (!found_player) {
-                throw SerializationError("Player data not found in save file");
-            }
-        }
-        
-        // Then create all other entities
+        // First pass: Create entities and deserialize independent components
         for (const auto& entity_data : registry_data["entities"]) {
             if (!entity_data.contains("id")) {
                 throw SerializationError("Entity missing 'id' field");
             }
             
-            // Skip if this was the player entity we already created
-            if (registry_data.contains("player_id") && 
-                entity_data["id"] == registry_data["player_id"]) {
-                continue;
+            unsigned int old_id = entity_data["id"];
+            Entity new_entity = Entity();
+            entity_map.push_back({old_id, new_entity});
+            
+            if (registry_data.contains("player_id") && old_id == registry_data["player_id"]) {
+                registry.player = new_entity;
             }
             
-            Entity new_entity = deserialize_entity(registry, entity_data);
-            Log::log_info("Created non-player entity with ID: " + std::to_string(new_entity.get_id()), __FILE__, __LINE__);
+            if (entity_data.contains("motion")) {
+                auto& motion = registry.motions.emplace(new_entity);
+                ComponentSerializer::deserialize_motion(motion, entity_data["motion"]);
+            }
+            
+            if (entity_data.contains("locomotion_stats")) {
+                auto& stats = registry.locomotion_stats.emplace(new_entity);
+                ComponentSerializer::deserialize_locomotion_stats(stats, entity_data["locomotion_stats"]);
+            }
+            
+            if (entity_data.contains("weapon")) {
+                auto& weapon = registry.weapons.emplace(new_entity);
+                ComponentSerializer::deserialize_weapon(weapon, entity_data["weapon"]);
+            }
+            
+            if (entity_data.contains("team")) {
+                auto& team = registry.teams.emplace(new_entity);
+                ComponentSerializer::deserialize_team(team, entity_data["team"]);
+            }
+            
+            if (entity_data.contains("collision_bounds")) {
+                auto& bounds = registry.collision_bounds.emplace(new_entity);
+                ComponentSerializer::deserialize_collision_bounds(bounds, entity_data["collision_bounds"]);
+            }
+            
+            if (entity_data.contains("wall")) {
+                auto& wall = registry.walls.emplace(new_entity);
+                ComponentSerializer::deserialize_wall(wall, entity_data["wall"]);
+            }
+            
+            if (entity_data.contains("enemy")) {
+                auto& enemy = registry.enemies.emplace(new_entity);
+                ComponentSerializer::deserialize_enemy(enemy, entity_data["enemy"]);
+            }
+            
+            if (entity_data.contains("static_object")) {
+                auto& static_obj = registry.static_objects.emplace(new_entity);
+                ComponentSerializer::deserialize_static_object(static_obj, entity_data["static_object"]);
+            }
+            
+            if (entity_data.contains("ai")) {
+                auto& ai = registry.ais.emplace(new_entity);
+                ComponentSerializer::deserialize_ai_component(ai, entity_data["ai"]);
+            }
+            
+            if (entity_data.contains("move_with")) {
+                auto& move_with = registry.move_withs.emplace(new_entity);
+                ComponentSerializer::deserialize_move_with(move_with, entity_data["move_with"]);
+            }
+            
+            if (entity_data.contains("rotate_with")) {
+                auto& rotate_with = registry.rotate_withs.emplace(new_entity);
+                ComponentSerializer::deserialize_rotate_with(rotate_with, entity_data["rotate_with"]);
+            }
+        }
+        
+        // Second pass: Deserialize components with entity references
+        for (const auto& entity_data : registry_data["entities"]) {
+            Entity current_entity = find_mapped_entity(entity_map, entity_data["id"]);
+            
+            if (entity_data.contains("attacker")) {
+                auto& attacker = registry.attackers.emplace(current_entity);
+                const auto& attacker_data = entity_data["attacker"];
+                Serialization::deserialize_vec2(attacker.aim, attacker_data["aim"]);
+                
+                if (attacker_data.contains("weapon_id")) {
+                    Entity weapon_entity = find_mapped_entity(entity_map, attacker_data["weapon_id"]);
+                    if (is_valid_entity(weapon_entity)) {
+                        attacker.weapon = weapon_entity;
+                    }
+                }
+            }
+        }
+        
+        if (registry_data.contains("player_id") && !registry.player) {
+            throw SerializationError("Player entity specified but not found in entities");
         }
     }
 };
