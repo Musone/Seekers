@@ -14,12 +14,13 @@ uniform float u_light_strengths[MAX_LIGHTS];
 uniform vec3 u_light_colours[MAX_LIGHTS];
 uniform int u_num_lights;
 
-uniform vec3 u_object_color;
+// uniform vec3 u_object_color;
 uniform sampler2D u_texture;
 
 out vec4 frag_color;
 
 void main() {
+    // vec4 stop_warning_me = vec4(u_object_color, 420.0);
     // Check texture transparency
     vec4 tex_color = texture(u_texture, v_uv);
     if (tex_color.w < 0.01) {
