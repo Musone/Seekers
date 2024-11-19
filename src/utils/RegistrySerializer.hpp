@@ -126,13 +126,29 @@ private:
                 registry.energy_no_regen_cooldowns.get(entity).timer);
         }
 
+        if (registry.in_dodges.has(entity)) {
+            entity_data["in_dodge"] = ComponentSerializer::serialize_in_dodge(
+                registry.in_dodges.get(entity));
+        }
+
+        if (registry.near_players.has(entity)) {
+            entity_data["near_player"] = ComponentSerializer::serialize_near_player(
+                registry.near_players.get(entity));
+        }
+
+        if (registry.near_cameras.has(entity)) {
+            entity_data["near_camera"] = ComponentSerializer::serialize_near_camera(
+                registry.near_cameras.get(entity));
+        }
+
+        if (registry.vision_to_players.has(entity)) {
+            entity_data["vision_to_player"] = ComponentSerializer::serialize_vision_to_player(
+                registry.vision_to_players.get(entity));
+        }
+
         // TODO: Add serialization methods for other components:
         // - [ ] Collisions
         // - [ ] TextureName
-        // - [ ] InDodge
-        // - [ ] NearPlayer
-        // - [ ] NearCamera
-        // - [ ] VisionToPlayer
         // - [ ] ProjectileModels
 
         return entity_data;
@@ -169,14 +185,14 @@ public:
         collect_entities(registry.stagger_cooldowns);
         collect_entities(registry.death_cooldowns);
         collect_entities(registry.energy_no_regen_cooldowns);
+        collect_entities(registry.in_dodges);
+        collect_entities(registry.near_players);
+        collect_entities(registry.near_cameras);
+        collect_entities(registry.vision_to_players);
 
         // TODO: Collect other component containers:
         // - [ ] Collisions
         // - [ ] TextureName
-        // - [ ] InDodge
-        // - [ ] NearPlayer
-        // - [ ] NearCamera
-        // - [ ] VisionToPlayer
         // - [ ] ProjectileModels
         
         // Store global registry state
@@ -318,13 +334,31 @@ public:
                 registry.energy_no_regen_cooldowns.emplace(new_entity, timer);
             }
 
+            if (entity_data.contains("in_dodge")) {
+                auto& dodge = registry.in_dodges.emplace(new_entity, 
+                    glm::vec2(0), glm::vec2(0), 0, 0); // Temporary values, will be overwritten
+                ComponentSerializer::deserialize_in_dodge(dodge, entity_data["in_dodge"]);
+            }
+
+            if (entity_data.contains("near_player")) {
+                registry.near_players.emplace(new_entity);
+                // No data to deserialize
+            }
+
+            if (entity_data.contains("near_camera")) {
+                registry.near_cameras.emplace(new_entity);
+                // No data to deserialize
+            }
+
+            if (entity_data.contains("vision_to_player")) {
+                float timer;
+                ComponentSerializer::deserialize_vision_to_player(timer, entity_data["vision_to_player"]);
+                registry.vision_to_players.emplace(new_entity, timer);
+            }
+
             // TODO: Add deserialization methods for other components:
             // - [ ] Collisions
             // - [ ] TextureName
-            // - [ ] InDodge
-            // - [ ] NearPlayer
-            // - [ ] NearCamera
-            // - [ ] VisionToPlayer
             // - [ ] ProjectileModels
             
         }

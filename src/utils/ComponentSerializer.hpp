@@ -407,12 +407,63 @@ namespace ComponentSerializer {
         proj.enchantment = static_cast<ENCHANTMENT>(j["enchantment"]);
     }
 
+    // InDodge serialization
+    inline json serialize_in_dodge(const InDodge& dodge) {
+        return {
+            {"source", Serialization::serialize_vec2(dodge.source)},
+            {"destination", Serialization::serialize_vec2(dodge.destination)},
+            {"origin_time", dodge.origin_time},
+            {"duration", dodge.duration}
+        };
+    }
+    
+    inline void deserialize_in_dodge(InDodge& dodge, const json& j) {
+        if (!j.contains("source") || !j.contains("destination") ||
+            !j.contains("origin_time") || !j.contains("duration")) {
+            throw SerializationError("Missing required fields in dodge data");
+        }
+        
+        glm::vec2 source, destination;
+        Serialization::deserialize_vec2(source, j["source"]);
+        Serialization::deserialize_vec2(destination, j["destination"]);
+        float origin_time = j["origin_time"];
+        float duration = j["duration"];
+        
+        dodge = InDodge(source, destination, origin_time, duration);
+    }
+
+    // NearPlayer serialization (empty struct)
+    inline json serialize_near_player(const NearPlayer&) {
+        return json::object();
+    }
+    
+    inline void deserialize_near_player(NearPlayer&, const json&) {
+        // Nothing to deserialize
+    }
+
+    // NearCamera serialization (empty struct)
+    inline json serialize_near_camera(const NearCamera&) {
+        return json::object();
+    }
+    
+    inline void deserialize_near_camera(NearCamera&, const json&) {
+        // Nothing to deserialize
+    }
+
+    // VisionToPlayer serialization
+    inline json serialize_vision_to_player(const VisionToPlayer& vision) {
+        return {{"timer", vision.timer}};
+    }
+    
+    inline void deserialize_vision_to_player(float& timer, const json& j) {
+        if (!j.contains("timer")) {
+            throw SerializationError("Missing timer in vision data");
+        }
+        timer = j["timer"];
+    }
+
     // TODO: Add serialization methods for other components:
     // - [ ] Collisions
     // - [ ] TextureName
-    // - [ ] InDodge
-    // - [ ] NearPlayer
-    // - [ ] NearCamera
-    // - [ ] VisionToPlayer
     // - [ ] ProjectileModels
 }
