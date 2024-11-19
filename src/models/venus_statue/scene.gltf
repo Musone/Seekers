@@ -1,0 +1,200 @@
+{
+  "accessors": [
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 6186,
+      "max": [
+        2.1009299755096436,
+        6.821897506713867,
+        1.9362664222717285
+      ],
+      "min": [
+        -1.708309292793274,
+        -5.2752556800842285,
+        -1.7906018495559692
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 74232,
+      "componentType": 5126,
+      "count": 6186,
+      "max": [
+        0.9999812841415405,
+        0.9998334050178528,
+        0.9996155500411987
+      ],
+      "min": [
+        -0.9999087452888489,
+        -0.9999319314956665,
+        -0.9998140335083008
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 6186,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "Enlil Scan (https://sketchfab.com/enlil.scan)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/polygonal-venus-statue-low-poly-2616cc59a42f4cfb88879e50a2cca1a5",
+      "title": "Polygonal Venus Statue - Low Poly"
+    },
+    "generator": "Sketchfab-12.68.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 24744,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 148464,
+      "byteOffset": 24744,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 173208,
+      "uri": "scene.bin"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "venus",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.7076012526892669,
+          0.6030663034435779,
+          0.18491619222722805,
+          1.0
+        ],
+        "metallicFactor": 0.2973794997113306,
+        "roughnessFactor": 0.658595343055965
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "venus_venus_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0
+          },
+          "indices": 2,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.220446049250313e-16,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        2.220446049250313e-16,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "a2058afe318645d6b15993ec55d61d32.fbx"
+    },
+    {
+      "children": [
+        3
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4
+      ],
+      "matrix": [
+        -8.291659744066667,
+        1.0154354573025318e-15,
+        0.053737712397232414,
+        0.0,
+        -8.754979874376707e-09,
+        8.2918300628661,
+        -1.3508822643525877e-06,
+        0.0,
+        -0.05373771239723169,
+        -1.3509112557746403e-06,
+        -8.291659744066557,
+        0.0,
+        0.09305965900421143,
+        43.74287033081055,
+        0.5470439195632935,
+        1.0
+      ],
+      "name": "venus"
+    },
+    {
+      "mesh": 0,
+      "name": "venus_venus_0"
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ]
+}
