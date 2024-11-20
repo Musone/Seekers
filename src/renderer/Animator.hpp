@@ -20,6 +20,7 @@ private:
     bool m_should_repeat = true;
     bool m_should_finish = false;
     float m_duration_s = 1.0f;
+    bool m_should_play_backwards = false;
 
     void _step_time() {
         float current_time = float(m_timer.GetTime()) / 1000000.0f;  // Convert microseconds to seconds
@@ -80,11 +81,12 @@ public:
         return m_animation_time / m_duration_s;
     }
 
-    void set_animation(Animation* animation, const float& duration_s = 1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+    void set_animation(Animation* animation, const float& duration_s = 1.0f, const bool& should_repeat = true, const bool& should_finish = false, const bool& should_play_backwards = false) {
         m_current_animation = animation;
         m_animation_time = 0.0f;
         m_should_repeat = should_repeat;
         m_should_finish = should_finish;
+        m_should_play_backwards = should_play_backwards;
         m_duration_s = duration_s;
         m_time_of_prev_frame = float(m_timer.GetTime()) / 1000000.0f;  // Convert microseconds to seconds
     }
@@ -111,6 +113,10 @@ public:
         for (size_t i = 0; i < frames.size(); ++i) {
             const auto& frame = frames[i];
             // float delta_time = std::abs(m_animation_time - frame.get_time_stamp());
+            float animation_time = m_animation_time;
+            if (m_should_play_backwards) {
+                animation_time = m_duration_s - m_animation_time;
+            }
             float delta_time = std::abs(m_animation_time - (m_duration_s * (frame.get_time_stamp() / m_current_animation->get_duration())));
             if (delta_time < smallest_delta) {
                 smallest_delta = delta_time;
