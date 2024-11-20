@@ -65,6 +65,7 @@ class Application {
     Texture2D* m_hud_health_texture_bacground;
     Texture2D* m_redbull;
     Texture2D* m_lock_on_reticle;
+    Texture2D* m_home_page;
 
     glm::vec3 m_light_pos;
     glm::vec3 m_light_colour;
@@ -105,6 +106,7 @@ public:
         m_map_texture = new Texture2D("jungle_tile_1.jpg");
         // m_wall_texture = new Texture2D("tileset_1.png"); // bricks
         m_wall_texture = new Texture2D("jungle_tile_1.jpg");
+        m_home_page = new Texture2D("menu/seekers_background.JPG");
         
         m_wall_shader = new Shader("StaticBlinnPhong");
         m_floor_shader = new Shader("StaticBlinnPhong");
@@ -206,6 +208,9 @@ public:
         m_health_shader = new Shader("MapDemoHealth");
         m_hud_health_shader = new Shader("TexturedHealthBar");
 
+        FontStuff& font_monkey = FontStuff::get_instance();
+        font_monkey.font_init("fonts/Cano-VGMwz.ttf", 42, m_renderer->get_window_width(), m_renderer->get_window_height());
+
         // Registry& registry = MapManager::get_instance().get_active_registry();
         // auto& models = registry.projectile_models.emplace(Entity());
         // models.arrow_model = m_arrow;
@@ -220,6 +225,8 @@ public:
     }
 
     void run_game_loop() { 
+        _draw_home_page();
+        
         // Get keys inputs from input manager
         m_renderer->set_on_key_callback_fn((void*)InputManager::on_key_pressed);
         m_renderer->set_on_mouse_move_callback_fn((void*)InputManager::on_mouse_move);
@@ -346,9 +353,6 @@ public:
 
         AnimatedModel* player_model;
 
-        FontStuff& font_monkey = FontStuff::get_instance();
-        font_monkey.font_init("fonts/Cano-VGMwz.ttf", 42, m_renderer->get_window_width(), m_renderer->get_window_height());
-
         Globals::ptr_window = m_renderer->get_window();
 
         Timer timer;
@@ -369,10 +373,18 @@ public:
 
             world.step(delta_time * 0.001f);
             Registry& reg = MapManager::get_instance().get_active_registry();
+            MapManager& map_monkey = MapManager::get_instance();
+            // if (map_monkey.enter_dungeon_flag || map_monkey.return_open_world_flag || Globals::show_loading_screen) {
+            //     // loading screen?
+            //     _draw_home_page();
+            //     world.step(delta_time * 0.001f);
+            // }
 
             // Game restart
             if (Globals::restart_renderer) {
                 Globals::restart_renderer = false;
+                _draw_home_page();
+
                 m_camera.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
                 for (auto& kv : m_models) {
                     if (kv.second == nullptr) { continue; }
@@ -413,6 +425,12 @@ public:
                 // delta_time = delta_time_s = 0.00000000001f;
                 time_of_last_frame = float(timer.GetTime());
                 _update_theme();
+            }
+
+            if (map_monkey.enter_dungeon_flag || map_monkey.return_open_world_flag) {
+                // loading screen?
+                _draw_home_page();
+                continue;
             }
 
             // Camera stuff
@@ -503,8 +521,8 @@ public:
 
                 for (const auto& entity : reg.light_sources.entities) {
                     if (counter > MAX_LIGHTS) { break; }
-                    if (!reg.near_cameras.has(entity)) { continue; }
                     const LightSource& light_source = reg.light_sources.get(entity);
+                    if (!reg.near_cameras.has(entity) && light_source.type != LIGHT_SOURCE_TYPE::SUN) { continue; }
                     ++counter;
                     m_light_positions.push_back(light_source.pos);
                     m_light_brightnesses.push_back(light_source.brightness);
@@ -1222,7 +1240,7 @@ private:
                 m_campfire->set_rotation_z(motion.angle);
                 m_campfire->draw();
             } else if (static_object.type == STATIC_OBJECT_TYPE::PORTAL) {
-                m_wall_shader->set_uniform_3f("u_object_color", { 56.0f/ 255.0f, 52.0f / 255.0f, 98.0f / 255.0f });
+                m_wall_shader->set_uniform_3f("u_object_color", { 1.0f, 1.0f, 1.0f });
                 m_portal->set_position(glm::vec3(motion.position, 0.0f));
                 m_portal->set_rotation_z(motion.angle);
                 m_portal->draw();
@@ -1392,6 +1410,35 @@ private:
         m_renderer->draw(m_square_mesh, *m_hud_health_shader);
     }
 
+    void _draw_home_page() {
+        m_renderer->begin_draw();
+        m_renderer->disable_depth_test();
+
+        const float aspect_ratio = float(m_renderer->get_window_width()) / float(m_renderer->get_window_height());
+        const float width = 2 / aspect_ratio;
+        const float height = 2;
+
+        const float pos_x = 0.0f;
+        const float pos_y = 0.0f;
+
+        m_hud_health_shader->set_uniform_3f("u_colour", glm::vec3(1.0f));
+        m_hud_health_shader->set_uniform_1i("u_texture", m_home_page->bind(28));
+        m_hud_health_shader->set_uniform_1f("u_health_percentage", 1);
+        m_hud_health_shader->set_uniform_mat4f("u_model", 
+            Transform::create_model_matrix(
+                {pos_x, pos_y, 0.0f},
+                {0, 0, 0},
+                {width, height, 1}
+            )
+        );
+        m_renderer->draw(m_square_mesh, *m_hud_health_shader);
+
+        FontStuff::get_instance().render_text("Loading...", m_renderer->get_window_width() / 2.0f - m_renderer->get_window_width() / 8.0f, m_renderer->get_window_height() / 12.0f, 3, {1, 1, 1});
+
+        m_renderer->enable_depth_test();
+        m_renderer->end_draw();
+    }
+
     std::vector<Texture2D*> m_tutorial_slides;
 
     void _load_tutorial() {
@@ -1470,7 +1517,7 @@ private:
         
         if (reg.near_interactable.is_active) {
             FontStuff& font_monkey = FontStuff::get_instance();
-            font_monkey.render_text(reg.near_interactable.message.c_str(), m_renderer->get_window_width() / 2.0f, m_renderer->get_window_height() / 2.0f, 1, {0.5, 0, 0});
+            font_monkey.render_text(reg.near_interactable.message.c_str(), m_renderer->get_window_width() / 2.0f, m_renderer->get_window_height() / 2.0f, 1, {0.95f, 0, 0});
         }
 
         m_renderer->enable_depth_test();

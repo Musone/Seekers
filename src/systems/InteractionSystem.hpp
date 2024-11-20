@@ -65,8 +65,10 @@ namespace InteractionSystem {
         Entity& interactable = registry.near_interactable.interactable;
         Interactable& comp = registry.interactables.get(interactable);
         if (comp.type == INTERACTABLE_TYPE::DUNGEON_ENTRANCE) {
+            Globals::show_loading_screen = true;
             MapManager::get_instance().enter_dungeon_flag = true;
         } else if (comp.type == INTERACTABLE_TYPE::DUNGEON_EXIT) {
+            Globals::show_loading_screen = true;
             MapManager::get_instance().return_open_world_flag = true;
         } else if (comp.type == INTERACTABLE_TYPE::BONFIRE) {
             GameplaySystem::rest();

@@ -24,4 +24,5 @@ namespace Globals {
     float lock_target_range = 20.0f;
     bool is_getting_up = false;
     void* ptr_window = nullptr;
+    bool show_loading_screen = false;
 }
