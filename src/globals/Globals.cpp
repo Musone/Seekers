@@ -20,4 +20,8 @@ namespace Globals {
     float energy_no_regen_duration = 2.0f;
     bool restart_renderer = true;
     float static_render_distance = 200.0f;
+    float interactable_angle = 3.1415926535 / 6.0f;
+    float lock_target_range = 20.0f;
+    bool is_getting_up = false;
+    void* ptr_window = nullptr;
 }

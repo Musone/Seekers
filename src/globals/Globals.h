@@ -31,4 +31,8 @@ namespace Globals {
     extern float energy_no_regen_duration;
     extern float static_render_distance;
     extern bool restart_renderer;
+    extern float interactable_angle;
+    extern float lock_target_range;
+    extern bool is_getting_up;
+    extern void* ptr_window;
 }

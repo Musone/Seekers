@@ -371,6 +371,16 @@ namespace ProceduralGenerationSystem {
         }
     }
 
+    inline void place_light_sources(Registry& registry, const std::vector<Room>& rooms) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<> color_dist(0.0f, 1.0f);
+        for (const auto& room : rooms) {
+            glm::vec3 color = glm::vec3(color_dist(gen), color_dist(gen), color_dist(gen));
+            EntityFactory::create_light_source(registry, glm::vec3(room.position, 6.0f), 10.0f, color, LIGHT_SOURCE_TYPE::MAGIC_ORB);
+        }
+    }
+
     inline Room create_spawn_room(std::vector<Room>& rooms, int map_width, int map_height) {
         Room room;
         room.size = glm::vec2(20, 20);
@@ -391,7 +401,10 @@ namespace ProceduralGenerationSystem {
 
     inline void create_enemies_and_objects(Registry& registry, const std::vector<Room>& rooms, const Room& spawn_room) {
         for (const Room& room : rooms) {
-            if (room == spawn_room) {continue;}
+            if (room == spawn_room) {
+                EntityFactory::create_portal(registry, {room.position.x - 9, room.position.y}, INTERACTABLE_TYPE::DUNGEON_EXIT);
+                continue;
+            }
 
             std::vector<std::pair<int, int>> enemies_and_objects_pos;
 
@@ -439,6 +452,7 @@ namespace ProceduralGenerationSystem {
         connect_rooms(rooms, hallways, map, map_width, map_height);
         place_walls_on_map(map);
         create_walls(registry, map);
+        place_light_sources(registry, rooms);
 
         create_enemies_and_objects(registry, rooms, spawn_room);
 

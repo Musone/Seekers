@@ -453,6 +453,7 @@ namespace CollisionSystem {
             // Remove the dead entity
             // registry.remove_all_components_of(loco);
             registry.death_cooldowns.emplace(loco, 5);
+            if (registry.locked_target.target == loco) GameplaySystem::lock_on_target();
         }
     }
 

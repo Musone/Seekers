@@ -2,6 +2,7 @@
 
 #include "ecs/Registry.hpp"
 #include "systems/ProceduralGenerationSystem.hpp"
+#include "systems/OpenWorldMapCreatorSystem.hpp"
 
 class MapManager {
 public:
@@ -19,9 +20,25 @@ public:
             auto player = EntityFactory::create_player(registry, glm::vec2(0.0f, 0.0f));
             auto weapon = EntityFactory::create_weapon(registry, glm::vec2(10.0f, 5.0f), 10.0f);
             registry.attackers.get(player).weapon = weapon;
+            while (registry.inventory.estus.size() < 3) {
+                Entity e = Entity();
+                registry.inventory.estus.push_back(e);
+                auto& estus = registry.estus.emplace(e);
+                estus.heal_amount = 120.0f;
+            }
+
+            // add dungeon entrance and bonfire here
+            EntityFactory::create_bonfire(registry, glm::vec2(10.0f, 10.0f));
+            EntityFactory::create_portal(registry, glm::vec2(-10.0f, -10.0f), INTERACTABLE_TYPE::DUNGEON_ENTRANCE);
+
+            EntityFactory::create_light_source(registry, {0, 0, 100}, 150, {1, 1, 0.8}, LIGHT_SOURCE_TYPE::SUN);
+
+            OpenWorldMapCreatorSystem::populate_open_world_map(registry);
 
             saved_world_registry = std::make_unique<Registry>();
             *saved_world_registry = *open_world_registry;
+
+            set_theme("OpenWorld");
         }
         // if (!spire_one_registry) {
         //     spire_one_registry = std::make_unique<Registry>();
@@ -47,6 +64,7 @@ public:
         open_world_registry = std::make_unique<Registry>();
         *open_world_registry = *saved_world_registry;
         active_registry = open_world_registry.get();
+        set_theme("OpenWorld");
         Globals::restart_renderer = true;
     }
 
@@ -89,16 +107,35 @@ public:
     // bool enter_spire_two_flag = false;
     // bool enter_spire_three_flag = false;
 
+    std::string sky_texture_name;
+    std::string wall_texture_name;
+    std::string floor_texture_name;
+
+
 private:
     MapManager() = default;
     MapManager(const MapManager&) = delete;
     void operator=(const MapManager&) = delete;
+
+    void set_theme(std::string theme) {
+        if (theme == "OpenWorld") {
+            sky_texture_name = "Blue sky.png";
+            wall_texture_name = "jungle_tile_1.jpg";
+            floor_texture_name = "ground.jpg";
+        } else if (theme == "Dungeon") {
+            sky_texture_name = "random_skybox.png";
+            wall_texture_name = "jungle_tile_1.jpg";
+            floor_texture_name = "jungle_tile_1.jpg";
+        }
+    }
 
     void enter_dungeon() {
         dungeon_registry = std::make_unique<Registry>();
         active_registry = dungeon_registry.get();
         move_player_comps(*open_world_registry, *dungeon_registry);
         ProceduralGenerationSystem::generate_dungeon(*dungeon_registry, MAP_WIDTH, MAP_HEIGHT, dungeon_registry->motions.get(dungeon_registry->player));
+        // dungeon_registry->projectile_models = open_world_registry->projectile_models;
+        set_theme("Dungeon");
         Globals::restart_renderer = true;
     }
 
@@ -108,6 +145,7 @@ private:
         move_player_comps(*dungeon_registry, *open_world_registry);
         open_world_registry->motions.get(open_world_registry->player) = player_motion_copy;
         dungeon_registry.reset();
+        set_theme("OpenWorld");
         Globals::restart_renderer = true;
     }
 
@@ -139,6 +177,9 @@ private:
         auto& collision_from = from.collision_bounds.get(from.player);
         auto& collision_to = to.collision_bounds.emplace(to.player);
         collision_to = collision_from;
+
+        to.inventory = from.inventory;
+        to.estus = from.estus;
     }
 
     void move_player_weapon(Registry& from, Registry& to, Entity weapon) {

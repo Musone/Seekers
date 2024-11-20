@@ -122,6 +122,14 @@ namespace GameplaySystem {
                 registry.near_cameras.emplace(e);
             }
         }
+
+        for (Entity& e : registry.light_sources.entities) {
+            auto& light_pos = registry.light_sources.get(e).pos;
+            float distance_camera = glm::distance(registry.camera_pos, glm::vec2(light_pos.x, light_pos.y));
+            if (distance_camera < Globals::static_render_distance) {
+                if (!registry.near_cameras.has(e)) registry.near_cameras.emplace(e);
+            }
+        }
     }
 
     inline void deplete_energy(const Entity& e, const float amount) {
@@ -184,5 +192,102 @@ namespace GameplaySystem {
 
         float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
         audio.play_dodge(distance_from_camera);
+    }
+
+    inline void consume_estus() {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+        std::vector<Entity>& esti = registry.inventory.estus;
+
+        if (esti.size() <= 0 || registry.attack_cooldowns.has(registry.player) || registry.stagger_cooldowns.has(registry.player) || registry.death_cooldowns.has(registry.player)) return;
+
+        LocomotionStats& loco =  registry.locomotion_stats.get(registry.player);
+        loco.health = fmin(loco.health + registry.estus.get(esti[0]).heal_amount, loco.max_health);
+        registry.remove_all_components_of(esti[0]);
+        esti.erase(esti.begin());
+    }
+
+    inline void rest() {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+
+        if (registry.in_rests.has(registry.player)) {
+            registry.in_rests.remove(registry.player);
+            Globals::is_getting_up = true;
+            return;
+        }
+
+        LocomotionStats& loco = registry.locomotion_stats.get(registry.player);
+        loco.health = loco.max_health;
+        loco.energy = loco.max_energy;
+        loco.poise = loco.max_poise;
+        while (registry.inventory.estus.size() < 3) {
+            Entity e = Entity();
+            registry.inventory.estus.push_back(e);
+            auto& estus = registry.estus.emplace(e);
+            estus.heal_amount = 120.0f;
+        }
+
+        registry.input_state.w_down = false;
+        registry.input_state.a_down = false;
+        registry.input_state.s_down = false;
+        registry.input_state.d_down = false;
+
+        registry.in_rests.emplace(registry.player);
+        // maybe respawn enemies here
+        // save here or in interaction
+    }
+
+    inline void lock_on_target() {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+        GLFWwindow* window = static_cast<GLFWwindow*>(Globals::ptr_window);
+
+        if (!registry.locked_target.is_active) {
+            double ypos;
+            glfwGetCursorPos(window, nullptr, &ypos);
+            double xpos = WINDOW_WIDTH * (1 - registry.motions.get(registry.player).angle) / 2;
+            glfwSetCursorPos(window, xpos, ypos);
+            return;
+        }
+
+        float min_angle = std::numeric_limits<float>::max();
+        auto& player_motion = registry.motions.get(registry.player);
+        for (Entity& e : registry.near_players.entities) {
+            if (!registry.enemies.has(e)) continue;
+            auto& motion = registry.motions.get(e);
+            if (glm::distance(player_motion.position, motion.position) > Globals::lock_target_range || registry.death_cooldowns.has(e)) continue;
+            float angle = Common::get_angle_between_item_and_player_view(motion.position, player_motion.position, player_motion.angle);
+            if (angle < min_angle) {
+                registry.locked_target.target = e;
+                min_angle = angle;
+            }
+        }
+        if (min_angle == std::numeric_limits<float>::max()) { // no target was found to lock on
+            registry.locked_target.is_active = false;
+            double ypos;
+            glfwGetCursorPos(window, nullptr, &ypos);
+            double xpos = WINDOW_WIDTH * (1 - registry.motions.get(registry.player).angle) / 2;
+            glfwSetCursorPos(window, xpos, ypos);
+        }
+    }
+
+    inline void switch_target(float delta_mouse_x) {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+
+        if (!registry.locked_target.is_active) return;
+
+        float min_angle = std::numeric_limits<float>::max();
+        auto& player_motion = registry.motions.get(registry.player);
+        for (Entity& e : registry.near_players.entities) {
+            if (!registry.enemies.has(e)) continue;
+            auto& motion = registry.motions.get(e);
+            if (glm::distance(player_motion.position, motion.position) > Globals::lock_target_range || registry.death_cooldowns.has(e)) continue;
+            float angle = Common::get_angle_between_item_and_player_view(motion.position, player_motion.position, player_motion.angle - delta_mouse_x);
+            if (angle < min_angle) {
+                registry.locked_target.target = e;
+                min_angle = angle;
+            }
+        }
+        if (min_angle == std::numeric_limits<float>::max()) { // no target was found to lock on
+            registry.locked_target.is_active = false;
+        }
     }
 };

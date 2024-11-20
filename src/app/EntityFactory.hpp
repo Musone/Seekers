@@ -314,12 +314,13 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_tree(Registry& registry, glm::vec2 position) {
+    inline Entity create_tree(Registry& registry, glm::vec2 position, float angle = 0.0f) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
         motion.position = position;
         motion.scale = glm::vec2(4.0f, 4.0f);
+        motion.angle = angle;
 
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;
@@ -331,8 +332,102 @@ namespace EntityFactory {
         registry.collision_bounds.emplace(entity,
             CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
-        registry.rotate_withs.emplace(entity, registry.player);
+        return entity;
+    }
+
+    inline Entity create_rock(Registry& registry, glm::vec2 position) {
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.scale = glm::vec2(13.0f);
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& tree = registry.static_objects.emplace(entity);
+        tree.type = STATIC_OBJECT_TYPE::ROCK;
+
+        // Use circle collider for tree
+        registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
         return entity;
+    }
+
+    inline Entity create_bonfire(Registry& registry, glm::vec2 position) {
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.scale = glm::vec2(1.5f);
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& obj = registry.static_objects.emplace(entity);
+        obj.type = STATIC_OBJECT_TYPE::BONFIRE;
+
+        // Use circle collider for tree
+        registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+
+        auto& interact = registry.interactables.emplace(entity);
+        interact.entity = entity;
+        interact.range = 5.0f;
+        interact.type = INTERACTABLE_TYPE::BONFIRE;
+
+        LightSource& light_source = registry.light_sources.emplace(entity);
+        light_source.pos = glm::vec3(position, 1.0f);
+        light_source.brightness = 10.0f;
+        light_source.colour = glm::vec3(252.0f/255.0f, 116.0f/255.0f, 5.0f/255.0f);
+
+        return entity;
+    }
+
+    // needs new static type
+    inline Entity create_portal(Registry& registry, glm::vec2 position, INTERACTABLE_TYPE type) {
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.scale = glm::vec2(1.5f);
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::NEUTRAL;
+
+        auto& tree = registry.static_objects.emplace(entity);
+        tree.type = STATIC_OBJECT_TYPE::PORTAL;
+
+        registry.collision_bounds.emplace(entity,
+           CollisionBounds::create_wall({0.1, 7.7}, 0));
+
+        auto& interact = registry.interactables.emplace(entity);
+        interact.entity = entity;
+        interact.range = 5.0f;
+        interact.type = type;
+
+        auto entity_l1 = Entity();
+        auto& light_source1 = registry.light_sources.emplace(entity_l1);
+        light_source1.brightness = 5.0f;
+        light_source1.colour = glm::vec3(103.f/255.f,0.f/255.f,116.f/255.f);
+        light_source1.pos = glm::vec3(position.x - 0.2, position.y, 2.0f);
+        auto entity_l2 = Entity();
+        auto& light_source2 = registry.light_sources.emplace(entity_l2);
+        light_source2.brightness = 5.0f;
+        light_source2.colour = glm::vec3(103.f/255.f,0.f/255.f,116.f/255.f);
+        light_source2.pos = glm::vec3(position.x + 0.2, position.y, 2.0f);
+
+        return entity;
+    }
+
+    inline Entity create_light_source(Registry& registry, glm::vec3 position, float brightness, glm::vec3 colour, LIGHT_SOURCE_TYPE type = LIGHT_SOURCE_TYPE::LIGHT_SOURCE_TYPE_COUNT) {
+        Entity e = Entity();
+        LightSource& light_source = registry.light_sources.emplace(e);
+        light_source.pos = position;
+        light_source.brightness = brightness;
+        light_source.colour = colour;
+        light_source.type = type;
+        return e;
     }
 };

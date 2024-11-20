@@ -6,6 +6,7 @@
 
 #include "systems/GameplaySystem.hpp"
 #include "systems/PhysicsSystem.hpp"
+#include "systems/InteractionSystem.hpp"
 #include "systems/GridMapSystem.hpp"
 #include "systems/AudioSystem.hpp"
 
@@ -155,6 +156,8 @@ void World::step(float elapsed_ms) {
     AISystem::AI_step();
 
     InputManager::handle_inputs_per_frame();
+
+    InteractionSystem::update_near_interactable();
 
     GameplaySystem::update_cooldowns(elapsed_ms);
     GameplaySystem::update_regen_stats(elapsed_ms);

@@ -18,7 +18,6 @@ extern "C"
 int main(void) {
     try {
         Application app;
-        // app.run_demo_world();
         app.run_game_loop();
         // Testing::try_assimp();
     } catch (const std::exception& e) {

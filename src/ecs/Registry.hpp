@@ -3,6 +3,7 @@
 #include <ecs/ComponentContainer.hpp>
 #include <components/Components.hpp>
 #include <ecs/IComponentContainer.hpp>
+#include <optional>
 
 #include <iostream>
 
@@ -13,6 +14,17 @@ struct InputState {
 	bool s_down = false;
 	bool d_down = false;
 	glm::vec2 mouse_pos = {0.f, 0.f};
+};
+
+struct NearInteractable {
+	bool is_active = false;
+	Entity interactable;
+	std::string message;
+};
+
+struct LockedTarget {
+	bool is_active = false;
+	Entity target;
 };
 
 class Registry {
@@ -46,8 +58,15 @@ public:
 	ComponentContainer<EnergyNoRegenCooldown> energy_no_regen_cooldowns;
 	ComponentContainer<VisionToPlayer> vision_to_players;
 	ComponentContainer<ProjectileModels> projectile_models;
+	ComponentContainer<LightSource> light_sources;
+	ComponentContainer<Interactable> interactables;
+	ComponentContainer<Estus> estus;
+	ComponentContainer<InRest> in_rests;
 	GridMap grid_map;
 	Entity player;
+	Inventory inventory;
+	NearInteractable near_interactable;
+	LockedTarget locked_target;
 	InputState input_state;
 	glm::vec2 camera_pos;
 
@@ -77,6 +96,10 @@ public:
 		m_registry_list.push_back(&energy_no_regen_cooldowns);
 		m_registry_list.push_back(&vision_to_players);
 		m_registry_list.push_back(&projectile_models);
+		m_registry_list.push_back(&light_sources);
+		m_registry_list.push_back(&interactables);
+		m_registry_list.push_back(&estus);
+		m_registry_list.push_back(&in_rests);
 
 		// create grid map entities
 		grid_map = GridMap();
@@ -98,6 +121,8 @@ public:
 
 			grid_map = other.grid_map;
 			player = other.player;
+			inventory = other.inventory;
+			near_interactable = other.near_interactable;
 			input_state = other.input_state;
 			camera_pos = other.camera_pos;
 
@@ -140,5 +165,37 @@ public:
 			}
 		}
 		return false;
+	}
+
+	template<typename T>
+	T* try_get_component(Entity e) {
+		auto* container = get_container<T>();
+		if (container && container->has(e)) {
+			return &container->get(e);
+		}
+		return nullptr;
+	}
+
+	template<typename T>
+	T& get_or_emplace_component(Entity e) {
+		auto* container = get_container<T>();
+		if (container) {
+			if (container->has(e)) {
+				return container->get(e);
+			}
+			return container->emplace(e);
+		}
+		throw std::runtime_error("Component type not registered");
+	}
+
+private:
+	template<typename T>
+	ComponentContainer<T>* get_container() {
+		for (auto* container : m_registry_list) {
+			if (auto* typed = dynamic_cast<ComponentContainer<T>*>(container)) {
+				return typed;
+			}
+		}
+		return nullptr;
 	}
 };

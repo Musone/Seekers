@@ -39,16 +39,10 @@ struct Buff
 };
 
 // Added for future milestones
-struct InventoryItem
-{
-    unsigned int item_id;
-    unsigned int count;
-};
-
-// Added for future milestones
 struct Inventory
 {
-    std::vector<InventoryItem> items;
+    std::vector<Entity> estus;
+    std::vector<Entity> weapons;
     unsigned int capacity;
 };
 
@@ -84,8 +78,11 @@ enum class INTERACTABLE_TYPE
 {
     ITEM_PICKUP = 0,
     DUNGEON_ENTRANCE = ITEM_PICKUP + 1,
-    SPIRE_ENTRANCE = DUNGEON_ENTRANCE + 1,
-    NPC = SPIRE_ENTRANCE + 1,
+    DUNGEON_EXIT = DUNGEON_ENTRANCE + 1,
+    SPIRE_ENTRANCE = DUNGEON_EXIT + 1,
+    SPIRE_EXIT = SPIRE_ENTRANCE + 1,
+    BONFIRE = SPIRE_EXIT + 1,
+    NPC = BONFIRE + 1,
     INTERACTABLE_TYPE_COUNT = NPC + 1
 };
 
@@ -95,7 +92,8 @@ const int interactable_type_count = (int)INTERACTABLE_TYPE::INTERACTABLE_TYPE_CO
 struct Interactable
 {
     INTERACTABLE_TYPE type;
-    unsigned int associated_id; // For items, dungeons, or NPCs
+    Entity entity;
+    float range;
 };
 
 struct InDodge {
@@ -106,10 +104,18 @@ struct InDodge {
     InDodge(glm::vec2 source, glm::vec2 destination, float origin_time, float duration) : source(source), destination(destination), origin_time(origin_time), duration(duration) {}
 };
 
+struct InRest {
+
+};
+
 struct NearPlayer {
 
 };
 
 struct NearCamera {
 
+};
+
+struct Estus {
+    float heal_amount;
 };
