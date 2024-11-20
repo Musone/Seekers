@@ -66,7 +66,6 @@ class Application {
     Texture2D* m_redbull;
     Texture2D* m_lock_on_reticle;
     Texture2D* m_home_page;
-    Texture2D* m_home_page;
 
     glm::vec3 m_light_pos;
     glm::vec3 m_light_colour;
@@ -208,9 +207,6 @@ public:
 
         m_health_shader = new Shader("MapDemoHealth");
         m_hud_health_shader = new Shader("TexturedHealthBar");
-
-        FontStuff& font_monkey = FontStuff::get_instance();
-        font_monkey.font_init("fonts/Cano-VGMwz.ttf", 42, m_renderer->get_window_width(), m_renderer->get_window_height());
 
         FontStuff& font_monkey = FontStuff::get_instance();
         font_monkey.font_init("fonts/Cano-VGMwz.ttf", 42, m_renderer->get_window_width(), m_renderer->get_window_height());
@@ -377,12 +373,6 @@ public:
 
             world.step(delta_time * 0.001f);
             Registry& reg = MapManager::get_instance().get_active_registry();
-            MapManager& map_monkey = MapManager::get_instance();
-            // if (map_monkey.enter_dungeon_flag || map_monkey.return_open_world_flag || Globals::show_loading_screen) {
-            //     // loading screen?
-            //     _draw_home_page();
-            //     world.step(delta_time * 0.001f);
-            // }
             MapManager& map_monkey = MapManager::get_instance();
             // if (map_monkey.enter_dungeon_flag || map_monkey.return_open_world_flag || Globals::show_loading_screen) {
             //     // loading screen?

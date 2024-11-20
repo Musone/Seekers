@@ -1,5 +1,9 @@
 #pragma once
+
+#include <fstream>
 #include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 #include <glm/vec2.hpp>
 #include <stdexcept>
 

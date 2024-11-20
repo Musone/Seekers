@@ -571,33 +571,33 @@ namespace ComponentSerializer {
     }
 
     // NearInteractable serialization
-    inline json serialize_near_interactable(const NearInteractable& near) {
+    inline json serialize_near_interactable(const NearInteractable& near_or_something) {
         json data = {
-            {"is_active", near.is_active},
-            {"message", near.message}
+            {"is_active", near_or_something.is_active},
+            {"message", near_or_something.message}
         };
-        if (near.is_active) {
-            data["interactable_id"] = near.interactable.get_id();
+        if (near_or_something.is_active) {
+            data["interactable_id"] = near_or_something.interactable.get_id();
         }
         return data;
     }
 
-    inline void deserialize_near_interactable(NearInteractable& near, const json& j, 
+    inline void deserialize_near_interactable(NearInteractable& near_or_something, const json& j, 
         const std::vector<std::pair<unsigned int, Entity>>& entity_map) {
         if (!j.contains("is_active") || !j.contains("message")) {
-            throw SerializationError("Missing fields in near interactable data");
+            throw SerializationError("Missing fields in near_or_something interactable data");
         }
         
-        near.is_active = j["is_active"];
-        near.message = j["message"];
+        near_or_something.is_active = j["is_active"];
+        near_or_something.message = j["message"];
         
-        if (near.is_active && j.contains("interactable_id")) {
+        if (near_or_something.is_active && j.contains("interactable_id")) {
             auto it = std::find_if(entity_map.begin(), entity_map.end(),
                 [id = j["interactable_id"]](const auto& pair) { 
                     return pair.first == id; 
                 });
             if (it != entity_map.end()) {
-                near.interactable = it->second;
+                near_or_something.interactable = it->second;
             }
         }
     }

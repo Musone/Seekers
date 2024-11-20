@@ -6,6 +6,10 @@
 #include <sys/stat.h>
 #include "app/MapManager.hpp"
 
+#ifdef _WIN32
+    #include <direct.h>
+#endif
+
 using json = nlohmann::json;
 
 struct SaveSlot {

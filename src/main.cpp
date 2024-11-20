@@ -1,4 +1,6 @@
 #define NOMINMAX
+#undef far
+#undef near
 
 #include <utils/Log.hpp>
 #include <app/Application.hpp>
