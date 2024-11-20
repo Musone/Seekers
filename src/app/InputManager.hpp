@@ -161,7 +161,7 @@ namespace InputManager {
                     auto& player_motion = registry.motions.get(registry.player);
                     player_motion.angle = (WINDOW_WIDTH / 2 - x) / (WINDOW_WIDTH / 2);
                 } else {
-                    GameplaySystem::switch_target(x - registry.input_state.mouse_pos.x);
+                    GameplaySystem::switch_target((x - registry.input_state.mouse_pos.x) / (WINDOW_WIDTH / 2));
                 }
             }
         }
