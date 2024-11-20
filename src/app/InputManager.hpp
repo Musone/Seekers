@@ -62,12 +62,12 @@ namespace InputManager {
                 GameplaySystem::consume_estus();
             }
 
-            if (key == GLFW_KEY_G) {
-                MapManager::get_instance().enter_dungeon_flag = true;
-            }
-            if (key == GLFW_KEY_R) {
-                MapManager::get_instance().return_open_world_flag = true;
-            }
+            // if (key == GLFW_KEY_G) {
+            //     MapManager::get_instance().enter_dungeon_flag = true;
+            // }
+            // if (key == GLFW_KEY_R) {
+            //     MapManager::get_instance().return_open_world_flag = true;
+            // }
 
             if (key == GLFW_KEY_F5) {
                 // Simple save with timestamp as name
