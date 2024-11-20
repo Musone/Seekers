@@ -372,19 +372,12 @@ namespace ProceduralGenerationSystem {
     }
 
     inline void place_light_sources(Registry& registry, const std::vector<Room>& rooms) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<> color_dist(0.0f, 1.0f);
         for (const auto& room : rooms) {
-            Entity e = Entity();
-            LightSource& light_source = registry.light_sources.emplace(e);
-            light_source.pos = glm::vec3(room.position, 6.0f);
-            light_source.brightness = 10.0f;
-
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_real_distribution<> red(0.0f, 1.0f);
-            std::uniform_real_distribution<> green(0.0f, 1.0f);
-            std::uniform_real_distribution<> blue(0.0f, 1.0f);
-
-            light_source.colour = {red(gen), green(gen), blue(gen)};
+            glm::vec3 color = glm::vec3(color_dist(gen), color_dist(gen), color_dist(gen));
+            EntityFactory::create_light_source(registry, glm::vec3(room.position, 6.0f), 10.0f, color, LIGHT_SOURCE_TYPE::MAGIC_ORB);
         }
     }
 
