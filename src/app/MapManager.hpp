@@ -31,6 +31,8 @@ public:
             EntityFactory::create_bonfire(registry, glm::vec2(10.0f, 10.0f));
             EntityFactory::create_portal(registry, glm::vec2(-10.0f, -10.0f), INTERACTABLE_TYPE::DUNGEON_ENTRANCE);
 
+            EntityFactory::create_light_source(registry, {0, 0, 100}, 150, {1, 1, 0.8}, LIGHT_SOURCE_TYPE::SUN);
+
             OpenWorldMapCreatorSystem::populate_open_world_map(registry);
 
             saved_world_registry = std::make_unique<Registry>();
@@ -108,6 +110,7 @@ public:
     std::string sky_texture_name;
     std::string wall_texture_name;
     std::string floor_texture_name;
+
 
 private:
     MapManager() = default;

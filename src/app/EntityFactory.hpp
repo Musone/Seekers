@@ -377,6 +377,11 @@ namespace EntityFactory {
         interact.range = 5.0f;
         interact.type = INTERACTABLE_TYPE::BONFIRE;
 
+        LightSource& light_source = registry.light_sources.emplace(entity);
+        light_source.pos = glm::vec3(position, 0.1f);
+        light_source.brightness = 5.0f;
+        light_source.colour = glm::vec3(252/255, 116/255, 5/255);
+
         return entity;
     }
 
@@ -403,5 +408,14 @@ namespace EntityFactory {
         interact.type = type;
 
         return entity;
+    }
+
+    inline Entity create_light_source(Registry& registry, glm::vec3 position, float brightness, glm::vec3 colour, LIGHT_SOURCE_TYPE type = LIGHT_SOURCE_TYPE::LIGHT_SOURCE_TYPE_COUNT) {
+        Entity e = Entity();
+        LightSource& light_source = registry.light_sources.emplace(e);
+        light_source.pos = position;
+        light_source.brightness = brightness;
+        light_source.colour = colour;
+        light_source.type = type;
     }
 };

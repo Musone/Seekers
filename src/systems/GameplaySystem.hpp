@@ -127,7 +127,7 @@ namespace GameplaySystem {
             auto& light_pos = registry.light_sources.get(e).pos;
             float distance_camera = glm::distance(registry.camera_pos, glm::vec2(light_pos.x, light_pos.y));
             if (distance_camera < Globals::static_render_distance) {
-                registry.near_cameras.emplace(e);
+                if (!registry.near_cameras.has(e)) registry.near_cameras.emplace(e);
             }
         }
     }
