@@ -107,7 +107,7 @@ public:
         // m_wall_texture = new Texture2D("tileset_1.png"); // bricks
         m_wall_texture = new Texture2D("jungle_tile_1.jpg");
         m_home_page = new Texture2D("menu/seekers_background.JPG");
-
+        
         m_wall_shader = new Shader("StaticBlinnPhong");
         m_floor_shader = new Shader("StaticBlinnPhong");
 
@@ -224,9 +224,9 @@ public:
         delete m_floor_shader;
     }
 
-    void run_game_loop() {
+    void run_game_loop() { 
         _draw_home_page();
-
+        
         // Get keys inputs from input manager
         m_renderer->set_on_key_callback_fn((void*)InputManager::on_key_pressed);
         m_renderer->set_on_mouse_move_callback_fn((void*)InputManager::on_mouse_move);
@@ -385,6 +385,8 @@ public:
                 Globals::restart_renderer = false;
                 _draw_home_page();
 
+                _draw_home_page();
+
                 m_camera.set_position({ 0, 0, CAMERA_DISTANCE_FROM_WORLD });
                 for (auto& kv : m_models) {
                     if (kv.second == nullptr) { continue; }
@@ -425,6 +427,12 @@ public:
                 // delta_time = delta_time_s = 0.00000000001f;
                 time_of_last_frame = float(timer.GetTime());
                 _update_theme();
+            }
+
+            if (map_monkey.enter_dungeon_flag || map_monkey.return_open_world_flag) {
+                // loading screen?
+                _draw_home_page();
+                continue;
             }
 
             if (map_monkey.enter_dungeon_flag || map_monkey.return_open_world_flag) {
@@ -522,6 +530,7 @@ public:
                 for (const auto& entity : reg.light_sources.entities) {
                     if (counter > MAX_LIGHTS) { break; }
                     const LightSource& light_source = reg.light_sources.get(entity);
+                    if (!reg.near_cameras.has(entity) && light_source.type != LIGHT_SOURCE_TYPE::SUN) { continue; }
                     if (!reg.near_cameras.has(entity) && light_source.type != LIGHT_SOURCE_TYPE::SUN) { continue; }
                     ++counter;
                     m_light_positions.push_back(light_source.pos);
@@ -1240,6 +1249,7 @@ private:
                 m_campfire->set_rotation_z(motion.angle);
                 m_campfire->draw();
             } else if (static_object.type == STATIC_OBJECT_TYPE::PORTAL) {
+                m_wall_shader->set_uniform_3f("u_object_color", { 1.0f, 1.0f, 1.0f });
                 m_wall_shader->set_uniform_3f("u_object_color", { 1.0f, 1.0f, 1.0f });
                 m_portal->set_position(glm::vec3(motion.position, 0.0f));
                 m_portal->set_rotation_z(motion.angle);

@@ -35,4 +35,5 @@ namespace Globals {
     extern float lock_target_range;
     extern bool is_getting_up;
     extern void* ptr_window;
+    extern bool show_loading_screen;
 }

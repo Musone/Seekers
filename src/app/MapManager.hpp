@@ -82,14 +82,12 @@ public:
     // checks the flags and switches the maps if necessary
     void switch_map() {
         if (return_open_world_flag) {
-            return_open_world_flag = false;
             if (active_registry == open_world_registry.get()) {
                 std::cout << "Already in open world. Return operation is illegal." << std::endl;
                 return;
             }
             return_to_world();
         } else if (enter_dungeon_flag) {
-            enter_dungeon_flag = false;
             if (active_registry == dungeon_registry.get()) {
                 std::cout << "Already in dungeon. Enter operation is illegal." << std::endl;
                 return;
@@ -137,6 +135,11 @@ private:
     }
 
     void enter_dungeon() {
+        if (Globals::show_loading_screen) {
+            Globals::show_loading_screen = false;
+            return;
+        }
+        enter_dungeon_flag = false;
         dungeon_registry = std::make_unique<Registry>();
         active_registry = dungeon_registry.get();
         move_player_comps(*open_world_registry, *dungeon_registry);
@@ -153,6 +156,11 @@ private:
     }
 
     void return_to_world() {
+        if (Globals::show_loading_screen) {
+            Globals::show_loading_screen = false;
+            return;
+        }
+        return_open_world_flag = false;
         active_registry = open_world_registry.get();
         Motion player_motion_copy = open_world_registry->motions.get(open_world_registry->player);
         move_player_comps(*dungeon_registry, *open_world_registry);
