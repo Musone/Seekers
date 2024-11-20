@@ -167,7 +167,7 @@ public:
         m_portal = new StaticModel("models/Portal/portal.obj", m_wall_shader);
         m_portal->set_pre_transform(
             Transform::create_model_matrix(
-                {0, 0, -1.0},
+                {0, 0, -1.1},
                 {PI / 2.0f, 0, 0},
                 glm::vec3(1.0f)
             )
