@@ -408,7 +408,10 @@ namespace ProceduralGenerationSystem {
 
     inline void create_enemies_and_objects(Registry& registry, const std::vector<Room>& rooms, const Room& spawn_room) {
         for (const Room& room : rooms) {
-            if (room == spawn_room) {continue;}
+            if (room == spawn_room) {
+                EntityFactory::create_portal(registry, {room.position.x - 9, room.position.y}, INTERACTABLE_TYPE::DUNGEON_EXIT);
+                continue;
+            }
 
             std::vector<std::pair<int, int>> enemies_and_objects_pos;
 
