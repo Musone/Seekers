@@ -121,7 +121,7 @@ private:
         if (theme == "OpenWorld") {
             sky_texture_name = "Blue sky.png";
             wall_texture_name = "jungle_tile_1.jpg";
-            floor_texture_name = "jungle_tile_1.jpg";
+            floor_texture_name = "ground.jpg";
         } else if (theme == "Dungeon") {
             sky_texture_name = "random_skybox.png";
             wall_texture_name = "jungle_tile_1.jpg";
