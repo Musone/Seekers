@@ -477,8 +477,158 @@ namespace ComponentSerializer {
         }
     }
 
-    // TODO: Add serialization methods for other components:
-    // - [ ] Collisions
-    // - [ ] TextureName
-    // - [ ] ProjectileModels
+    // Estus serialization
+    inline json serialize_estus(const Estus& estus) {
+        return {
+            {"heal_amount", estus.heal_amount}
+        };
+    }
+
+    inline void deserialize_estus(Estus& estus, const json& j) {
+        if (!j.contains("heal_amount")) {
+            throw SerializationError("Missing heal_amount in estus data");
+        }
+        estus.heal_amount = j["heal_amount"];
+    }
+
+    // Interactable serialization
+    inline json serialize_interactable(const Interactable& interactable) {
+        return {
+            {"type", static_cast<int>(interactable.type)},
+            {"entity_id", interactable.entity.get_id()},
+            {"range", interactable.range}
+        };
+    }
+
+    inline void deserialize_interactable(Interactable& interactable, const json& j, const Entity& mapped_entity) {
+        if (!j.contains("type") || !j.contains("range")) {
+            throw SerializationError("Missing fields in interactable data");
+        }
+        interactable.type = static_cast<INTERACTABLE_TYPE>(j["type"]);
+        interactable.entity = mapped_entity;
+        interactable.range = j["range"];
+    }
+
+    // LightSource serialization
+    inline json serialize_light_source(const LightSource& light) {
+        return {
+            {"type", static_cast<int>(light.type)},
+            {"brightness", light.brightness},
+            {"pos", Serialization::serialize_vec3(light.pos)},
+            {"colour", Serialization::serialize_vec3(light.colour)}
+        };
+    }
+
+    inline void deserialize_light_source(LightSource& light, const json& j) {
+        if (!j.contains("type") || !j.contains("brightness") || 
+            !j.contains("pos") || !j.contains("colour")) {
+            throw SerializationError("Missing fields in light source data");
+        }
+        light.type = static_cast<LIGHT_SOURCE_TYPE>(j["type"]);
+        light.brightness = j["brightness"];
+        Serialization::deserialize_vec3(light.pos, j["pos"]);
+        Serialization::deserialize_vec3(light.colour, j["colour"]);
+    }
+
+    // Inventory serialization
+    inline json serialize_inventory(const Inventory& inventory) {
+        std::vector<unsigned int> estus_ids, weapon_ids;
+        for (const auto& e : inventory.estus) estus_ids.push_back(e.get_id());
+        for (const auto& w : inventory.weapons) weapon_ids.push_back(w.get_id());
+        
+        return {
+            {"estus_ids", estus_ids},
+            {"weapon_ids", weapon_ids},
+            {"capacity", inventory.capacity}
+        };
+    }
+
+    inline void deserialize_inventory(Inventory& inventory, const json& j, 
+        const std::vector<std::pair<unsigned int, Entity>>& entity_map) {
+        if (!j.contains("estus_ids") || !j.contains("weapon_ids") || !j.contains("capacity")) {
+            throw SerializationError("Missing fields in inventory data");
+        }
+        
+        inventory.capacity = j["capacity"];
+        inventory.estus.clear();
+        inventory.weapons.clear();
+        
+        for (const auto& id : j["estus_ids"]) {
+            auto it = std::find_if(entity_map.begin(), entity_map.end(),
+                [id](const auto& pair) { return pair.first == id; });
+            if (it != entity_map.end()) {
+                inventory.estus.push_back(it->second);
+            }
+        }
+        
+        for (const auto& id : j["weapon_ids"]) {
+            auto it = std::find_if(entity_map.begin(), entity_map.end(),
+                [id](const auto& pair) { return pair.first == id; });
+            if (it != entity_map.end()) {
+                inventory.weapons.push_back(it->second);
+            }
+        }
+    }
+
+    // NearInteractable serialization
+    inline json serialize_near_interactable(const NearInteractable& near) {
+        json data = {
+            {"is_active", near.is_active},
+            {"message", near.message}
+        };
+        if (near.is_active) {
+            data["interactable_id"] = near.interactable.get_id();
+        }
+        return data;
+    }
+
+    inline void deserialize_near_interactable(NearInteractable& near, const json& j, 
+        const std::vector<std::pair<unsigned int, Entity>>& entity_map) {
+        if (!j.contains("is_active") || !j.contains("message")) {
+            throw SerializationError("Missing fields in near interactable data");
+        }
+        
+        near.is_active = j["is_active"];
+        near.message = j["message"];
+        
+        if (near.is_active && j.contains("interactable_id")) {
+            auto it = std::find_if(entity_map.begin(), entity_map.end(),
+                [id = j["interactable_id"]](const auto& pair) { 
+                    return pair.first == id; 
+                });
+            if (it != entity_map.end()) {
+                near.interactable = it->second;
+            }
+        }
+    }
+
+    // LockedTarget serialization
+    inline json serialize_locked_target(const LockedTarget& locked) {
+        json data = {
+            {"is_active", locked.is_active}
+        };
+        if (locked.is_active) {
+            data["target_id"] = locked.target.get_id();
+        }
+        return data;
+    }
+
+    inline void deserialize_locked_target(LockedTarget& locked, const json& j, 
+        const std::vector<std::pair<unsigned int, Entity>>& entity_map) {
+        if (!j.contains("is_active")) {
+            throw SerializationError("Missing fields in locked target data");
+        }
+        
+        locked.is_active = j["is_active"];
+        
+        if (locked.is_active && j.contains("target_id")) {
+            auto it = std::find_if(entity_map.begin(), entity_map.end(),
+                [id = j["target_id"]](const auto& pair) { 
+                    return pair.first == id; 
+                });
+            if (it != entity_map.end()) {
+                locked.target = it->second;
+            }
+        }
+    }
 }

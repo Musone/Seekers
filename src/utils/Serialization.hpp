@@ -22,4 +22,17 @@ namespace Serialization {
         v.x = j["x"];
         v.y = j["y"];
     }
+
+    inline json serialize_vec3(const glm::vec3& v) {
+        return {{"x", v.x}, {"y", v.y}, {"z", v.z}};
+    }
+
+    inline void deserialize_vec3(glm::vec3& v, const json& j) {
+        if (!j.contains("x") || !j.contains("y") || !j.contains("z")) {
+            throw SerializationError("Invalid vec3 format");
+        }
+        v.x = j["x"];
+        v.y = j["y"];
+        v.z = j["z"];
+    }
 }
