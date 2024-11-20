@@ -117,7 +117,7 @@ public:
             if (m_should_play_backwards) {
                 animation_time = m_duration_s - m_animation_time;
             }
-            float delta_time = std::abs(m_animation_time - (m_duration_s * (frame.get_time_stamp() / m_current_animation->get_duration())));
+            float delta_time = std::abs(animation_time - (m_duration_s * (frame.get_time_stamp() / m_current_animation->get_duration())));
             if (delta_time < smallest_delta) {
                 smallest_delta = delta_time;
                 current_frame = const_cast<KeyFrame*>(&frame);
