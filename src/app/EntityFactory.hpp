@@ -407,6 +407,17 @@ namespace EntityFactory {
         interact.range = 5.0f;
         interact.type = type;
 
+        auto entity_l1 = Entity();
+        auto& light_source1 = registry.light_sources.emplace(entity_l1);
+        light_source1.brightness = 5.0f;
+        light_source1.colour = glm::vec3(103.f/255.f,0.f/255.f,116.f/255.f);
+        light_source1.pos = glm::vec3(position.x - 0.2, position.y, 2.0f);
+        auto entity_l2 = Entity();
+        auto& light_source2 = registry.light_sources.emplace(entity_l2);
+        light_source2.brightness = 5.0f;
+        light_source2.colour = glm::vec3(103.f/255.f,0.f/255.f,116.f/255.f);
+        light_source2.pos = glm::vec3(position.x + 0.2, position.y, 2.0f);
+
         return entity;
     }
 

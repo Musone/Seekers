@@ -60,8 +60,6 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_1) {
                 GameplaySystem::consume_estus();
-            if (key == GLFW_KEY_1) {
-                GameplaySystem::consume_estus();
             }
 
             // if (key == GLFW_KEY_G) {

@@ -170,7 +170,7 @@ public:
         m_portal->set_pre_transform(
             Transform::create_model_matrix(
                 {0, 0, -1.1},
-                {PI / 2.0f, 0, 0},
+                {PI / 2.0f, 0, PI},
                 glm::vec3(1.0f)
             )
         );
@@ -1433,7 +1433,7 @@ private:
         );
         m_renderer->draw(m_square_mesh, *m_hud_health_shader);
 
-        FontStuff::get_instance().render_text("Loading...", m_renderer->get_window_width() / 2.0f - m_renderer->get_window_width() / 8.0f, m_renderer->get_window_height() / 12.0f, 3, {1, 1, 1});
+        FontStuff::get_instance().render_text("Loading...", m_renderer->get_window_width() / 2.0f - m_renderer->get_window_width() / 8.0f, m_renderer->get_window_height() / 12.0f, float(m_renderer->get_window_width()) / (1920.f / 3.f), {1, 1, 1});
 
         m_renderer->enable_depth_test();
         m_renderer->end_draw();
@@ -1517,7 +1517,7 @@ private:
 
         if (reg.near_interactable.is_active) {
             FontStuff& font_monkey = FontStuff::get_instance();
-            font_monkey.render_text(reg.near_interactable.message.c_str(), m_renderer->get_window_width() / 2.0f, m_renderer->get_window_height() / 2.0f, 1, {0.95f, 0, 0});
+            font_monkey.render_text(reg.near_interactable.message.c_str(), m_renderer->get_window_width() / 2.0f, m_renderer->get_window_height() / 2.0f, float(m_renderer->get_window_width()) / 1920.f, {0.95f, 0, 0});
         }
 
         m_renderer->enable_depth_test();
