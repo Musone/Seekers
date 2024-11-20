@@ -1347,7 +1347,7 @@ private:
         const float width = size;
         const float height = size;
 
-        glm::vec3 crosshair_pos = { motion.position.x, motion.position.y, 2.5f }; // Placed on the target position
+        glm::vec3 crosshair_pos = { motion.position.x, motion.position.y, 2.0f }; // Placed on the target position
         
         m_hud_health_shader->set_uniform_3f("u_colour", glm::vec3(1.0f));
         m_hud_health_shader->set_uniform_1i("u_texture", m_lock_on_reticle->bind(28));
