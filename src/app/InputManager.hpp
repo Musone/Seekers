@@ -70,39 +70,41 @@ namespace InputManager {
             }
 
             if (key == GLFW_KEY_F5) {
-                auto& save_system = SaveLoadSystem::get_instance();
-                
-                // Debug: List all current save slots
-                auto slots = save_system.list_save_slots();
-                std::cout << "Current save slots:" << std::endl;
-                for (const auto& slot : slots) {
-                    std::cout << "Slot " << slot.id << ": " << slot.name 
-                             << " (saved at: " << std::ctime(&slot.timestamp) << ")" << std::endl;
-                }
-                
-                // Create a new slot with timestamp in name
+                // Simple save with timestamp as name
                 std::string timestamp = std::to_string(std::time(nullptr));
-                SaveSlot new_slot = save_system.create_new_slot("Save_" + timestamp);
-                save_system.save_game_to_slot(new_slot);
+                if (SaveLoadSystem::save_game(registry, "Save_" + timestamp)) {
+                    std::cout << "Game saved successfully" << std::endl;
+                } else {
+                    std::cout << "Failed to save game" << std::endl;
+                }
             }
             if (key == GLFW_KEY_F6) {
+                // Load latest save
+                if (SaveLoadSystem::load_game(registry)) {
+                    std::cout << "Game loaded successfully" << std::endl;
+                } else {
+                    std::cout << "Failed to load game" << std::endl;
+                }
+            }
+            if (key == GLFW_KEY_F7) {
+                // List all save files
                 auto& save_system = SaveLoadSystem::get_instance();
                 auto slots = save_system.list_save_slots();
                 
-                if (!slots.empty()) {
-                    // Try to load the most recent save
-                    std::cout << "Loading most recent save: " << slots.back().name << std::endl;
-                    save_system.load_game_from_slot(slots.back());
+                if (slots.empty()) {
+                    std::cout << "No save files found" << std::endl;
                 } else {
-                    std::cout << "No save slots available" << std::endl;
-                }
-            }
-            if (key == GLFW_KEY_F9) {
-                // Create new game
-                if (SaveLoadSystem::load_game(registry, "new_game_template")) {
-                    std::cout << "Started new game" << std::endl;
-                } else {
-                    std::cerr << "Failed to start new game" << std::endl;
+                    std::cout << "\n=== Save Files ===" << std::endl;
+                    for (const auto& slot : slots) {
+                        std::string time_str = std::ctime(&slot.timestamp);
+                        time_str = time_str.substr(0, time_str.length() - 1); // Remove newline
+                        std::cout << "ID: " << slot.id 
+                                 << " | Name: " << slot.name 
+                                 << " | File: " << slot.filename 
+                                 << " | Saved: " << time_str 
+                                 << std::endl;
+                    }
+                    std::cout << "===============\n" << std::endl;
                 }
             }
         }
