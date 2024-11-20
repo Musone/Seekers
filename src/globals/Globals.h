@@ -34,4 +34,5 @@ namespace Globals {
     extern float interactable_angle;
     extern float lock_target_range;
     extern bool is_getting_up;
+    extern void* ptr_window;
 }

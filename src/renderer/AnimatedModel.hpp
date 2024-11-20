@@ -159,10 +159,10 @@ public:
         std::cout << "\n\n";
     }
 
-    void play_animation(const std::string& name, const float& duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+    void play_animation(const std::string& name, const float& duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false, const bool& should_play_backwards = false) {
         auto it = m_name_to_animation_id.find(name);
         if (it != m_name_to_animation_id.end()) {
-            play_animation(it->second, duration_s, should_repeat, should_finish);
+            play_animation(it->second, duration_s, should_repeat, should_finish, should_play_backwards);
         } else {
             Log::log_warning("Model " + m_name + " does not have animtion: \"" + name, __FILE__, __LINE__);
         }
@@ -178,35 +178,35 @@ public:
         }
     }
 
-    void play_animation(const size_t& index, float duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+    void play_animation(const size_t& index, float duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false, const bool& should_play_backwards = false) {
         if (index < m_animations.size()) {
             if (index != get_current_animation_id()) {
                 if (!m_animator.should_finish() || m_animator.portion_complete() >= 0.9999f) {
                     if (duration_s <= 0) {
                         duration_s = m_animations[index]->get_duration();
                     }
-                    m_animator.set_animation(m_animations[index], duration_s, should_repeat, should_finish);
+                    m_animator.set_animation(m_animations[index], duration_s, should_repeat, should_finish, should_play_backwards);
                 }
             }
         }
     }
 
-    void force_play_animation(const std::string& name, const float& duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+    void force_play_animation(const std::string& name, const float& duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false, const bool& should_play_backwards = false) {
         auto it = m_name_to_animation_id.find(name);
         if (it != m_name_to_animation_id.end()) {
-            force_play_animation(it->second, duration_s, should_repeat, should_finish);
+            force_play_animation(it->second, duration_s, should_repeat, should_finish, should_play_backwards);
         } else {
             Log::log_warning("Model " + m_name + " does not have animtion: \"" + name, __FILE__, __LINE__);
         }
     }
 
-    void force_play_animation(const size_t& index, float duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false) {
+    void force_play_animation(const size_t& index, float duration_s = -1.0f, const bool& should_repeat = true, const bool& should_finish = false, const bool& should_play_backwards = false) {
         if (index < m_animations.size()) {
             if (index != get_current_animation_id()) {
                 if (duration_s <= 0) {
                     duration_s = m_animations[index]->get_duration();
                 }
-                m_animator.set_animation(m_animations[index], duration_s, should_repeat, should_finish);
+                m_animator.set_animation(m_animations[index], duration_s, should_repeat, should_finish, should_play_backwards);
             }
         }
     }

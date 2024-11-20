@@ -64,6 +64,8 @@ public:
 		return instance;
 	}
 
+    void* get_window() const { return (void*)m_window; }
+
     // Make sure to catch, log, and terminate errors when using the renderer.
     void init(std::string window_name, int window_width, int window_height, bool enable_vsync, bool enable_resize, const bool& fullscreen = false) {
         m_window_width = window_width;
