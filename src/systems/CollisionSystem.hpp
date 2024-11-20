@@ -165,9 +165,8 @@ namespace CollisionSystem {
 
         // Detailed phase: check each edge
         bool collision = false;
-        out_penetration = 0.0f;
-        out_normal = glm::vec2(0.0f);
-        int contact_count = 0;
+        float max_penetration = 0.0f;
+        glm::vec2 best_normal(0.0f, 0.0f);
 
         // Check collision against each edge of the wall
         for (const auto& edge : wall.edges) {
@@ -175,17 +174,18 @@ namespace CollisionSystem {
             float edge_penetration;
 
             if (check_circle_segment(circle, circle_pos, edge, wall_pos,
-                                   edge_normal, edge_penetration)) {
+                                     edge_normal, edge_penetration)) {
                 collision = true;
-                out_normal += edge_normal;
-                out_penetration = std::max(out_penetration, edge_penetration);
-                contact_count++;
+                if (edge_penetration > max_penetration) {
+                    max_penetration = edge_penetration;
+                    best_normal = edge_normal;
+                }
             }
         }
 
-        // Average the normals if multiple contacts
         if (collision) {
-            out_normal = glm::normalize(out_normal / static_cast<float>(contact_count));
+            out_normal = best_normal;
+            out_penetration = max_penetration;
         }
 
         return collision;
@@ -482,18 +482,24 @@ namespace CollisionSystem {
             float overlap = combined_radius - distance;
 
             if (overlap > 0) {
-                const float BUFFER = 0.01f;
-                // Minimal position adjustment
-                motion1.position += normal * (overlap/8.0f + BUFFER);
-                motion2.position -= normal * (overlap/8.0f + BUFFER);
+                // Reduce BUFFER to minimize excessive pushback
+                const float BUFFER = 0.0f;  // Removed additional buffer
 
-                // Almost completely stop relative motion
+                // Equal distribution of overlap to both entities
+                float separation = overlap / 2.0f;
+
+                // Minimal position adjustment to resolve overlap
+                motion1.position += normal * separation;
+                motion2.position -= normal * separation;
+
+                // Minimal velocity adjustment to prevent future overlaps
                 float vel1_along_normal = glm::dot(motion1.velocity, normal);
                 float vel2_along_normal = glm::dot(motion2.velocity, normal);
 
                 if (vel1_along_normal - vel2_along_normal < 0) {
-                    // Very minimal velocity adjustment
-                    glm::vec2 impulse = normal * (vel1_along_normal - vel2_along_normal) * 0.05f;
+                    // Very minimal impulse to adjust velocities
+                    const float IMPULSE_FACTOR = 0.01f;  // Further reduced from 0.05f
+                    glm::vec2 impulse = normal * (vel1_along_normal - vel2_along_normal) * IMPULSE_FACTOR;
                     motion1.velocity -= impulse;
                     motion2.velocity += impulse;
                 }

@@ -66,6 +66,7 @@ namespace InteractionSystem {
         Interactable& comp = registry.interactables.get(interactable);
         if (comp.type == INTERACTABLE_TYPE::DUNGEON_ENTRANCE) {
             MapManager::get_instance().enter_dungeon_flag = true;
+            MapManager::get_instance().dungeon_difficulty = comp.dungeon_difficulty;
         } else if (comp.type == INTERACTABLE_TYPE::DUNGEON_EXIT) {
             MapManager::get_instance().return_open_world_flag = true;
         } else if (comp.type == INTERACTABLE_TYPE::BONFIRE) {
