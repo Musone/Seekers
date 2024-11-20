@@ -10,6 +10,7 @@
 #include "ecs/Registry.hpp"
 #include "globals/Globals.h"
 #include "utils/Common.hpp"
+#include "systems/SaveLoadSystem.hpp"
 
 namespace InputManager {
     inline void on_key_pressed(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -59,6 +60,54 @@ namespace InputManager {
             }
             if (key == GLFW_KEY_1) {
                 GameplaySystem::consume_estus();
+            if (key == GLFW_KEY_1) {
+                GameplaySystem::consume_estus();
+            }
+
+            // if (key == GLFW_KEY_G) {
+            //     MapManager::get_instance().enter_dungeon_flag = true;
+            // }
+            // if (key == GLFW_KEY_R) {
+            //     MapManager::get_instance().return_open_world_flag = true;
+            // }
+
+            if (key == GLFW_KEY_F5) {
+                // Simple save with timestamp as name
+                std::string timestamp = std::to_string(std::time(nullptr));
+                if (SaveLoadSystem::save_game(registry, "Save_" + timestamp)) {
+                    std::cout << "Game saved successfully" << std::endl;
+                } else {
+                    std::cout << "Failed to save game" << std::endl;
+                }
+            }
+            if (key == GLFW_KEY_F6) {
+                // Load latest save
+                if (SaveLoadSystem::load_game(registry)) {
+                    std::cout << "Game loaded successfully" << std::endl;
+                } else {
+                    std::cout << "Failed to load game" << std::endl;
+                }
+            }
+            if (key == GLFW_KEY_F7) {
+                // List all save files
+                auto& save_system = SaveLoadSystem::get_instance();
+                auto slots = save_system.list_save_slots();
+
+                if (slots.empty()) {
+                    std::cout << "No save files found" << std::endl;
+                } else {
+                    std::cout << "\n=== Save Files ===" << std::endl;
+                    for (const auto& slot : slots) {
+                        std::string time_str = std::ctime(&slot.timestamp);
+                        time_str = time_str.substr(0, time_str.length() - 1); // Remove newline
+                        std::cout << "ID: " << slot.id
+                                 << " | Name: " << slot.name
+                                 << " | File: " << slot.filename
+                                 << " | Saved: " << time_str
+                                 << std::endl;
+                    }
+                    std::cout << "===============\n" << std::endl;
+                }
             }
 
             // if (key == GLFW_KEY_G) {
