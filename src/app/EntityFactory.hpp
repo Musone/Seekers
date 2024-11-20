@@ -378,7 +378,7 @@ namespace EntityFactory {
         interact.type = INTERACTABLE_TYPE::BONFIRE;
 
         LightSource& light_source = registry.light_sources.emplace(entity);
-        light_source.pos = glm::vec3(position, 0.5f);
+        light_source.pos = glm::vec3(position, 1.0f);
         light_source.brightness = 5.0f;
         light_source.colour = glm::vec3(252/255, 116/255, 5/255);
 
