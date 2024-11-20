@@ -399,7 +399,7 @@ namespace ProceduralGenerationSystem {
         return false;
     }
 
-    inline void create_enemies_and_objects(Registry& registry, const std::vector<Room>& rooms, const Room& spawn_room) {
+    inline void create_enemies_and_objects(Registry& registry, const std::vector<Room>& rooms, const Room& spawn_room, int dungeon_difficutly) {
         for (const Room& room : rooms) {
             if (room == spawn_room) {
                 EntityFactory::create_portal(registry, {room.position.x - 9, room.position.y}, INTERACTABLE_TYPE::DUNGEON_EXIT);
@@ -414,7 +414,13 @@ namespace ProceduralGenerationSystem {
             std::uniform_int_distribution<> pos_y_dist(room.position.y - room.size.y / 2 + 2, room.position.y + room.size.y / 2 - 2);
             std::uniform_int_distribution<> enemy_num_dist(1, room.size.x * room.size.y / 400);
             std::uniform_int_distribution<> object_num_dist(1, room.size.x * room.size.y / 600);
-            std::uniform_int_distribution<> enemy_type_dist(0, (int)ENEMY_TYPE::ENEMY_TYPE_COUNT - 1);
+            std::uniform_int_distribution<> enemy_type_dist;
+            if (dungeon_difficutly == 0) {
+                enemy_type_dist = std::uniform_int_distribution<>(3, 3);
+            } else if (dungeon_difficutly == 1) {
+                enemy_type_dist = std::uniform_int_distribution<>(0, 1);
+            }
+
 
             int enemy_num = enemy_num_dist(gen);
             for (int i = 0; i < enemy_num; i++) {
@@ -435,13 +441,14 @@ namespace ProceduralGenerationSystem {
                     x = pos_x_dist(gen);
                     y = pos_y_dist(gen);
                 }
+
                 EntityFactory::create_tree(registry, {x, y});
                 enemies_and_objects_pos.push_back({x, y});
             }
         }
     }
 
-    inline void generate_dungeon(Registry& registry, int map_width, int map_height, Motion& player_motion) {
+    inline void generate_dungeon(Registry& registry, int map_width, int map_height, Motion& player_motion, int dungeon_difficulty) {
         std::vector<std::vector<char>> map(map_height, std::vector<char>(map_width, '.'));
 
         std::vector<Room> rooms;
@@ -454,7 +461,7 @@ namespace ProceduralGenerationSystem {
         create_walls(registry, map);
         place_light_sources(registry, rooms);
 
-        create_enemies_and_objects(registry, rooms, spawn_room);
+        create_enemies_and_objects(registry, rooms, spawn_room, dungeon_difficulty);
 
         // print map
         for (const auto& row : map) {

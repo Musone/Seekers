@@ -386,7 +386,7 @@ namespace EntityFactory {
     }
 
     // needs new static type
-    inline Entity create_portal(Registry& registry, glm::vec2 position, INTERACTABLE_TYPE type) {
+    inline Entity create_portal(Registry& registry, glm::vec2 position, INTERACTABLE_TYPE type, int dungeon_difficulty = 0) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
@@ -406,6 +406,7 @@ namespace EntityFactory {
         interact.entity = entity;
         interact.range = 5.0f;
         interact.type = type;
+        interact.dungeon_difficulty = dungeon_difficulty;
 
         auto entity_l1 = Entity();
         auto& light_source1 = registry.light_sources.emplace(entity_l1);

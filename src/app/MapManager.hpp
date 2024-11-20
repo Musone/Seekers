@@ -29,7 +29,8 @@ public:
 
             // add dungeon entrance and bonfire here
             EntityFactory::create_bonfire(registry, glm::vec2(10.0f, 10.0f));
-            EntityFactory::create_portal(registry, glm::vec2(-10.0f, -10.0f), INTERACTABLE_TYPE::DUNGEON_ENTRANCE);
+            EntityFactory::create_portal(registry, glm::vec2(-10.0f, -10.0f), INTERACTABLE_TYPE::DUNGEON_ENTRANCE, 0);
+            EntityFactory::create_portal(registry, glm::vec2(-150.0f, -100.0f), INTERACTABLE_TYPE::DUNGEON_ENTRANCE, 1);
 
             EntityFactory::create_light_source(registry, {0, 0, 100}, 150, {1, 1, 0.8}, LIGHT_SOURCE_TYPE::SUN);
 
@@ -103,6 +104,7 @@ public:
 
     bool return_open_world_flag = false;
     bool enter_dungeon_flag = false;
+    int dungeon_difficulty;
     // bool enter_spire_one_flag = false;
     // bool enter_spire_two_flag = false;
     // bool enter_spire_three_flag = false;
@@ -110,7 +112,6 @@ public:
     std::string sky_texture_name;
     std::string wall_texture_name;
     std::string floor_texture_name;
-
 
 private:
     MapManager() = default;
@@ -123,9 +124,15 @@ private:
             wall_texture_name = "jungle_tile_1.jpg";
             floor_texture_name = "ground.jpg";
         } else if (theme == "Dungeon") {
-            sky_texture_name = "random_skybox.png";
-            wall_texture_name = "jungle_tile_1.jpg";
-            floor_texture_name = "jungle_tile_1.jpg";
+            if (dungeon_difficulty == 0) {
+                sky_texture_name = "random_skybox.png";
+                wall_texture_name = "jungle_tile_1.jpg";
+                floor_texture_name = "jungle_tile_1.jpg";
+            } else if (dungeon_difficulty == 1) {
+                sky_texture_name = "SkyboxDark.png";
+                wall_texture_name = "tileset_1.png";
+                floor_texture_name = "tileset_7.png";
+            }
         }
     }
 
@@ -133,7 +140,13 @@ private:
         dungeon_registry = std::make_unique<Registry>();
         active_registry = dungeon_registry.get();
         move_player_comps(*open_world_registry, *dungeon_registry);
-        ProceduralGenerationSystem::generate_dungeon(*dungeon_registry, MAP_WIDTH, MAP_HEIGHT, dungeon_registry->motions.get(dungeon_registry->player));
+        int map_size;
+        if (dungeon_difficulty == 0) {
+            map_size = 200;
+        } else if (dungeon_difficulty == 1) {
+            map_size = 500;
+        }
+        ProceduralGenerationSystem::generate_dungeon(*dungeon_registry, map_size, map_size, dungeon_registry->motions.get(dungeon_registry->player), dungeon_difficulty);
         // dungeon_registry->projectile_models = open_world_registry->projectile_models;
         set_theme("Dungeon");
         Globals::restart_renderer = true;
