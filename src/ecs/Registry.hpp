@@ -3,6 +3,7 @@
 #include <ecs/ComponentContainer.hpp>
 #include <components/Components.hpp>
 #include <ecs/IComponentContainer.hpp>
+#include <optional>
 
 #include <iostream>
 
@@ -164,5 +165,37 @@ public:
 			}
 		}
 		return false;
+	}
+
+	template<typename T>
+	T* try_get_component(Entity e) {
+		auto* container = get_container<T>();
+		if (container && container->has(e)) {
+			return &container->get(e);
+		}
+		return nullptr;
+	}
+
+	template<typename T>
+	T& get_or_emplace_component(Entity e) {
+		auto* container = get_container<T>();
+		if (container) {
+			if (container->has(e)) {
+				return container->get(e);
+			}
+			return container->emplace(e);
+		}
+		throw std::runtime_error("Component type not registered");
+	}
+
+private:
+	template<typename T>
+	ComponentContainer<T>* get_container() {
+		for (auto* container : m_registry_list) {
+			if (auto* typed = dynamic_cast<ComponentContainer<T>*>(container)) {
+				return typed;
+			}
+		}
+		return nullptr;
 	}
 };
