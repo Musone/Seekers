@@ -346,6 +346,8 @@ public:
         FontStuff& font_monkey = FontStuff::get_instance();
         font_monkey.font_init("fonts/Cano-VGMwz.ttf", 42, m_renderer->get_window_width(), m_renderer->get_window_height());
 
+        Globals::ptr_window = m_renderer->get_window();
+
         Timer timer;
         float time_of_last_frame = 0;
         const float FRAME_TIME_60FPS = 1000000.0f / 60.0f;
