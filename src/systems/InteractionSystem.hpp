@@ -67,6 +67,7 @@ namespace InteractionSystem {
         if (comp.type == INTERACTABLE_TYPE::DUNGEON_ENTRANCE) {
             Globals::show_loading_screen = true;
             MapManager::get_instance().enter_dungeon_flag = true;
+            MapManager::get_instance().dungeon_difficulty = comp.dungeon_difficulty;
         } else if (comp.type == INTERACTABLE_TYPE::DUNGEON_EXIT) {
             Globals::show_loading_screen = true;
             MapManager::get_instance().return_open_world_flag = true;

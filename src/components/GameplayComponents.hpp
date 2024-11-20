@@ -94,6 +94,7 @@ struct Interactable
     INTERACTABLE_TYPE type;
     Entity entity;
     float range;
+    int dungeon_difficulty;
 };
 
 struct InDodge {
