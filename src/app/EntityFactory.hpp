@@ -355,7 +355,7 @@ namespace EntityFactory {
         return entity;
     }
 
-    inline Entity create_bonerfire(Registry& registry, glm::vec2 position) {
+    inline Entity create_bonfire(Registry& registry, glm::vec2 position) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
@@ -365,18 +365,23 @@ namespace EntityFactory {
         auto& team = registry.teams.emplace(entity);
         team.team_id = TEAM_ID::NEUTRAL;
 
-        auto& tree = registry.static_objects.emplace(entity);
-        tree.type = STATIC_OBJECT_TYPE::BONFIRE;
+        auto& obj = registry.static_objects.emplace(entity);
+        obj.type = STATIC_OBJECT_TYPE::BONFIRE;
 
         // Use circle collider for tree
         registry.collision_bounds.emplace(entity,
             CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
 
+        auto& interact = registry.interactables.emplace(entity);
+        interact.entity = entity;
+        interact.range = 5.0f;
+        interact.type = INTERACTABLE_TYPE::BONFIRE;
+
         return entity;
     }
 
     // needs new static type
-    inline Entity create_dungeon_entrance(Registry& registry, glm::vec2 position) {
+    inline Entity create_portal(Registry& registry, glm::vec2 position, INTERACTABLE_TYPE type) {
         auto entity = Entity();
 
         auto& motion = registry.motions.emplace(entity);
@@ -389,9 +394,13 @@ namespace EntityFactory {
         auto& tree = registry.static_objects.emplace(entity);
         tree.type = STATIC_OBJECT_TYPE::PORTAL;
 
-        // Use circle collider for tree
         registry.collision_bounds.emplace(entity,
-            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+           CollisionBounds::create_wall({0.1, 7.7}, 0));
+
+        auto& interact = registry.interactables.emplace(entity);
+        interact.entity = entity;
+        interact.range = 5.0f;
+        interact.type = type;
 
         return entity;
     }
