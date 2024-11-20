@@ -236,8 +236,9 @@ namespace GameplaySystem {
         // save here or in interaction
     }
 
-    inline void lock_on_target(GLFWwindow* window) {
+    inline void lock_on_target() {
         Registry& registry = MapManager::get_instance().get_active_registry();
+        GLFWwindow* window = static_cast<GLFWwindow*>(Globals::ptr_window);
 
         if (!registry.locked_target.is_active) {
             double ypos;
