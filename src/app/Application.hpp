@@ -64,6 +64,7 @@ class Application {
     std::string m_window_name = "Seekers";
 
     std::unordered_map<unsigned int, AnimatedModel*> m_models;
+    bool m_player_was_in_rest = false;
 public:
 
     Application() : m_light_pos(1.0f, 1.0f, 2.0f) {
@@ -179,6 +180,9 @@ public:
         hero.load_animation_from_file("models/Hero/Dying.dae");
         hero.load_animation_from_file("models/Hero/Stagger.dae");
         hero.load_animation_from_file("models/Dance.dae");
+        hero.load_animation_from_file("models/Hero/Sitting.dae");
+        hero.load_animation_from_file("models/Hero/Stand Up.dae");
+        
         // AnimatedModel hero("models/Hero/Hero (no sword).dae", &animated_shader);
         // hero.load_animation_from_file("models/Hero/Left.dae");
         // hero.load_animation_from_file("models/Hero/Right.dae");
@@ -1314,6 +1318,23 @@ private:
             const float buffer_time = 0.5f;
             if (reg.death_cooldowns.has(entity)) {
                 model->force_play_animation("Dying.dae", -1, false, true);
+            } else if (reg.in_rests.has(entity) && reg.player.get_id() == entity.get_id()) {
+                if (!m_player_was_in_rest) {
+                    model->force_play_animation("Stand Up.dae", -1, false, true, true);
+                    m_player_was_in_rest = true;
+                }
+            } else if (
+                Globals::is_getting_up &&
+                model->get_current_animation_id() == model->get_animation_id("Stand Up.dae") && 
+                model->get_portion_complete_of_curr_animation() > 0.95f
+            ) {
+                if (m_player_was_in_rest) {
+                    model->force_play_animation("Sitting.dae");
+                    model->force_play_animation("Stand Up.dae", -1, false, true);
+                    m_player_was_in_rest = false;
+                } else {
+                    Globals::is_getting_up = false;
+                }
             } else if (reg.stagger_cooldowns.has(entity)) {
                 const auto& cooldown = reg.stagger_cooldowns.get(entity);
                 model->force_play_animation("Stagger.dae", cooldown.timer + buffer_time);
