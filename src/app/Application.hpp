@@ -73,6 +73,7 @@ class Application {
     std::vector<glm::vec3> m_light_positions;
     std::vector<glm::vec3> m_light_colours;
     std::vector<float> m_light_brightnesses;
+    std::vector<StaticModel*> m_light_models;
 
     std::string m_window_name = "Seekers";
 
@@ -487,28 +488,18 @@ public:
                 m_light_positions.clear();
                 m_light_brightnesses.clear();
                 m_light_colours.clear();
+                m_light_models.clear();
                 
                 m_light_positions.reserve(MAX_LIGHTS);
                 m_light_brightnesses.reserve(MAX_LIGHTS);
                 m_light_colours.reserve(MAX_LIGHTS);
+                m_light_models.reserve(MAX_LIGHTS);
                 
                 m_light_positions.push_back(m_light_pos);
                 m_light_brightnesses.push_back(1.0f);
                 m_light_colours.push_back(m_light_colour);
+                m_light_models.push_back(nullptr);
                 int counter = 1;
-
-                // int x = 0; // ROCKS DELETE THIS
-                // for (auto& fjdiso : m_rocks) {
-                //     ++counter;
-                //     m_light_positions.push_back({x, 0, 20});
-                //     m_light_colours.push_back({1,1,1});
-                //     m_light_brightnesses.push_back(20);
-                //     x += 50;
-                // }
-                m_light_positions.push_back({0,0,100});
-                m_light_brightnesses.push_back(150);
-                m_light_colours.push_back(glm::vec3(1.0f, 1.0f, 0.8f));
-                counter++;
 
                 for (const auto& entity : reg.light_sources.entities) {
                     if (counter > MAX_LIGHTS) { break; }
@@ -518,6 +509,11 @@ public:
                     m_light_positions.push_back(light_source.pos);
                     m_light_brightnesses.push_back(light_source.brightness);
                     m_light_colours.push_back(light_source.colour);
+                    if (light_source.type == LIGHT_SOURCE_TYPE::MAGIC_ORB) {
+                        m_light_models.push_back(m_light_orb);
+                    } else {
+                        m_light_models.push_back(nullptr);
+                    }
                 }
             }
             
@@ -1125,10 +1121,11 @@ private:
     void _draw_light_orbs() {
         // Always skip the camera light :/
         m_light_orb->set_rotation_z(m_light_orb->get_rotation_z() + 0.05);
-        for (unsigned int i = 1; i < m_light_positions.size(); ++i) {
-            m_light_orb->set_position(m_light_positions[i]);
-            m_light_orb->set_position_z(m_light_positions[i].z + 2);
-            m_light_orb->draw();
+        for (unsigned int i = 0; i < m_light_positions.size(); ++i) {
+            if (m_light_models[i] == nullptr) { continue; }
+            m_light_models[i]->set_position(m_light_positions[i]);
+            m_light_models[i]->set_position_z(m_light_positions[i].z + 2);
+            m_light_models[i]->draw();
         }
     }
 
