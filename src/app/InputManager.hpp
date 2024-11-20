@@ -105,7 +105,7 @@ namespace InputManager {
             }
             if (button == GLFW_MOUSE_BUTTON_RIGHT) {
                 registry.locked_target.is_active = !registry.locked_target.is_active;
-                GameplaySystem::lock_on_target();
+                GameplaySystem::lock_on_target(window);
             }
         }
     }

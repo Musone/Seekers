@@ -236,10 +236,16 @@ namespace GameplaySystem {
         // save here or in interaction
     }
 
-    inline void lock_on_target() {
+    inline void lock_on_target(GLFWwindow* window) {
         Registry& registry = MapManager::get_instance().get_active_registry();
 
-        if (!registry.locked_target.is_active) return;
+        if (!registry.locked_target.is_active) {
+            double ypos;
+            glfwGetCursorPos(window, nullptr, &ypos);
+            double xpos = WINDOW_WIDTH * (1 - registry.motions.get(registry.player).angle) / 2;
+            glfwSetCursorPos(window, xpos, ypos);
+            return;
+        }
 
         float min_angle = std::numeric_limits<float>::max();
         auto& player_motion = registry.motions.get(registry.player);
@@ -255,6 +261,10 @@ namespace GameplaySystem {
         }
         if (min_angle == std::numeric_limits<float>::max()) { // no target was found to lock on
             registry.locked_target.is_active = false;
+            double ypos;
+            glfwGetCursorPos(window, nullptr, &ypos);
+            double xpos = WINDOW_WIDTH * (1 - registry.motions.get(registry.player).angle) / 2;
+            glfwSetCursorPos(window, xpos, ypos);
         }
     }
 
