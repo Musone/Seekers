@@ -1337,6 +1337,7 @@ private:
     }
 
     void _draw_aim() {
+        auto& reg = MapManager::get_instance().get_active_registry();
         if (!reg.locked_target.is_active || !reg.motions.has(reg.locked_target.target)) {return;}
         const auto& motion = reg.motions.get(reg.locked_target.target);
         float cam_angle = _vector_to_angle(motion.position - glm::vec2(m_camera.get_position()));
@@ -1346,6 +1347,8 @@ private:
         const float width = size;
         const float height = size;
 
+        glm::vec3 crosshair_pos = { motion.position.x, motion.position.y, 2.5f }; // Placed on the target position
+        
         m_hud_health_shader->set_uniform_3f("u_colour", glm::vec3(1.0f));
         m_hud_health_shader->set_uniform_1i("u_texture", m_lock_on_reticle->bind(28));
         m_hud_health_shader->set_uniform_1f("u_health_percentage", 1.0f);
