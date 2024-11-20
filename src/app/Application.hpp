@@ -64,6 +64,7 @@ class Application {
     Texture2D* m_hud_health_texture_border;
     Texture2D* m_hud_health_texture_bacground;
     Texture2D* m_redbull;
+    Texture2D* m_lock_on_reticle;
 
     glm::vec3 m_light_pos;
     glm::vec3 m_light_colour;
@@ -95,6 +96,7 @@ public:
         m_hud_health_texture_border = new Texture2D("sphere_border.png");
         m_hud_health_texture_bacground = new Texture2D("sphere_background.png");
         m_redbull = new Texture2D("Redbull.png");
+        m_lock_on_reticle = new Texture2D("lock_on_reticle.png");
 
         m_skybox_shader = new Shader("Skybox");
         // m_skybox_texture = new SkyboxTexture("random_skybox.png"); // The red lava skybox
@@ -575,7 +577,6 @@ public:
                 kv->second->draw();
             }
             
-            _draw_aim();
             _draw_hud();
 
             m_renderer->end_draw();
@@ -1336,27 +1337,26 @@ private:
     }
 
     void _draw_aim() {
-        auto& reg = MapManager::get_instance().get_active_registry();
-        if (!reg.motions.has(reg.player) || !reg.attackers.has(reg.player)) {return;}
-        auto& attacker = reg.attackers.get(reg.player);
-        if (!reg.weapons.has(attacker.weapon)) { return; }
-        const auto& motion = reg.motions.get(reg.player);
-        const auto& weapon = reg.weapons.get(attacker.weapon);
-        auto player_dir = glm::vec3(Transform::create_rotation_matrix({ 0, 0, motion.angle }) * glm::vec4(1, 0, 0, 0));
-        m_health_shader->set_uniform_3f("u_colour", { 1, 0, 0 }); // red croshair
-        glm::vec3 crosshair_pos = { motion.position.x, motion.position.y, 2.5f };
-        const float crosshair_length = weapon.range;
-        crosshair_pos += player_dir * (crosshair_length / 2.0f);
-        m_health_shader->set_uniform_mat4f(
-            "u_mvp",
-            m_camera.get_view_project_matrix()
-            * Transform::create_model_matrix(
+        if (!reg.locked_target.is_active || !reg.motions.has(reg.locked_target.target)) {return;}
+        const auto& motion = reg.motions.get(reg.locked_target.target);
+        float cam_angle = _vector_to_angle(motion.position - glm::vec2(m_camera.get_position()));
+
+        const float aspect_ratio = float(m_renderer->get_window_width()) / float(m_renderer->get_window_height());
+        const float size = 1.5f;
+        const float width = size;
+        const float height = size;
+
+        m_hud_health_shader->set_uniform_3f("u_colour", glm::vec3(1.0f));
+        m_hud_health_shader->set_uniform_1i("u_texture", m_lock_on_reticle->bind(28));
+        m_hud_health_shader->set_uniform_1f("u_health_percentage", 1.0f);
+        m_hud_health_shader->set_uniform_mat4f("u_model", 
+            m_camera.get_view_project_matrix() * Transform::create_model_matrix(
                 crosshair_pos,
-                glm::vec3({ 0, 0, motion.angle }),
-                glm::vec3({ crosshair_length, 0.05 , 0.05 })
+                {PI / 2.0f, 0, cam_angle - PI / 2.0f},
+                {width, height, 1}
             )
         );
-        m_renderer->draw(m_square_mesh, *m_health_shader);
+        m_renderer->draw(m_square_mesh, *m_hud_health_shader);
     }
 
     void _draw_resource(const glm::vec2& pos, const float size, const float& percent_remaining, const glm::vec3 colour) {
@@ -1434,6 +1434,7 @@ private:
         float size = 0.25;
         
         m_renderer->disable_depth_test();
+        _draw_aim();
 
         _draw_resource(
             {-1 + 3 * size / 2, -1 + 3 * size / 2},
