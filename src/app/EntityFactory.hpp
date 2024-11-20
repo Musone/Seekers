@@ -417,5 +417,6 @@ namespace EntityFactory {
         light_source.brightness = brightness;
         light_source.colour = colour;
         light_source.type = type;
+        return e;
     }
 };
