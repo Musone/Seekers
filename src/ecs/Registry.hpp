@@ -48,6 +48,7 @@ public:
 	ComponentContainer<CollisionBounds> collision_bounds;
 	ComponentContainer<InDodge> in_dodges;
 	ComponentContainer<AIComponent> ais;
+	ComponentContainer<BossAI> boss_ais;
 	ComponentContainer<NearPlayer> near_players;
 	ComponentContainer<NearCamera> near_cameras;
 	ComponentContainer<Wall> walls;
@@ -86,6 +87,7 @@ public:
 		m_registry_list.push_back(&collision_bounds);
 		m_registry_list.push_back(&in_dodges);
 		m_registry_list.push_back(&ais);
+		m_registry_list.push_back(&boss_ais);
 		m_registry_list.push_back(&near_players);
 		m_registry_list.push_back(&static_objects);
 		m_registry_list.push_back(&walls);
