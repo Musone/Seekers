@@ -290,4 +290,40 @@ namespace GameplaySystem {
             registry.locked_target.is_active = false;
         }
     }
+
+    inline void boss_attack(Entity& e, Motion& motion, BOSS_ATTACK_TYPE type) {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+        AudioSystem& audio = AudioSystem::get_instance();
+
+        Attacker& attacker = registry.attackers.get(e);
+        Weapon& weapon = registry.weapons.get(attacker.weapon);
+
+        if (type == BOSS_ATTACK_TYPE::REGULAR) {
+            EntityFactory::create_boss_projectile(registry, motion.position, motion.angle, attacker.aim, weapon);
+            registry.attack_cooldowns.emplace(e, 0.3f);
+        } else if (type == BOSS_ATTACK_TYPE::LONG) {
+            glm::vec2 pos0 = glm::vec2(motion.position.x - cos(motion.angle), motion.position.y - sin(motion.angle));
+            glm::vec2 pos2 = glm::vec2(motion.position.x + cos(motion.angle), motion.position.y + sin(motion.angle));
+            EntityFactory::create_boss_projectile(registry, pos0, motion.angle, attacker.aim, weapon);
+            EntityFactory::create_boss_projectile(registry, motion.position, motion.angle, attacker.aim, weapon);
+            EntityFactory::create_boss_projectile(registry, pos2, motion.angle, attacker.aim, weapon);
+            registry.attack_cooldowns.emplace(e, 0.5f);
+        } else if (type == BOSS_ATTACK_TYPE::AOE) {
+            for (int i = 0; i < 8; i++) {
+                float angle = motion.angle + i * PI / 4;
+                glm::vec2 aim = glm::vec2(cos(angle), sin(angle));
+                EntityFactory::create_boss_projectile(registry, motion.position, angle, aim, weapon);
+            }
+            registry.attack_cooldowns.emplace(e, 0.5f);
+        }
+
+        // deplete_energy(e, weapon.attack_energy_cost);    *** commented out so this doesn't interfere and complicate combo executions
+
+        float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
+        if (weapon.type == WEAPON_TYPE::BOW) {
+            audio.play_attack_bow(distance_from_camera);
+        } else {
+            audio.play_attack_sword(distance_from_camera);
+        }
+    }
 };

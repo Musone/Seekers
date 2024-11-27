@@ -4,6 +4,7 @@
 
 #include "app/MapManager.hpp"
 #include "GameplaySystem.hpp"
+#include "../../../../../../../../Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk/System/Library/Frameworks/CoreText.framework/Headers/CTFontDescriptor.h"
 #include "../ecs/Entity.hpp"
 #include "../components/Components.hpp"
 #include "../ecs/Registry.hpp"
@@ -269,12 +270,45 @@ namespace AISystem
         }
     }
 
-    inline void boss_combo_step(Entity& e, BossAI& comp) {
-        // BIG FAT TODO
+    inline void boss_combo_step(Entity& e, BossAI& comp, float elapsed_ms) {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+        Motion& boss_motion = registry.motions.get(e);
+        Motion& player_motion = registry.motions.get(registry.player);
+
+        comp.attack_delay_counter -= elapsed_ms / 1000.0f;
+        // close the gap with the player if necessary
+        if (glm::distance(boss_motion.position, player_motion.position) < comp.attack_range) {
+            boss_motion.velocity = glm::vec2(0.0f);
+        } else {
+            boss_motion.velocity = glm::normalize(player_motion.position - boss_motion.position) * registry.locomotion_stats.get(e).movement_speed;
+            return;
+        }
+
+        if (registry.attack_cooldowns.has(e) || comp.attack_delay_counter > 0.0f ||
+            registry.stagger_cooldowns.has(e) || registry.death_cooldowns.has(e) ||
+            registry.locomotion_stats.get(e).energy <= 0) return;
+
+        BOSS_ATTACK_TYPE attack_type = comp.combos.at(comp.combo_index).attacks.at(comp.attack_index);
+        GameplaySystem::boss_attack(e, boss_motion, attack_type);
+
+        // update comp
+        comp.attack_index++;
+        if (comp.attack_index >= comp.combos.at(comp.combo_index).attacks.size()) {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_real_distribution<float> cooldown_dist(0.5f, 5.0f);
+            std::uniform_real_distribution<float> angle_dist(0.0f, 2 * PI);
+            comp.state = BOSS_STATE::COOLDOWN;
+            comp.cooldown_delay_counter = cooldown_dist(gen);
+            float angle = angle_dist(gen);
+            boss_motion.velocity = glm::vec2(cos(angle), sin(angle)) * boss_motion.velocity * 0.3f;
+        } else {
+            comp.attack_delay_counter = comp.combos.at(comp.combo_index).delays.at(comp.attack_index);
+        }
     }
 
     inline void boss_cooldown(Entity& e, BossAI& comp, float elapsed_ms) {
-        comp.cooldown_delay_counter -= elapsed_ms;
+        comp.cooldown_delay_counter -= elapsed_ms / 1000.0f;
         if (comp.cooldown_delay_counter <= 0.0f) {
             comp.state = BOSS_STATE::CHASE;
         }
@@ -288,6 +322,7 @@ namespace AISystem
 
         if (glm::distance(boss_motion.position, player_motion.position) < comp.attack_range) {
             comp.state = BOSS_STATE::IN_COMBO;
+            // TODO: init vars related to IN_COMBO (ex. delay, attack/combo index...)
         } else {
             boss_motion.velocity = glm::normalize(player_motion.position - boss_motion.position) * registry.locomotion_stats.get(e).movement_speed;
             boss_dodge(e, comp.dodge_ratio);
@@ -309,7 +344,7 @@ namespace AISystem
             boss_update_aim_angle(e);
             BossAI& comp = registry.boss_ais.get(e);
             if (comp.state == BOSS_STATE::IN_COMBO) {
-
+                boss_combo_step(e, comp, elapsed_ms);
             } else if (comp.state == BOSS_STATE::COOLDOWN) {
                 boss_cooldown(e, comp, elapsed_ms);
             } else if (comp.state == BOSS_STATE::CHASE) {

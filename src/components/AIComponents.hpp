@@ -35,17 +35,22 @@ enum class BOSS_STATE
     CHASE
 };
 
-std::array<std::string, 3> boss_attack_name = {"regular", "rapid_repeat", "aoe"};
+enum class BOSS_ATTACK_TYPE
+{
+    REGULAR,
+    LONG,
+    AOE
+};
 
 struct AttackCombo {
-    std::vector<std::string> attacks;
+    std::vector<BOSS_ATTACK_TYPE> attacks;
     std::vector<float> delays;          // optional delay before each attack (same size as attacks list)
 };
 
 struct BossAI {
-    BOSS_STATE state;
-    float cooldown_delay_counter;       // cooldown counter between combos (switch from cooldown state to chase/in_combo)
-    float dodge_ratio;                  // between 0 and 1 for the percentage of attacks dodged by boss
+    BOSS_STATE state = BOSS_STATE::COOLDOWN;
+    float cooldown_delay_counter = 0.2f;// cooldown counter between combos (switch from cooldown state to chase/in_combo)
+    float dodge_ratio = 0.0f;           // between 0 and 1 for the percentage of attacks dodged by boss
     std::vector<AttackCombo> combos;
     std::vector<float> q;               // reward (damage dealt - damage received) list of combos for Q-learning (same size as combos list)
     std::vector<unsigned int> k;        // number of times combo was used for Q-learning (same size as q list)

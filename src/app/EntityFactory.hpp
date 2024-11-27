@@ -431,4 +431,30 @@ namespace EntityFactory {
         light_source.type = type;
         return e;
     }
+
+    inline Entity create_boss_projectile(Registry& registry, glm::vec2 pos, float angle, glm::vec2 aim, Weapon& weapon) {
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = pos;
+        motion.angle = angle;
+        motion.velocity = aim * weapon.proj_speed;
+        motion.scale = glm::vec2(1.0f, 1.0f);  // Projectile size
+
+        auto& projectile = registry.projectiles.emplace(entity);
+        projectile.damage = weapon.damage;
+        projectile.range_remaining = weapon.range;
+        projectile.stagger_duration = weapon.stagger_duration;
+        projectile.poise_points = weapon.poise_points;
+        projectile.enchantment = ENCHANTMENT::NONE;
+        projectile.projectile_type = weapon.projectile_type;
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::FOW;
+
+        registry.collision_bounds.emplace(entity,
+                CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+
+        return entity;
+    }
 };
