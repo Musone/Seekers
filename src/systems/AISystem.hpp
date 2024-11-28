@@ -270,6 +270,13 @@ namespace AISystem
         }
     }
 
+    inline void boss_pick_combo(BossAI& comp) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dist(0, comp.combos.size() - 1);
+        comp.combo_index = dist(gen);
+    }
+
     inline void boss_combo_step(Entity& e, BossAI& comp, float elapsed_ms) {
         Registry& registry = MapManager::get_instance().get_active_registry();
         Motion& boss_motion = registry.motions.get(e);
@@ -322,7 +329,9 @@ namespace AISystem
 
         if (glm::distance(boss_motion.position, player_motion.position) < comp.attack_range) {
             comp.state = BOSS_STATE::IN_COMBO;
-            // TODO: init vars related to IN_COMBO (ex. delay, attack/combo index...)
+            boss_pick_combo(comp);
+            comp.attack_index = 0;
+            comp.attack_delay_counter = comp.combos.at(comp.combo_index).delays.at(0);
         } else {
             boss_motion.velocity = glm::normalize(player_motion.position - boss_motion.position) * registry.locomotion_stats.get(e).movement_speed;
             boss_dodge(e, comp.dodge_ratio);
