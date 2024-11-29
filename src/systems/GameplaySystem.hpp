@@ -182,9 +182,7 @@ namespace GameplaySystem {
         Registry& registry = MapManager::get_instance().get_active_registry();
         AudioSystem& audio = AudioSystem::get_instance();
 
-        LocomotionStats& locomotion = registry.locomotion_stats.get(e);
-
-        if (registry.in_dodges.has(e) || locomotion.energy <= 0) return;
+        if (registry.in_dodges.has(e) || registry.locomotion_stats.get(e).energy <= 0) return;
 
         Motion& motion = registry.motions.get(e);
 
@@ -196,6 +194,8 @@ namespace GameplaySystem {
         }
         registry.in_dodges.emplace(e, motion.position, dodge_target_pos, Globals::timer.GetTime(), Globals::dodgeDuration);
         deplete_energy(e, Globals::dodge_energy_cost);
+
+        registry.buildups.remove(e);
 
         float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
         audio.play_dodge(distance_from_camera);
