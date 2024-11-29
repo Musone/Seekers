@@ -154,6 +154,7 @@ void World::step(float elapsed_ms) {
     m_audioSystem.handle_audio_per_frame();
 
     AISystem::AI_step();
+    // AISystem::boss_AI_step(elapsed_ms); // conditional this for with in_boss_fight flag
 
     InputManager::handle_inputs_per_frame();
 

@@ -260,7 +260,7 @@ namespace AISystem
         std::uniform_real_distribution<float> dodge_dist(0.0f, 1.0f);
 
         for (Entity& e : registry.projectiles.entities) {
-            if (glm::distance(registry.motions.get(e).position, registry.motions.get(boss_entity).position) < 2.0f &&
+            if (glm::distance(registry.motions.get(e).position, registry.motions.get(boss_entity).position) < 4.0f &&
                 registry.teams.get(e).team_id == TEAM_ID::FRIENDLY) {
                 if (dodge_dist(gen) <= dodge_ratio) {
                     GameplaySystem::dodge(boss_entity);
@@ -281,19 +281,20 @@ namespace AISystem
         Registry& registry = MapManager::get_instance().get_active_registry();
         Motion& boss_motion = registry.motions.get(e);
         Motion& player_motion = registry.motions.get(registry.player);
+        LocomotionStats& boss_loco = registry.locomotion_stats.get(e);
 
         comp.attack_delay_counter -= elapsed_ms / 1000.0f;
         // close the gap with the player if necessary
         if (glm::distance(boss_motion.position, player_motion.position) < comp.attack_range) {
             boss_motion.velocity = glm::vec2(0.0f);
         } else {
-            boss_motion.velocity = glm::normalize(player_motion.position - boss_motion.position) * registry.locomotion_stats.get(e).movement_speed;
+            boss_motion.velocity = glm::normalize(player_motion.position - boss_motion.position) * boss_loco.movement_speed;
             return;
         }
 
         if (registry.attack_cooldowns.has(e) || comp.attack_delay_counter > 0.0f ||
             registry.stagger_cooldowns.has(e) || registry.death_cooldowns.has(e) ||
-            registry.locomotion_stats.get(e).energy <= 0) return;
+            boss_loco.energy <= 0) return;
 
         BOSS_ATTACK_TYPE attack_type = comp.combos.at(comp.combo_index).attacks.at(comp.attack_index);
         GameplaySystem::boss_attack(e, boss_motion, attack_type);
@@ -304,17 +305,20 @@ namespace AISystem
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_real_distribution<float> cooldown_dist(0.5f, 5.0f);
-            std::uniform_real_distribution<float> angle_dist(0.0f, 2 * PI);
+            std::uniform_real_distribution<float> move_multi_dist(-0.3f, 0.3f);
             comp.state = BOSS_STATE::COOLDOWN;
             comp.cooldown_delay_counter = cooldown_dist(gen);
-            float angle = angle_dist(gen);
-            boss_motion.velocity = glm::vec2(cos(angle), sin(angle)) * boss_motion.velocity * 0.3f;
+            boss_motion.velocity = glm::vec2(-sin(boss_motion.angle), cos(boss_motion.angle)) * boss_loco.movement_speed * move_multi_dist(gen);
         } else {
             comp.attack_delay_counter = comp.combos.at(comp.combo_index).delays.at(comp.attack_index);
         }
     }
 
     inline void boss_cooldown(Entity& e, BossAI& comp, float elapsed_ms) {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+        Motion& boss_motion = registry.motions.get(e);
+        glm::vec2 new_velocity = glm::vec2(-sin(boss_motion.angle), cos(boss_motion.angle)) * glm::length(boss_motion.velocity);
+        boss_motion.velocity = glm::dot(boss_motion.velocity, new_velocity) > 0 ? new_velocity : -new_velocity;
         comp.cooldown_delay_counter -= elapsed_ms / 1000.0f;
         if (comp.cooldown_delay_counter <= 0.0f) {
             comp.state = BOSS_STATE::CHASE;

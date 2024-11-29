@@ -457,4 +457,59 @@ namespace EntityFactory {
 
         return entity;
     }
+
+
+
+    inline Entity create_test_boss(Registry& registry, glm::vec2 position) {
+        auto entity = Entity();
+
+        auto& motion = registry.motions.emplace(entity);
+        motion.position = position;
+        motion.scale = glm::vec2(3.0f, 3.0f);  // Enemy size
+
+        auto& locomotion = registry.locomotion_stats.emplace(entity);
+        locomotion.max_health = 100.0f;
+        locomotion.health = locomotion.max_health;
+        locomotion.max_energy = 1000.0f;
+        locomotion.energy = locomotion.max_energy;
+        locomotion.max_poise = 1000.0f;
+        locomotion.poise = locomotion.max_poise;
+        locomotion.movement_speed = 12.0f;
+
+        auto& team = registry.teams.emplace(entity);
+        team.team_id = TEAM_ID::FOW;
+
+        auto& attacker = registry.attackers.emplace(entity);
+
+        // COMBOS
+        BossAI& ai = registry.boss_ais.emplace(entity);
+        ai.dodge_ratio = 1.0f;
+        ai.attack_range = 6.5f;
+        AttackCombo combo1 = {
+            .attacks = {BOSS_ATTACK_TYPE::REGULAR, BOSS_ATTACK_TYPE::LONG, BOSS_ATTACK_TYPE::REGULAR},
+            .delays = {0.0f, 0.5f, 0.3f}
+        };
+        AttackCombo combo2 = {
+            .attacks = {BOSS_ATTACK_TYPE::AOE, BOSS_ATTACK_TYPE::LONG, BOSS_ATTACK_TYPE::AOE},
+            .delays = {0.0f, 0.5f, 0.4f}
+        };
+        AttackCombo combo3 = {
+            .attacks = {BOSS_ATTACK_TYPE::REGULAR, BOSS_ATTACK_TYPE::REGULAR, BOSS_ATTACK_TYPE::AOE},
+            .delays = {0.0f, 0.1f, 0.7f}
+        };
+        ai.combos = {combo1, combo2, combo3};
+
+
+        auto& enemy = registry.enemies.emplace(entity);
+        enemy.type = ENEMY_TYPE::WARRIOR;
+
+        Entity enemy_weapon = EntityFactory::create_weapon(registry, position, 10.0f, 0.5f, WEAPON_TYPE::SWORD);
+        attacker.weapon = enemy_weapon;
+
+        // Use circle collider for enemy
+        registry.collision_bounds.emplace(entity,
+            CollisionBounds::create_circle(Common::max_of(motion.scale) / 2));
+
+        return entity;
+    }
 };
