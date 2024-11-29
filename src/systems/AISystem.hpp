@@ -271,6 +271,7 @@ namespace AISystem
     }
 
     inline void boss_pick_combo(BossAI& comp) {
+        // TODO: add Q-learning stuff here
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dist(0, comp.combos.size() - 1);
@@ -292,12 +293,10 @@ namespace AISystem
             return;
         }
 
-        if (registry.attack_cooldowns.has(e) || comp.attack_delay_counter > 0.0f ||
-            registry.stagger_cooldowns.has(e) || registry.death_cooldowns.has(e) ||
-            boss_loco.energy <= 0) return;
+        if (comp.attack_delay_counter > 0.0f) return;
 
         BOSS_ATTACK_TYPE attack_type = comp.combos.at(comp.combo_index).attacks.at(comp.attack_index);
-        GameplaySystem::boss_attack(e, boss_motion, attack_type);
+        if (!GameplaySystem::attack(e, 0.3, true, attack_type)) return;
 
         // update comp
         comp.attack_index++;

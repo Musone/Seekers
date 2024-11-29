@@ -6,6 +6,8 @@
 #include <app/EntityFactory.hpp>
 
 namespace GameplaySystem {
+    inline void truly_attack(Entity& e, bool from_boss = false, BOSS_ATTACK_TYPE attack_type = BOSS_ATTACK_TYPE::REGULAR); // in order to use it in update_cooldowns
+
     inline void update_cooldowns(float elapsed_ms) {
         Registry& registry = MapManager::get_instance().get_active_registry();
 
@@ -64,6 +66,20 @@ namespace GameplaySystem {
                 return;
             }
             registry.remove_all_components_of(e);
+        }
+
+        to_be_removed.clear();
+        to_be_removed.reserve(registry.buildups.entities.size());
+        for (Entity& e : registry.buildups.entities) {
+            auto& buildup = registry.buildups.get(e);
+            buildup.timer -= elapsed_ms / 1000.0f;
+            if (buildup.timer <= 0) {
+                to_be_removed.push_back(e);
+                truly_attack(e, buildup.from_boss, buildup.attack_type);
+            }
+        }
+        for (Entity& e : to_be_removed) {
+            registry.buildups.remove(e);
         }
     }
 
@@ -147,28 +163,19 @@ namespace GameplaySystem {
         }
     }
 
-    inline void attack(Entity& e) {
+    inline bool attack(Entity& e, float buildup_duration = 0.3f, bool from_boss = false, BOSS_ATTACK_TYPE attack_type = BOSS_ATTACK_TYPE::REGULAR) {
         Registry& registry = MapManager::get_instance().get_active_registry();
-        AudioSystem& audio = AudioSystem::get_instance();
 
-        LocomotionStats& locomotion = registry.locomotion_stats.get(e);
+        if (registry.attack_cooldowns.has(e) || registry.buildups.has(e) ||
+            registry.stagger_cooldowns.has(e) || registry.death_cooldowns.has(e) ||
+            registry.locomotion_stats.get(e).energy <= 0) return false;
 
-        if (registry.attack_cooldowns.has(e) || registry.stagger_cooldowns.has(e) || registry.death_cooldowns.has(e) || locomotion.energy <= 0) return;
+        AttackBuildup& buildup = registry.buildups.emplace(e);
+        buildup.timer = buildup_duration;
+        buildup.from_boss = from_boss;
+        buildup.attack_type = attack_type;
 
-        Motion& motion = registry.motions.get(e);
-        Attacker& attacker = registry.attackers.get(e);
-        Weapon& weapon = registry.weapons.get(attacker.weapon);
-
-        EntityFactory::create_projectile(registry, motion, attacker, weapon, registry.teams.get(e).team_id);
-        registry.attack_cooldowns.emplace(e, weapon.attack_cooldown);
-        deplete_energy(e, weapon.attack_energy_cost);
-
-        float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
-        if (weapon.type == WEAPON_TYPE::BOW) {
-            audio.play_attack_bow(distance_from_camera);
-        } else {
-            audio.play_attack_sword(distance_from_camera);
-        }
+        return true;
     }
 
     inline void dodge(Entity& e) {
@@ -291,12 +298,8 @@ namespace GameplaySystem {
         }
     }
 
-    inline void boss_attack(Entity& e, Motion& motion, BOSS_ATTACK_TYPE type) {
+    inline void boss_attack(Entity& e, Motion& motion, Attacker& attacker, Weapon& weapon, BOSS_ATTACK_TYPE type) {
         Registry& registry = MapManager::get_instance().get_active_registry();
-        AudioSystem& audio = AudioSystem::get_instance();
-
-        Attacker& attacker = registry.attackers.get(e);
-        Weapon& weapon = registry.weapons.get(attacker.weapon);
 
         if (type == BOSS_ATTACK_TYPE::REGULAR) {
             EntityFactory::create_boss_projectile(registry, motion.position, motion.angle, attacker.aim, weapon);
@@ -318,6 +321,27 @@ namespace GameplaySystem {
         }
 
         // deplete_energy(e, weapon.attack_energy_cost);    *** commented out so this doesn't interfere and complicate combo executions
+    }
+
+    // "truly" haha, get it?
+    inline void truly_attack(Entity& e, bool from_boss, BOSS_ATTACK_TYPE attack_type) {
+        Registry& registry = MapManager::get_instance().get_active_registry();
+        AudioSystem& audio = AudioSystem::get_instance();
+
+        // was staggered or killed mid buildup
+        if (registry.stagger_cooldowns.has(e) || registry.death_cooldowns.has(e) || !registry.valid(e)) return;
+
+        Motion& motion = registry.motions.get(e);
+        Attacker& attacker = registry.attackers.get(e);
+        Weapon& weapon = registry.weapons.get(attacker.weapon);
+
+        if (from_boss) {
+            boss_attack(e, motion, attacker, weapon, attack_type);
+        } else {
+            EntityFactory::create_projectile(registry, motion, attacker, weapon, registry.teams.get(e).team_id);
+            registry.attack_cooldowns.emplace(e, weapon.attack_cooldown);
+            deplete_energy(e, weapon.attack_energy_cost);
+        }
 
         float distance_from_camera = glm::distance(registry.camera_pos, motion.position);
         if (weapon.type == WEAPON_TYPE::BOW) {

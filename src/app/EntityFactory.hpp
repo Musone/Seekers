@@ -55,7 +55,7 @@ namespace EntityFactory {
         } else {
             weapon.range = 5.0f;
         }
-        weapon.proj_speed = 80.0f;
+        weapon.proj_speed = 50.0f;
         weapon.attack_cooldown = attack_cooldown;
         weapon.stagger_duration = 0.5f;
         weapon.poise_points = 10.0f;

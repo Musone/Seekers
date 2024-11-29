@@ -63,6 +63,7 @@ public:
 	ComponentContainer<Interactable> interactables;
 	ComponentContainer<Estus> estus;
 	ComponentContainer<InRest> in_rests;
+	ComponentContainer<AttackBuildup> buildups;
 	GridMap grid_map;
 	Entity player;
 	Inventory inventory;
@@ -102,6 +103,7 @@ public:
 		m_registry_list.push_back(&interactables);
 		m_registry_list.push_back(&estus);
 		m_registry_list.push_back(&in_rests);
+		m_registry_list.push_back(&buildups);
 
 		// create grid map entities
 		grid_map = GridMap();

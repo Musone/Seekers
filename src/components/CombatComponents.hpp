@@ -2,6 +2,8 @@
 
 #include <glm/vec2.hpp>
 
+#include "AIComponents.hpp"
+
 enum class PROJECTILE_TYPE
 {
     ARROW = 0,
@@ -69,6 +71,12 @@ struct DeathCooldown {
 struct EnergyNoRegenCooldown {
     float timer;
     EnergyNoRegenCooldown(float t) : timer(t) {}
+};
+
+struct AttackBuildup {
+    float timer;
+    bool from_boss;
+    BOSS_ATTACK_TYPE attack_type;
 };
 
 struct Projectile
