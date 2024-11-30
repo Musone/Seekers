@@ -486,16 +486,16 @@ namespace EntityFactory {
         ai.dodge_ratio = 1.0f;
         ai.attack_range = 6.5f;
         AttackCombo combo1 = {
-            .attacks = {BOSS_ATTACK_TYPE::REGULAR, BOSS_ATTACK_TYPE::LONG, BOSS_ATTACK_TYPE::REGULAR},
-            .delays = {0.0f, 0.5f, 0.3f}
+            std::vector<BOSS_ATTACK_TYPE>({BOSS_ATTACK_TYPE::REGULAR, BOSS_ATTACK_TYPE::LONG, BOSS_ATTACK_TYPE::REGULAR}),
+            {0.0f, 0.5f, 0.3f}
         };
         AttackCombo combo2 = {
-            .attacks = {BOSS_ATTACK_TYPE::AOE, BOSS_ATTACK_TYPE::LONG, BOSS_ATTACK_TYPE::AOE},
-            .delays = {0.0f, 0.5f, 0.4f}
+            std::vector<BOSS_ATTACK_TYPE>({BOSS_ATTACK_TYPE::AOE, BOSS_ATTACK_TYPE::LONG, BOSS_ATTACK_TYPE::AOE}),
+            {0.0f, 0.5f, 0.4f}
         };
         AttackCombo combo3 = {
-            .attacks = {BOSS_ATTACK_TYPE::REGULAR, BOSS_ATTACK_TYPE::REGULAR, BOSS_ATTACK_TYPE::AOE},
-            .delays = {0.0f, 0.1f, 0.7f}
+            std::vector<BOSS_ATTACK_TYPE>({BOSS_ATTACK_TYPE::REGULAR, BOSS_ATTACK_TYPE::REGULAR, BOSS_ATTACK_TYPE::AOE}),
+            {0.0f, 0.1f, 0.7f}
         };
         ai.combos = {combo1, combo2, combo3};
 

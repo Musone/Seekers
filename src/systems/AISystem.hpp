@@ -4,7 +4,6 @@
 
 #include "app/MapManager.hpp"
 #include "GameplaySystem.hpp"
-#include "../../../../../../../../Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk/System/Library/Frameworks/CoreText.framework/Headers/CTFontDescriptor.h"
 #include "../ecs/Entity.hpp"
 #include "../components/Components.hpp"
 #include "../ecs/Registry.hpp"
