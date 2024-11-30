@@ -45,11 +45,12 @@ public:
     unsigned int m_font_vao;
     unsigned int m_font_vbo;
     Shader m_font_shader;
+    float font_default_size;
 
     std::unordered_map<char, Character> m_ftCharacters;
 
     bool font_init(const std::string& font_filename, unsigned int font_default_size, const int window_width_px, const int window_height_px) {
-    
+        this->font_default_size = float(font_default_size);
 #pragma region Shader stuff...
         // const auto& reg = MapManager::get_instance().get_active_registry();
         glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));

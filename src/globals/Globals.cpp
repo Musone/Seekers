@@ -25,4 +25,5 @@ namespace Globals {
     bool is_getting_up = false;
     void* ptr_window = nullptr;
     bool show_loading_screen = false;
+    bool in_pause = true;
 }

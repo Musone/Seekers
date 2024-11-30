@@ -97,7 +97,7 @@ public:
         if (fullscreen) {
             // uncommenting this removes the health top bar.
             // Keeping top bar for now to track FPS.
-            // glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
+            glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
             const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
             window_width = mode->width;
             window_height = mode->height;
@@ -135,6 +135,11 @@ public:
 
         m_is_initialized = true;
         Log::log_success("Renderer loaded", __FILE__, __LINE__);
+
+        // glfwGetWindowSize(m_window, &window_width, &window_height);
+        glfwGetFramebufferSize(m_window, &window_width, &window_height);
+        m_window_width = window_width;
+        m_window_height = window_height;
     }
 
     const void begin_draw() const {
@@ -202,8 +207,8 @@ public:
         if (!m_is_initialized) {
             Log::log_error_and_terminate("Renderer not initialized", __FILE__, __LINE__);
         }
-        GL_Call(glfwTerminate());
         GL_Call(glfwSetWindowShouldClose(m_window, 1));
+        // GL_Call(glfwTerminate()); // IDK WHY THIS GIVING INVALID OP ERROR
     }
 
     int is_key_pressed(const int& key_code) const {
@@ -248,5 +253,24 @@ public:
 
     void unlock_cursor() const {
         GL_Call(glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL));
+    }
+
+    void set_icon(const std::string& icon_path) {
+        GLFWimage images[1];
+        int channels;
+        images[0].pixels = stbi_load(
+            icon_path.c_str(), 
+            &images[0].width, 
+            &images[0].height, 
+            &channels, 
+            STBI_rgb_alpha
+        );
+
+        if (images[0].pixels) {
+            glfwSetWindowIcon(m_window, 1, images);
+            stbi_image_free(images[0].pixels);
+        } else {
+            Log::log_warning("Failed to load icon: ", __FILE__, __LINE__);
+        }
     }
 };
