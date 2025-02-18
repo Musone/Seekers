@@ -1,6 +1,8 @@
 # Seekers
 Click the image below to view our Demo Video:
+
 [![Seekers Demo](https://img.youtube.com/vi/hXh101_gjjw/0.jpg)](https://www.youtube.com/watch?v=hXh101_gjjw)
+
 https://www.youtube.com/watch?v=hXh101_gjjw
 
 ## Team 23: Los Pollos Hermanos Gaming
