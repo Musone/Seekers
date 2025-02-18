@@ -1,6 +1,6 @@
 # Seekers
 
-[![Seekers Demo](https://img.youtube.com/vi/hXh101_gjjw /0.jpg)](https://www.youtube.com/watch?v=hXh101_gjjw )
+[![Seekers Demo](https://img.youtube.com/vi/hXh101_gjjw/0.jpg)](https://www.youtube.com/watch?v=hXh101_gjjw)
 
 ![Seekers Splash Screen](doc/Splashscreen.jpg)
 
