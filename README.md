@@ -1,5 +1,7 @@
 # Seekers
 
+[![Seekers demo video](https://youtu.be/hXh101_gjjw)
+
 ![Seekers Splash Screen](doc/Splashscreen.jpg)
 
 ## Team 23: Los Pollos Hermanos Gaming
